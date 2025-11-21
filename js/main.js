@@ -37,28 +37,55 @@ class GlitchPortfolio {
     async init() {
         console.log('Initializing Glitch Portfolio...');
         
-        this.updateLoading(10, 'LOADING_THREE.JS');
-        
-        this.initThree();
-        
-        this.updateLoading(30, 'INITIALIZING_MODULES');
-        
-        await this.initModules();
-        
-        this.updateLoading(60, 'COMPILING_SHADERS');
-        
-        this.setupEvents();
-        
-        this.updateLoading(80, 'STARTING_RENDER_ENGINE');
-        
-        this.animate();
-        
-        setTimeout(() => {
+        // Add overall timeout for mobile (30 seconds max)
+        const isMobile = Utils.isMobile() || Utils.isTouchDevice();
+        const initTimeout = setTimeout(() => {
+            console.warn('Initialization timeout, forcing completion');
             this.updateLoading(100, 'COMPLETE');
             setTimeout(() => {
-                this.loadingScreen.classList.add('hidden');
+                if (this.loadingScreen) {
+                    this.loadingScreen.classList.add('hidden');
+                }
             }, 500);
-        }, 1000);
+        }, isMobile ? 30000 : 60000);
+        
+        try {
+            this.updateLoading(10, 'LOADING_THREE.JS');
+            
+            this.initThree();
+            
+            this.updateLoading(30, 'INITIALIZING_MODULES');
+            
+            await this.initModules();
+            
+            this.updateLoading(60, 'COMPILING_SHADERS');
+            
+            this.setupEvents();
+            
+            this.updateLoading(80, 'STARTING_RENDER_ENGINE');
+            
+            this.animate();
+            
+            clearTimeout(initTimeout);
+            
+            setTimeout(() => {
+                this.updateLoading(100, 'COMPLETE');
+                setTimeout(() => {
+                    if (this.loadingScreen) {
+                        this.loadingScreen.classList.add('hidden');
+                    }
+                }, 500);
+            }, 1000);
+        } catch (error) {
+            clearTimeout(initTimeout);
+            console.error('Initialization error:', error);
+            this.updateLoading(100, 'ERROR_INIT');
+            setTimeout(() => {
+                if (this.loadingScreen) {
+                    this.loadingScreen.classList.add('hidden');
+                }
+            }, 2000);
+        }
     }
     
     initThree() {
@@ -69,33 +96,37 @@ class GlitchPortfolio {
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
         this.camera.position.z = 5;
         
+        // Mobile optimizations
+        const isMobile = Utils.isMobile() || Utils.isTouchDevice();
+        const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
+        
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: false,
-            alpha: false
+            antialias: !isMobile, // Disable antialiasing on mobile for performance
+            alpha: false,
+            powerPreference: isMobile ? 'low-power' : 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(pixelRatio);
         this.renderer.setClearColor(0x000000);
         
-        console.log('Three.js initialized');
+        console.log('Three.js initialized', isMobile ? '(Mobile Mode)' : '(Desktop Mode)');
     }
     
     async initModules() {
+        const isMobile = Utils.isMobile() || Utils.isTouchDevice();
+        
         this.cursor = new CustomCursor();
         console.log('Cursor initialized');
         
         this.gyroscope = new Gyroscope();
         
-        if (Utils.isMobile() || Utils.isTouchDevice()) {
-            const gyroEnabled = await this.gyroscope.init();
+        if (isMobile) {
+            // Add timeout for gyroscope initialization on mobile
+            const gyroPromise = this.gyroscope.init();
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(false), 5000));
             
-            if (!gyroEnabled && Utils.isIOS()) {
-                const button = this.gyroscope.createPermissionButton();
-                if (button) {
-                    document.body.appendChild(button);
-                }
-            }
+            await Promise.race([gyroPromise, timeoutPromise]);
         }
         
         this.gyroscope.onChange((values) => {
@@ -115,14 +146,17 @@ class GlitchPortfolio {
         
         console.log('Gyroscope initialized');
         
-        this.sceneManager = new SceneManager(this.scene, this.camera);
+        this.sceneManager = new SceneManager(this.scene, this.camera, isMobile);
         console.log('Scene Manager initialized');
         
-        this.postProcessing = new PostProcessing(this.renderer, this.scene, this.camera);
+        this.postProcessing = new PostProcessing(this.renderer, this.scene, this.camera, isMobile);
         console.log('Post-processing initialized');
         
         this.audioReactor = new AudioReactor();
-        await this.audioReactor.init();
+        // Add timeout for audio initialization
+        const audioPromise = this.audioReactor.init();
+        const audioTimeout = new Promise(resolve => setTimeout(() => resolve(false), 3000));
+        await Promise.race([audioPromise, audioTimeout]);
         console.log('Audio Reactor initialized');
     }
     

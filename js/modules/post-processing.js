@@ -4,10 +4,11 @@
  */
 
 class PostProcessing {
-    constructor(renderer, scene, camera) {
+    constructor(renderer, scene, camera, isMobile = false) {
         this.renderer = renderer;
         this.scene = scene;
         this.camera = camera;
+        this.isMobile = isMobile;
         
         this.composer = null;
         
@@ -18,9 +19,10 @@ class PostProcessing {
             datamosh: null
         };
         
+        // Reduce intensity on mobile for better performance
         this.intensities = {
-            glitch: 0.05,
-            rgbShift: 0.005,
+            glitch: isMobile ? 0.03 : 0.05,
+            rgbShift: isMobile ? 0.003 : 0.005,
             datamosh: 0.0
         };
         
@@ -40,25 +42,50 @@ class PostProcessing {
     }
     
     loadPostProcessingScripts() {
+        // Use working version and add timeout/error handling for mobile
         const scripts = [
-            'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/js/postprocessing/EffectComposer.js',
-            'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/js/postprocessing/RenderPass.js',
-            'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/js/postprocessing/ShaderPass.js',
-            'https://cdn.jsdelivr.net/npm/three@0.168.0/examples/js/shaders/CopyShader.js'
+            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js',
+            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js',
+            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/ShaderPass.js',
+            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/shaders/CopyShader.js'
         ];
         
         let loaded = 0;
+        let failed = false;
+        const timeout = setTimeout(() => {
+            if (!failed && loaded < scripts.length) {
+                console.warn('Post-processing scripts timeout, falling back to basic rendering');
+                failed = true;
+                this.setupFallback();
+            }
+        }, 10000); // 10 second timeout for mobile
+        
         scripts.forEach(src => {
             const script = document.createElement('script');
             script.src = src;
             script.onload = () => {
+                if (failed) return;
                 loaded++;
                 if (loaded === scripts.length) {
+                    clearTimeout(timeout);
                     setTimeout(() => this.setup(), 100);
+                }
+            };
+            script.onerror = () => {
+                console.error('Failed to load post-processing script:', src);
+                if (loaded === 0) {
+                    clearTimeout(timeout);
+                    failed = true;
+                    this.setupFallback();
                 }
             };
             document.head.appendChild(script);
         });
+    }
+    
+    setupFallback() {
+        console.warn('Using fallback rendering without post-processing');
+        this.composer = null;
     }
     
     setup() {

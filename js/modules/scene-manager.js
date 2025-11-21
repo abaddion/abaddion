@@ -4,19 +4,25 @@
  */
 
 class SceneManager {
-    constructor(scene, camera) {
+    constructor(scene, camera, isMobile = false) {
         this.scene = scene;
         this.camera = camera;
+        this.isMobile = isMobile;
         
         this.scenes = [];
         this.currentSceneIndex = 0;
         this.isTransitioning = false;
         
+        // Reduce geometry complexity on mobile
+        const sphereSegments = isMobile ? 16 : 32;
+        const torusSegments = isMobile ? 8 : 16;
+        const torusRadialSegments = isMobile ? 50 : 100;
+        
         this.geometryPool = {
             plane: new THREE.PlaneGeometry(2, 2),
             box: new THREE.BoxGeometry(1, 1, 1),
-            sphere: new THREE.SphereGeometry(1, 32, 32),
-            torus: new THREE.TorusGeometry(1, 0.4, 16, 100)
+            sphere: new THREE.SphereGeometry(1, sphereSegments, sphereSegments),
+            torus: new THREE.TorusGeometry(1, 0.4, torusSegments, torusRadialSegments)
         };
         
         this.init();
@@ -33,7 +39,8 @@ class SceneManager {
     
     createScene0() {
         const sceneObjects = [];
-        const particleCount = 100;
+        // Reduce particle count on mobile for better performance
+        const particleCount = this.isMobile ? 50 : 100;
         
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
@@ -156,7 +163,8 @@ class SceneManager {
         gridHelper.material.opacity = 0.3;
         sceneObjects.push(gridHelper);
         
-        const cubeCount = 50;
+        // Reduce cube count on mobile
+        const cubeCount = this.isMobile ? 25 : 50;
         const cubes = [];
         
         for (let i = 0; i < cubeCount; i++) {
@@ -196,7 +204,8 @@ class SceneManager {
     createScene3() {
         const sceneObjects = [];
         
-        const lineCount = 50;
+        // Reduce line count on mobile
+        const lineCount = this.isMobile ? 25 : 50;
         const radius = 3;
         
         for (let i = 0; i < lineCount; i++) {
