@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>GLITCH_PORTFOLIO_v2.0.30</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- WebGL Canvas - The Core -->
+    <canvas id="glitch-canvas"></canvas>
+    
+    <!-- Overlay UI Layer -->
+    <div id="overlay">
+        <!-- Custom Cursor -->
+        <div id="cursor">
+            <div class="cursor-core"></div>
+            <div class="cursor-trail"></div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav id="main-nav">
+            <div class="nav-item" data-scene="0">
+                <span class="nav-glitch">INIT</span>
+            </div>
+            <div class="nav-item" data-scene="1">
+                <span class="nav-glitch">WORK</span>
+            </div>
+            <div class="nav-item" data-scene="2">
+                <span class="nav-glitch">INFO</span>
+            </div>
+            <div class="nav-item" data-scene="3">
+                <span class="nav-glitch">CONTACT</span>
+            </div>
+        </nav>
+        
+        <!-- Hero Section -->
+        <section id="hero">
+            <h1 class="glitch-text" data-text="CREATIVE_TECHNOLOGIST">
+                CREATIVE_TECHNOLOGIST
+            </h1>
+            <p class="subtitle">
+                <span class="terminal-cursor">▓</span>
+                BUILDING_DIGITAL_FUTURES
+            </p>
+        </section>
+        
+        <!-- Scene Info Display -->
+        <div id="scene-info">
+            <div class="info-line">
+                <span class="label">RENDER_PASS:</span>
+                <span class="value" id="pass-count">08</span>
+            </div>
+            <div class="info-line">
+                <span class="label">FPS:</span>
+                <span class="value" id="fps-counter">60</span>
+            </div>
+            <div class="info-line">
+                <span class="label">GYRO:</span>
+                <span class="value" id="gyro-status">IDLE</span>
+            </div>
+        </div>
+        
+        <!-- Controls Hint -->
+        <div id="controls">
+            <div class="control-hint">[SHIFT×2] CHAOS_MODE</div>
+            <div class="control-hint">[SPACE] FREEZE_FRAME</div>
+            <div class="control-hint">[1-9] LOAD_PRESET</div>
+        </div>
+        
+        <!-- Loading Screen -->
+        <div id="loading">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p class="loading-text">INITIALIZING_GLITCH_ENGINE</p>
+        </div>
+    </div>
+    
+    <!-- Three.js from CDN -->
+    <script src="three.min.js"></script>
+    
+    <!-- Core Modules -->
+    <script src="js/modules/utils.js"></script>
+    <script src="js/modules/cursor.js"></script>
+    <script src="js/modules/gyroscope.js"></script>
+    <script src="js/shaders/glitch.js"></script>
+    <script src="js/shaders/rgb-shift.js"></script>
+    <script src="js/shaders/datamosh.js"></script>
+    <script src="js/modules/post-processing.js"></script>
+    <script src="js/modules/scene-manager.js"></script>
+    <script src="js/modules/audio-reactor.js"></script>
+    
+    <!-- Main Application -->
+    <script src="js/main.js"></script>
+</body>
+</html>
