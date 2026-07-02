@@ -1,66 +1,56 @@
-# ⚡ THE ARCHITECT | Barbora 
+# Barbora Jenšík (Barush)
 
-> **#TalentOverKeywords** — Building the infrastructure for the Digital Identity Era.
+Founder · TA practitioner · 20+ years in technical recruitment — Skype, Avast, Barclays, Kiwi.com, and more.  Now turning that into products.---## 
 
-### 🛠️ What I'm Building
-- **[vairee.ai](https://vairee.ai)**: Transforming static resumes into Dynamic Digital Identities. Moving recruitment from "keyword matching" to "intent-based data."
-- **Recberry**: Innovating TA Consultancy through research-first delivery and blind profile matching.
-- **Leetberry**: A framework for sourcing Principal-level IT talent.
+🛠️ What I'm building
+| Project | What it is | Status 
+| [vairee.ai](https://vairee.ai) | Passive talent matching — Dynamic Digital Identity, not CV | Pre-launch |
+| [Recberry](https://recberry.com) | TA consulting & TA Efficiency Framework | Active |
+| [RecruitShield](https://recruitshield.com) | Recruitment scam scanner | Live |
+| Valkyra | Child online safety scanner | Active |
+| [Job Seeker Toolkit] (https://recberry.com/job-seekers) | Digital toolkit for candidates | Active |---## 
 
-### 🧬 Tech & Innovation Interests
-- **Digital Identities**: Exploring the intersection of professional data and user-owned identity.
-- **AI Bias Mitigation**: Building systems that focus on skill-proof rather than algorithmic filtering.
-- **GraphQL & Advanced Sourcing**: Leveraging deep-web data to find the 1% of talent.
+🧠 What actually interests me
+- Why static CVs fail senior talent — and what replaces them
+- Anonymity + consent as a design principle in hiring
+- Reusing OSINT infrastructure across products
+- Building solo with AI tooling ---*
+
+"The resume is a 500-year-old technology. It's time for an upgrade."*
+📫 [LinkedIn](https://linkedin.com/in/barushbalazikova) · barbora@recberry.com
 
 ### 📊 Stats & Activity
 ![Barbora's GitHub stats](https://github-readme-stats.vercel.app/api?username=abaddion&show_icons=true&theme=tokyonight)
 ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=abaddion&layout=compact&theme=tokyonight)
 
-### 📫 Connect with me
-- **LinkedIn**: [(https://www.linkedin.com/in/barushbalazikova/)]
-- **Site**: [vairee.ai](https://vairee.ai)
-- **Concept**: "The resume is a 500-year-old technology. It's time for an upgrade."
-
 
 /////////////////////////////////////////////////////
 
-# GLITCH PORTFOLIO
+# Glitch Portfolio
 
-A futuristic glitch-art portfolio built with Three.js and custom GLSL shaders.
+Futuristic glitch-art portfolio 
+— Three.js + custom GLSL shaders.## 
 
-## Quick Start
-```bash
+Quick Start
 ./start.sh
-```
-
-Then open: http://localhost:8000
+# open http://localhost:8000
 
 ## Controls
+| Key | Action |
+| `SHIFT×2` | Chaos Mode |
+| `SPACE` | Freeze Frame |
+| `1–4` | Switch Scenes |
+| `Mouse` | Parallax Camera |
 
-- **SHIFT×2** - Chaos Mode
-- **SPACE** - Freeze Frame
-- **1-4** - Switch Scenes
-- **Mouse** - Parallax Camera
+## Customise
+Name → `index.html` line 36  
+Colors → `css/main.css` lines 12–20
 
-## Customize
-
-Edit `index.html` line 36 to change your name:
-```html
-<h1 class="glitch-text" data-text="YOUR_NAME">YOUR_NAME</h1>
-```
-
-Edit `css/main.css` lines 12-20 to change colors.
-
-## Structure
-```
-glitch-portfolio/
-├── index.html
-├── css/main.css
-├── js/
-│   ├── main.js
-│   ├── modules/
-│   └── shaders/
-└── assets/
+## Stack
+- Three.js r168
+- Custom GLSL Shaders
+- Vanilla JS
+— no frameworks
 ```
 
 ## Built With
