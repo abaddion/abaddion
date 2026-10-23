@@ -179,12 +179,16 @@ async function waitApp(page) {
     await page.waitForFunction(() => window.app?.content, { timeout: 30000 });
     await page.waitForFunction(
         () =>
-            document.documentElement.classList.contains('no-webgl') ||
-            (window.app?.webgl?.interactionState &&
-                window.app?.webgl?.transition &&
-                window.app?.webgl?.canvasDetail),
-        { timeout: 45000 }
+            window.app?.webgl?.interactionState &&
+            window.app?.webgl?.transition &&
+            window.app?.webgl?.canvasDetail &&
+            window.app?.webgl?.renderLoop,
+        { timeout: 60000 }
     );
+    const noWebgl = await page.evaluate(() => document.documentElement.classList.contains('no-webgl'));
+    if (noWebgl) {
+        throw new Error('WebGL boot failed (no-webgl)');
+    }
 }
 
 async function getState(page) {
@@ -205,7 +209,13 @@ function isBenignConsole(text) {
 async function runViewport(vp) {
     const launchOpts = {
         headless: 'new',
-        args: ['--no-sandbox', '--enable-webgl', '--use-gl=angle']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--enable-webgl',
+            '--use-gl=angle',
+            '--use-angle=swiftshader'
+        ]
     };
     if (fs.existsSync(chrome)) {
         launchOpts.executablePath = chrome;

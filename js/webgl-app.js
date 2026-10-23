@@ -71,7 +71,7 @@ class WebGLLayer {
         this.setupEvents();
         this.syncFromShellFocus();
         this.scheduleAtlasBuild();
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     scheduleAtlasBuild() {
@@ -172,9 +172,9 @@ class WebGLLayer {
             onClose: () => {
                 this._restoreDetailCorridorMesh();
                 this.detailFly?.cancel();
-                this.renderLoop.ping();
+                this.renderLoop?.ping();
             },
-            onNavigateSlug: () => this.renderLoop.ping()
+            onNavigateSlug: () => this.renderLoop?.ping()
         });
         this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
 
@@ -220,7 +220,7 @@ class WebGLLayer {
             cameraRig: this.cameraRig,
             reducedMotion: this.reducedMotion,
             novaFallback: this.novaFallback,
-            onActivity: () => this.renderLoop.ping(),
+            onActivity: () => this.renderLoop?.ping(),
             onFloorOpen: (idx) => this.onFloorOpened(idx),
             onFloorClose: () => this.onFloorClosed()
         });
@@ -229,7 +229,7 @@ class WebGLLayer {
         this.gyroscope.onChange((v) => {
             this.gyroOffset.x = v.x;
             this.gyroOffset.y = v.y;
-            this.renderLoop.ping();
+            this.renderLoop?.ping();
         });
 
         this.cursor = new CustomCursor();
@@ -246,7 +246,7 @@ class WebGLLayer {
             isTransitioning: () => this.interactionState.isTransitioning(),
             onCancelTransition: () =>
                 this.transition.interruptToFocus(this.focusIndex),
-            onActivity: () => this.renderLoop.ping(),
+            onActivity: () => this.renderLoop?.ping(),
             isCorridorActive: () => this.isCorridorActive(),
             isDetailOpen: () => this.isDetailOpen(),
             onCorridorScroll: (delta) => this.corridorScroll(delta),
@@ -286,7 +286,7 @@ class WebGLLayer {
     corridorScroll(delta) {
         const step = delta > 0 ? 0.04 : -0.04;
         this.corridor.setProgress(this.corridor.progress + step);
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     _restoreDetailCorridorMesh() {
@@ -304,14 +304,14 @@ class WebGLLayer {
             this._detailCorridorMesh = mesh;
             let handoffRect;
             if (mesh && this.detailFly) {
-                this.renderLoop.ping();
+                this.renderLoop?.ping();
                 handoffRect = await this.detailFly.start(mesh);
             }
             await this.canvasDetail.open(slug, handoffRect?.width > 0 ? { handoffRect } : {});
         } finally {
             this._detailOpening = false;
         }
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     handleRoute({ index, openOnLoad, scrollContact, canvasSlug }) {
@@ -367,13 +367,13 @@ class WebGLLayer {
             this.router.navigate(route, true);
         }
         this.transition?.open(index);
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
         this.updateHeroHandoffState();
     }
 
     closeFloor() {
         this.transition?.close();
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     updateHeroHandoffState() {
@@ -392,7 +392,7 @@ class WebGLLayer {
     }
 
     setupEvents() {
-        const ping = () => this.renderLoop.ping();
+        const ping = () => this.renderLoop?.ping();
         window.addEventListener('resize', () => this.onResize());
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
@@ -401,7 +401,7 @@ class WebGLLayer {
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) this.renderLoop.stop();
-            else this.renderLoop.ping();
+            else this.renderLoop?.ping();
         });
 
         window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
@@ -430,11 +430,11 @@ class WebGLLayer {
     onMouseMove(event) {
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     onKeyDown(event) {
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
         if (this.isCorridorActive() && (event.code === 'ArrowLeft' || event.code === 'ArrowRight')) {
             event.preventDefault();
             this.corridor.stepPainting(event.code === 'ArrowRight' ? 1 : -1);
@@ -457,7 +457,7 @@ class WebGLLayer {
         this.camera.updateProjectionMatrix();
         this.stack?.applyViewportLayout();
         this.postProcessing?.resize(w, h);
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     updateParallax() {

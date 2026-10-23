@@ -18,5 +18,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Chromium for Puppeteer
+        run: npx puppeteer browsers install chrome
+
       - name: Run smoke
         run: node scripts/smoke.mjs
+        env:
+          CI: true
