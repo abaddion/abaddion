@@ -1,5 +1,5 @@
 /**
- * Gallery corridor — right wall, lazy painting textures, damped dolly.
+ * Walk-through gallery corridor — camera dolly, right wall, lazy textures.
  */
 
 import * as THREE from 'three';
@@ -7,8 +7,10 @@ import { getItems } from './content-loader.js';
 
 const MAX_LOADED = 8;
 const EYE_Y = 1.55;
-const WALL_X = 2.2;
-const SPACING_BASE = 1.8;
+const WALL_X = 2.35;
+const SPACING_BASE = 2.1;
+const CAMERA_X = -0.35;
+const LOOK_X = 0.15;
 
 function parseSizeCm(sizeStr) {
     if (!sizeStr) return { w: 60, h: 80 };
@@ -20,136 +22,174 @@ function parseSizeCm(sizeStr) {
 export class CanvasCorridor {
     constructor(scene, options = {}) {
         this.scene = scene;
-        this.qualityTier = options.qualityTier ?? 'high';
         this.onPaintingClick = options.onPaintingClick ?? (() => {});
-        this.onProgressChange = options.onProgressChange ?? (() => {});
+        this.onActiveChange = options.onActiveChange ?? (() => {});
 
         this.root = new THREE.Group();
         this.root.visible = false;
         scene.add(this.root);
 
         this.items = getItems('canvas');
-        this.progress = 0;
-        this.targetProgress = 0;
+        this.cameraZ = 0;
+        this.targetCameraZ = 0;
         this.focusIndex = 0;
         this.loader = new THREE.TextureLoader();
         this.loaded = new Map();
         this.meshes = [];
         this.spotlights = [];
-        this.hovered = null;
+        this.length = 0;
 
         this._buildEnvironment();
         this._buildPaintings();
     }
 
     _buildEnvironment() {
-        const wallGeo = new THREE.PlaneGeometry(40, 6);
-        const wallMat = new THREE.MeshBasicMaterial({ color: 0x080808, side: THREE.FrontSide });
+        const wallGeo = new THREE.PlaneGeometry(6, 5);
+        const wallMat = new THREE.MeshBasicMaterial({ color: 0x060606, side: THREE.FrontSide });
         const wall = new THREE.Mesh(wallGeo, wallMat);
-        wall.position.set(WALL_X, 3, -10);
+        wall.position.set(WALL_X, 3, -this.length * 0.5 - 4);
         wall.rotation.y = -Math.PI / 2;
         this.root.add(wall);
 
-        const floorGeo = new THREE.PlaneGeometry(40, 40);
-        const floorMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
+        const floorGeo = new THREE.PlaneGeometry(8, this.length + 24);
+        const floorMat = new THREE.MeshBasicMaterial({ color: 0x040404 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
-        floor.position.set(0, 0, -10);
+        floor.position.set(0, 0, -this.length * 0.5 - 2);
         this.root.add(floor);
-
-        if (this.qualityTier !== 'low') {
-            const gloss = new THREE.Mesh(
-                new THREE.PlaneGeometry(40, 40),
-                new THREE.MeshBasicMaterial({
-                    color: 0x1a1a1a,
-                    transparent: true,
-                    opacity: 0.12
-                })
-            );
-            gloss.rotation.x = -Math.PI / 2;
-            gloss.position.set(0, 0.01, -10);
-            this.root.add(gloss);
-        }
     }
 
     _buildPaintings() {
-        let z = 0;
+        let z = -2;
         this.items.forEach((item, i) => {
             const { w, h } = parseSizeCm(item.size);
             const scale = 0.012;
             const pw = w * scale;
             const ph = h * scale;
             const geo = new THREE.PlaneGeometry(pw, ph);
-            const mat = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.DoubleSide });
+            const mat = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.FrontSide });
             const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(WALL_X - 0.02, EYE_Y, z);
+            mesh.position.set(WALL_X, EYE_Y, z);
             mesh.rotation.y = -Math.PI / 2;
-            mesh.userData = { index: i, slug: item.slug, item };
+            mesh.userData = { index: i, slug: item.slug, item, z };
             this.root.add(mesh);
             this.meshes.push(mesh);
 
-            const spotGeo = new THREE.PlaneGeometry(pw * 1.4, ph * 1.8);
+            const spotGeo = new THREE.PlaneGeometry(pw * 1.35, ph * 1.6);
             const spotMat = new THREE.MeshBasicMaterial({
-                color: 0xfff8e8,
+                color: 0xfff4dc,
                 transparent: true,
-                opacity: 0.06,
+                opacity: 0.05,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
             const spot = new THREE.Mesh(spotGeo, spotMat);
             spot.position.copy(mesh.position);
-            spot.position.x -= 0.01;
+            spot.position.x -= 0.02;
             spot.rotation.copy(mesh.rotation);
             this.root.add(spot);
-            this.spotlights.push({ mesh: spot, base: 0.06, painting: mesh });
+            this.spotlights.push({ mesh: spot, base: 0.05, painting: mesh });
 
-            z -= SPACING_BASE + ph * 0.35;
+            z -= SPACING_BASE + ph * 0.4;
         });
-        this.length = Math.abs(z);
+        this.length = Math.abs(z) - 2;
+        this.endZ = z + SPACING_BASE;
     }
 
     setVisible(v) {
         this.root.visible = v;
+        if (v) {
+            this.cameraZ = 0;
+            this.targetCameraZ = 0;
+            this._syncFocusFromCamera();
+        }
     }
 
-    setProgress(p) {
-        this.targetProgress = Math.max(0, Math.min(1, p));
+    resetWalk() {
+        this.cameraZ = 0;
+        this.targetCameraZ = 0;
+        this._syncFocusFromCamera();
+    }
+
+    scroll(delta) {
+        const step = delta > 0 ? -0.35 : 0.35;
+        this.targetCameraZ = THREE.MathUtils.clamp(this.targetCameraZ + step, this.endZ - 1, 1.5);
     }
 
     stepPainting(delta) {
-        const next = Math.max(0, Math.min(this.meshes.length - 1, this.focusIndex + delta));
+        const next = THREE.MathUtils.clamp(this.focusIndex + delta, 0, this.meshes.length - 1);
         if (next === this.focusIndex) return;
         this.focusIndex = next;
-        this.targetProgress = next / Math.max(1, this.meshes.length - 1);
+        this.targetCameraZ = this.meshes[next].userData.z + 1.2;
+    }
+
+    get progress() {
+        return THREE.MathUtils.clamp(-this.cameraZ / Math.max(1, this.length), 0, 1);
+    }
+
+    setProgress(p) {
+        this.targetCameraZ = THREE.MathUtils.lerp(1.5, this.endZ - 1, p);
     }
 
     getCameraPose() {
-        const z = -this.progress * this.length;
         return {
-            position: new THREE.Vector3(-1.2, EYE_Y, z + 2),
-            lookAt: new THREE.Vector3(WALL_X, EYE_Y, z - 4)
+            position: new THREE.Vector3(CAMERA_X, EYE_Y, this.cameraZ),
+            lookAt: new THREE.Vector3(LOOK_X, EYE_Y, this.cameraZ - 12)
         };
     }
 
+    _syncFocusFromCamera() {
+        let best = 0;
+        let bestD = Infinity;
+        this.meshes.forEach((m, i) => {
+            const d = Math.abs(m.position.z - (this.cameraZ - 1.5));
+            if (d < bestD) {
+                bestD = d;
+                best = i;
+            }
+        });
+        if (best !== this.focusIndex) {
+            this.focusIndex = best;
+        }
+        this._updateSpotlights();
+        const item = this.items[this.focusIndex];
+        this.onActiveChange({
+            index: this.focusIndex,
+            slug: item?.slug,
+            title: item?.title,
+            atEnd: this.focusIndex >= this.meshes.length - 1 && this.progress > 0.92
+        });
+    }
+
+    _updateSpotlights() {
+        this.meshes.forEach((m, i) => {
+            const spot = this.spotlights[i];
+            const active = i === this.focusIndex;
+            spot.mesh.material.opacity = active ? 0.2 : spot.base;
+            m.position.x = active ? WALL_X - 0.08 : WALL_X;
+        });
+    }
+
     update(dt, camera) {
-        this.progress += (this.targetProgress - this.progress) * Math.min(1, dt * 4);
+        this.cameraZ += (this.targetCameraZ - this.cameraZ) * Math.min(1, dt * 5);
         const pose = this.getCameraPose();
-        camera.position.lerp(pose.position, Math.min(1, dt * 6));
+        camera.position.lerp(pose.position, Math.min(1, dt * 8));
         camera.lookAt(pose.lookAt);
 
-        const center = Math.round(this.progress * (this.meshes.length - 1));
+        this._syncFocusFromCamera();
+
+        const center = this.focusIndex;
         this.meshes.forEach((m, i) => {
-            const dist = Math.abs(i - center);
-            if (dist <= 4 && !this.loaded.has(i)) this._loadTexture(i);
+            if (Math.abs(i - center) <= 4 && !this.loaded.has(i)) this._loadTexture(i);
         });
         this._evictFar(center);
-        this.onProgressChange(this.progress, this.meshes[center]?.userData.slug);
     }
 
     _loadTexture(index) {
         const item = this.items[index];
         if (!item?.thumb || this.loaded.has(index)) return;
         this.loader.load(item.thumb, (tex) => {
+            tex.colorSpace = THREE.SRGBColorSpace;
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
             this.meshes[index].material.map = tex;
@@ -167,21 +207,6 @@ export class CanvasCorridor {
                 this.loaded.delete(i);
             }
             if (this.loaded.size <= MAX_LOADED) break;
-        }
-    }
-
-    setHover(mesh) {
-        if (this.hovered === mesh) return;
-        if (this.hovered) {
-            this.hovered.position.x = WALL_X - 0.02;
-            const si = this.hovered.userData.index;
-            this.spotlights[si].mesh.material.opacity = this.spotlights[si].base;
-        }
-        this.hovered = mesh;
-        if (mesh) {
-            mesh.position.x = WALL_X - 0.35;
-            const si = mesh.userData.index;
-            this.spotlights[si].mesh.material.opacity = 0.18;
         }
     }
 

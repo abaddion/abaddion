@@ -36,6 +36,7 @@ class WebGLLayer {
         this.canvasRevealed = false;
         this.THREE = null;
         this.corridor = null;
+        this.corridorHud = null;
         this.canvasDetail = null;
         this.detailFly = null;
         this._detailOpening = false;
@@ -160,6 +161,8 @@ class WebGLLayer {
         const { NovaFallback } = await import('./modules/nova-fallback.js');
 
         this.canvasFloorIndex = floors.findIndex((f) => f.id === 'canvas');
+        this.aboutFloorIndex = floors.findIndex((f) => f.id === 'about');
+        this.cardLayer.setReducedMotion(this.reducedMotion);
         this.novaFallback = new NovaFallback();
 
         this.interactionState = new InteractionState();
@@ -234,7 +237,13 @@ class WebGLLayer {
             isCorridorActive: () => this.isCorridorActive(),
             isDetailOpen: () => this.isDetailOpen(),
             onCorridorScroll: (delta) => this.corridorScroll(delta),
-            onCorridorStep: (delta) => this.corridor?.stepPainting(delta)
+            onCorridorStep: (delta) => this.corridor?.stepPainting(delta),
+            onCorridorTap: (x, y) => this.corridorTap(x, y),
+            isAboutOpen: () => this.cardLayer.isAboutFloorOpen(),
+            onAboutWheel: (dy) => {
+                const crawl = this.cardLayer.getAboutCrawl(this.aboutFloorIndex);
+                return crawl?.onWheel(dy) ?? false;
+            }
         });
     }
 
@@ -248,12 +257,19 @@ class WebGLLayer {
         if (this.corridor) return;
         patchAppState({ canvasSystems: 'loading' });
         const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
+        const { CorridorHud } = await import('./modules/corridor-hud.js');
         const { CanvasDetail } = await import('./modules/canvas-detail.js');
         const { DetailFly } = await import('./modules/detail-fly.js');
 
+        this.corridorHud = new CorridorHud({
+            onPrev: () => this.corridor?.stepPainting(-1),
+            onNext: () => this.corridor?.stepPainting(1),
+            onBackToStart: () => this.corridor?.resetWalk(),
+            onBackStack: () => this.closeFloor()
+        });
         this.corridor = new CanvasCorridor(this.scene, {
-            qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
-            onPaintingClick: (slug) => this.openCanvasDetail(slug)
+            onPaintingClick: (slug) => this.openCanvasDetail(slug),
+            onActiveChange: (info) => this.corridorHud?.update(info)
         });
         this.detailFly = new DetailFly({
             scene: this.scene,
@@ -290,6 +306,9 @@ class WebGLLayer {
                 this.stack.root.visible = false;
                 this.labels.container.style.visibility = 'hidden';
                 this.corridor?.setVisible(true);
+                this.corridor?.resetWalk();
+                this.corridorHud?.setVisible(true);
+                if (this.scene) this.scene.fog = null;
                 this.renderLoop?.ping();
             });
         }
@@ -299,6 +318,10 @@ class WebGLLayer {
         this.stack.root.visible = true;
         this.labels.container.style.visibility = '';
         this.corridor?.setVisible(false);
+        this.corridorHud?.setVisible(false);
+        if (this.scene && !this.scene.fog && this.THREE) {
+            this.scene.fog = new this.THREE.Fog(0x0a0a0a, 12, 40);
+        }
         this.detailFly?.cancel();
         this._restoreDetailCorridorMesh();
         this.canvasDetail?.close();
@@ -309,9 +332,14 @@ class WebGLLayer {
             void this.ensureCanvasSystems();
             return;
         }
-        const step = delta > 0 ? 0.04 : -0.04;
-        this.corridor.setProgress(this.corridor.progress + step);
+        this.corridor.scroll(delta);
         this.renderLoop?.ping();
+    }
+
+    corridorTap(clientX, clientY) {
+        if (!this.isCorridorActive()) return;
+        const hit = this.corridor.pick(clientX, clientY, this.camera, this.canvas);
+        if (hit?.userData?.slug) this.openCanvasDetail(hit.userData.slug);
     }
 
     _restoreDetailCorridorMesh() {
@@ -441,16 +469,6 @@ class WebGLLayer {
         this.canvas.addEventListener('touchstart', enableGyro, { passive: true });
         document.getElementById('gyro-status')?.addEventListener('click', enableGyro);
 
-        this.canvas.addEventListener('click', (e) => {
-            if (!this.isCorridorActive()) return;
-            const hit = this.corridor.pick(e.clientX, e.clientY, this.camera, this.canvas);
-            if (hit?.userData?.slug) this.openCanvasDetail(hit.userData.slug);
-        });
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (!this.isCorridorActive()) return;
-            const hit = this.corridor.pick(e.clientX, e.clientY, this.camera, this.canvas);
-            this.corridor.setHover(hit);
-        });
     }
 
     onMouseMove(event) {
