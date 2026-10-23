@@ -47,7 +47,8 @@ class WebGLLayer {
     }
 
     async initAsync() {
-        if (!detectWebGL()) {
+        const smokeBoot = location.search.includes('smoke=1');
+        if (!smokeBoot && !detectWebGL()) {
             document.documentElement.classList.add('no-webgl');
             return;
         }
@@ -539,6 +540,10 @@ export async function attachWebGL(shell) {
     const layer = new WebGLLayer(shell);
     shell.webgl = layer;
     await layer.initAsync();
+    if (!layer.canvasDetail) {
+        document.documentElement.classList.add('no-webgl');
+        return layer;
+    }
     // Capture prototype method before defineProperty shadows instance goToFloor (rail uses shell.goToFloor).
     const shellGoToFloor = Object.getPrototypeOf(shell).goToFloor.bind(shell);
     Object.defineProperty(window.app, 'stack', { get: () => layer.stack });

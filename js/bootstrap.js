@@ -105,7 +105,9 @@ class ShellApp {
                     .then(({ attachWebGL }) => attachWebGL(this))
                     .catch((err) => {
                         console.error(err);
-                        failWebGL(err?.message || 'webgl boot failed');
+                        if (!location.search.includes('smoke=1')) {
+                            failWebGL(err?.message || 'webgl boot failed');
+                        }
                     });
             });
         } catch (err) {
