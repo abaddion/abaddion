@@ -21,9 +21,9 @@ npm-debug.log*
 # Dependencies (if any)
 node_modules/
 
-# Build files
-dist/
-build/
+# Build files (root only — do not use bare `build/`; it ignores vendor/three/build/)
+/dist/
+/build/
 
 # Temporary files
 *.tmp
