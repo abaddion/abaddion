@@ -30,10 +30,20 @@ jobs:
       - name: Install Chromium for Puppeteer
         run: npx puppeteer browsers install chrome
 
+      - name: Wait for Vercel preview URL
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        id: vercel-preview
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_interval: 10
+          max_timeout: 300
+
       - name: Run smoke:fast
         run: node scripts/smoke.mjs --fast
         env:
           CI: true
+          SMOKE_DEPLOY_URL: https://${{ steps.vercel-preview.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload smoke screenshots
         if: always()

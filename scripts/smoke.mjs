@@ -140,6 +140,78 @@ function pageUrl(route = '/') {
     return new URL(route, baseUrl).toString();
 }
 
+/** Paths index.html must load (preload, modulepreload, stylesheet, import map, entry script). */
+function collectIndexHeadAssets() {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const paths = new Set();
+    const attrRe = /(?:href|src)=["']([^"']+)["']/g;
+    let m;
+    while ((m = attrRe.exec(html)) !== null) {
+        const p = m[1];
+        if (p.startsWith('http') || p.startsWith('#') || p.startsWith('data:')) continue;
+        paths.add(p.startsWith('/') ? p : `/${p}`);
+    }
+    const mapMatch = html.match(/<script type="importmap">\s*([\s\S]*?)<\/script>/);
+    if (mapMatch) {
+        const map = JSON.parse(mapMatch[1]);
+        for (const v of Object.values(map.imports || {})) {
+            if (typeof v !== 'string' || v.startsWith('http')) continue;
+            const rel = v.startsWith('./') ? v.slice(2) : v;
+            paths.add(rel.startsWith('/') ? rel : `/${rel}`);
+        }
+    }
+    return [...paths].sort();
+}
+
+function deployFetchHeaders() {
+    const headers = {};
+    const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    if (secret) {
+        headers['x-vercel-protection-bypass'] = secret;
+        headers['x-vercel-set-bypass-cookie'] = 'true';
+    }
+    return headers;
+}
+
+async function assertDeployAssets(deployBase) {
+    const base = deployBase.replace(/\/$/, '');
+    const headers = deployFetchHeaders();
+    const paths = collectIndexHeadAssets();
+    const bad = [];
+    for (const p of paths) {
+        const url = `${base}${p}`;
+        let res;
+        try {
+            res = await fetch(url, { headers, redirect: 'follow' });
+        } catch (e) {
+            bad.push(`${p} fetch failed: ${e.message}`);
+            continue;
+        }
+        if (res.status !== 200) {
+            bad.push(`${p} → HTTP ${res.status}`);
+            continue;
+        }
+        if (p.endsWith('.js')) {
+            const ct = res.headers.get('content-type') || '';
+            if (!/javascript|ecmascript|module/i.test(ct)) {
+                bad.push(`${p} expected JS, got ${ct || 'no content-type'}`);
+            }
+        }
+    }
+    if (bad.length) throw new Error(`deploy assets: ${bad.join('; ')}`);
+    console.log('OK deploy assets', paths.length, 'urls @', base);
+}
+
+async function runDeployAssetsPhase() {
+    const deployUrl = process.env.SMOKE_DEPLOY_URL;
+    if (!deployUrl) {
+        if (process.env.CI) throw new Error('SMOKE_DEPLOY_URL required in CI');
+        console.log('skip deploy-assets (set SMOKE_DEPLOY_URL to check a Vercel preview)');
+        return;
+    }
+    await assertDeployAssets(deployUrl);
+}
+
 function collectAppModules() {
     const jsRoot = path.join(root, 'js');
     const out = [];
@@ -568,6 +640,7 @@ async function runNoWebGLPhase() {
 
 async function runFastSuite() {
     const progress = loadProgress();
+    await runPhase('deploy-assets', runDeployAssetsPhase, progress);
     await runPhase('module-graph', runModuleGraphPhase, progress);
     for (const vp of FAST_VIEWPORTS) {
         await runPhase(`fast-${vp.name}`, () => runViewportFast(vp), progress);
