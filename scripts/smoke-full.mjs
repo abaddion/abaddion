@@ -272,7 +272,10 @@ async function waitApp(page) {
             appState: window.__APP_STATE,
             openFloor: typeof window.app?.openFloor
         }));
-        throw new Error(`WebGL boot timeout (${JSON.stringify(boot)}): ${err.message}`);
+        const webglErr = await page.evaluate(() => window.__WEBGL_ERR || null);
+        throw new Error(
+            `WebGL boot timeout (${JSON.stringify(boot)}${webglErr ? ` err=${webglErr}` : ''}): ${err.message}`
+        );
     }
     const boot = await page.evaluate(() => ({
         noWebgl: document.documentElement.classList.contains('no-webgl'),
@@ -455,6 +458,102 @@ async function runViewportFull(vp) {
     }
     await page.evaluate(() => window.app.closeFloor());
     await new Promise((r) => setTimeout(r, 700));
+
+    const novaSettled = await page.evaluate(() => {
+        const el = document.getElementById('nova-fallback');
+        const novaPass = window.app?.postProcessing?.passes?.nova?.enabled ?? false;
+        return {
+            novaHidden: !el || el.hidden,
+            novaTransition: document.documentElement.classList.contains('nova-transition'),
+            novaPass,
+            leaderLines: document.querySelectorAll('.floor-label-leader').length
+        };
+    });
+    if (!novaSettled.novaHidden || novaSettled.novaTransition || novaSettled.novaPass) {
+        errors.push(`${vp.name}: nova remnant ${JSON.stringify(novaSettled)}`);
+    }
+    if (novaSettled.leaderLines > 0) {
+        errors.push(`${vp.name}: label leader lines present (${novaSettled.leaderLines})`);
+    }
+
+    const aboutIdx = await page.evaluate(() =>
+        window.app.content.floors.findIndex((f) => f.id === 'about')
+    );
+
+    await page.evaluate((i) => window.app.openFloor(i), aboutIdx);
+    await new Promise((r) => setTimeout(r, 900));
+    const topBar = await page.evaluate(() => {
+        const bar = document.querySelector('.floor-view-topbar')?.getBoundingClientRect();
+        const title = document.querySelector('.floor-card.is-open .card-title')?.getBoundingClientRect();
+        if (!bar || !title) return { ok: false };
+        return { ok: title.top >= bar.bottom - 4, titleTop: title.top, barBottom: bar.bottom };
+    });
+    if (!topBar.ok) errors.push(`${vp.name}: top bar overlaps title ${JSON.stringify(topBar)}`);
+    const crawlBefore = await page.evaluate(
+        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
+        aboutIdx
+    );
+    await page.mouse.wheel({ deltaY: 400 });
+    await new Promise((r) => setTimeout(r, 400));
+    const crawlAfter = await page.evaluate(
+        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
+        aboutIdx
+    );
+    if (crawlAfter <= crawlBefore) {
+        const flat = await page.evaluate(
+            () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat') ?? true
+        );
+        if (!flat) errors.push(`${vp.name}: about crawl did not advance on wheel`);
+    }
+
+    await page.evaluate(() => {
+        const form = document.querySelector('#contact-form, .about-contact-form');
+        if (!form) return;
+        form.querySelector('[name="name"]').value = 'Smoke';
+        form.querySelector('[name="email"]').value = 'smoke@test.com';
+        form.querySelector('[name="message"]').value = 'Hello';
+        form.requestSubmit();
+    });
+    const formOk = await page.evaluate(
+        () => document.querySelector('[data-form-error]')?.hidden !== false
+    );
+    if (!formOk) errors.push(`${vp.name}: contact form validation failed`);
+
+    await page.evaluate(() => window.app.closeFloor());
+    await new Promise((r) => setTimeout(r, 500));
+
+    await page.evaluate(() => window.app.openFloor(1));
+    await new Promise((r) => setTimeout(r, 1000));
+    const zBefore = await page.evaluate(() => window.app.webgl?.corridor?.cameraZ ?? 0);
+    for (let i = 0; i < 8; i++) {
+        await page.mouse.wheel({ deltaY: 120 });
+        await new Promise((r) => setTimeout(r, 60));
+    }
+    await new Promise((r) => setTimeout(r, 400));
+    const zAfter = await page.evaluate(() => window.app.webgl?.corridor?.cameraZ ?? 0);
+    if (Math.abs(zAfter - zBefore) < 0.05) {
+        errors.push(`${vp.name}: corridor did not walk on wheel`);
+    }
+
+    if (vp.mobile) {
+        await page.mouse.click(Math.floor(vp.width * 0.72), Math.floor(vp.height * 0.45));
+        await new Promise((r) => setTimeout(r, 900));
+        const detailOpen = await page.evaluate(() => !window.app?.canvasDetail?.el?.hidden);
+        if (!detailOpen) errors.push(`${vp.name}: corridor tap did not open detail`);
+        await page.keyboard.press('Escape');
+        await new Promise((r) => setTimeout(r, 300));
+    }
+
+    const drawCalls = await page.evaluate(() => {
+        window.app.webgl?.frameRender?.();
+        return window.app?.renderer?.info?.render?.calls ?? null;
+    });
+    if (drawCalls != null && drawCalls > 80) {
+        errors.push(`${vp.name}: high draw calls in corridor ${drawCalls}`);
+    }
+
+    await page.evaluate(() => window.app.closeFloor());
+    await new Promise((r) => setTimeout(r, 500));
 
     for (let i = 0; i < 20; i++) {
         await page.mouse.wheel({ deltaY: i % 2 ? 80 : -80 });
