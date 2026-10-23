@@ -3,96 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
-    <title>GLITCH_PORTFOLIO_v2.0.30</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="abaddion — creative technologist">
+    <title>abaddion</title>
+    <link rel="preload" href="/content.json" as="fetch" crossorigin>
+    <link rel="preload" href="fonts/label-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="modulepreload" href="js/bootstrap.js">
+    <link rel="modulepreload" href="js/modules/utils.js">
+    <link rel="modulepreload" href="js/modules/content-loader.js">
+    <link rel="modulepreload" href="js/modules/card-layer.js">
+    <link rel="modulepreload" href="js/modules/rail.js">
+    <link rel="modulepreload" href="js/modules/router.js">
     <link rel="stylesheet" href="css/main.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./vendor/three/build/three.module.min.js",
+            "three/addons/": "./vendor/three/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
-    <!-- WebGL Canvas - The Core -->
-    <canvas id="glitch-canvas"></canvas>
-    
-    <!-- Overlay UI Layer -->
-    <div id="overlay">
-        <!-- Custom Cursor -->
-        <div id="cursor">
-            <div class="cursor-core"></div>
-            <div class="cursor-trail"></div>
+    <a class="skip-link" href="#cards">Skip to content</a>
+
+    <header id="identity-hero" class="identity-hero">
+        <h1 class="identity-name">abaddion</h1>
+        <p class="identity-headline">creative technologist</p>
+        <p class="identity-intro">PLACEHOLDER: code, math, canvas.</p>
+    </header>
+
+    <canvas id="glitch-canvas" aria-hidden="true"></canvas>
+
+    <nav id="floor-rail" aria-label="Floors">
+        <ul class="floor-rail-list">
+            <li><a href="/" aria-current="page">abaddion</a></li>
+            <li><a href="/canvas">canvas</a></li>
+            <li><a href="/code">code</a></li>
+            <li><a href="/career-pages">career pages</a></li>
+            <li><a href="/about">about</a></li>
+        </ul>
+    </nav>
+    <div id="floor-labels" aria-hidden="true"></div>
+
+    <p id="open-hint" class="open-hint" aria-hidden="true"><span class="hint-fine">click to open</span><span class="hint-coarse">tap to open</span></p>
+
+    <div id="cards" class="cards-root"></div>
+
+    <div id="hud">
+        <div class="info-line">
+            <span class="label">PASS</span>
+            <span class="value" id="pass-count">00</span>
         </div>
-        
-        <!-- Navigation -->
-        <nav id="main-nav">
-            <div class="nav-item" data-scene="0">
-                <span class="nav-glitch">INIT</span>
-            </div>
-            <div class="nav-item" data-scene="1">
-                <span class="nav-glitch">WORK</span>
-            </div>
-            <div class="nav-item" data-scene="2">
-                <span class="nav-glitch">INFO</span>
-            </div>
-            <div class="nav-item" data-scene="3">
-                <span class="nav-glitch">CONTACT</span>
-            </div>
-        </nav>
-        
-        <!-- Hero Section -->
-        <section id="hero">
-            <h1 class="glitch-text" data-text="CREATIVE_TECHNOLOGIST">
-                CREATIVE_TECHNOLOGIST
-            </h1>
-            <p class="subtitle">
-                <span class="terminal-cursor">▓</span>
-                BUILDING_DIGITAL_FUTURES
-            </p>
-        </section>
-        
-        <!-- Scene Info Display -->
-        <div id="scene-info">
-            <div class="info-line">
-                <span class="label">RENDER_PASS:</span>
-                <span class="value" id="pass-count">08</span>
-            </div>
-            <div class="info-line">
-                <span class="label">FPS:</span>
-                <span class="value" id="fps-counter">60</span>
-            </div>
-            <div class="info-line">
-                <span class="label">GYRO:</span>
-                <span class="value" id="gyro-status">IDLE</span>
-            </div>
+        <div class="info-line">
+            <span class="label">FPS</span>
+            <span class="value" id="fps-counter">60</span>
         </div>
-        
-        <!-- Controls Hint -->
-        <div id="controls">
-            <div class="control-hint">[SHIFT×2] CHAOS_MODE</div>
-            <div class="control-hint">[SPACE] FREEZE_FRAME</div>
-            <div class="control-hint">[1-9] LOAD_PRESET</div>
-        </div>
-        
-        <!-- Loading Screen -->
-        <div id="loading">
-            <div class="loading-bar">
-                <div class="loading-progress"></div>
-            </div>
-            <p class="loading-text">INITIALIZING_GLITCH_ENGINE</p>
+        <div class="info-line">
+            <span class="label">GYRO</span>
+            <span class="value" id="gyro-status" role="button" tabindex="0">TAP_TO_ENABLE</span>
         </div>
     </div>
-    
-    <!-- Three.js from CDN -->
-    <script src="three.min.js"></script>
-    
-    <!-- Core Modules -->
-    <script src="js/modules/utils.js"></script>
-    <script src="js/modules/cursor.js"></script>
-    <script src="js/modules/gyroscope.js"></script>
-    <script src="js/shaders/glitch.js"></script>
-    <script src="js/shaders/rgb-shift.js"></script>
-    <script src="js/shaders/datamosh.js"></script>
-    <script src="js/modules/post-processing.js"></script>
-    <script src="js/modules/scene-manager.js"></script>
-    <script src="js/modules/audio-reactor.js"></script>
-    
-    <!-- Main Application -->
-    <script src="js/main.js"></script>
+
+    <div id="loading" class="hidden" aria-hidden="true">
+        <div class="loading-bar"><div class="loading-progress"></div></div>
+        <p class="loading-text">INITIALIZING</p>
+    </div>
+
+    <div id="cursor">
+        <div class="cursor-core"></div>
+        <div class="cursor-trail"></div>
+    </div>
+
+    <script type="module" src="js/bootstrap.js"></script>
 </body>
 </html>

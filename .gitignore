@@ -30,3 +30,6 @@ build/
 *.bak
 
 .vercel
+.env.local
+.env*.local
+three-0.160.0.tgz

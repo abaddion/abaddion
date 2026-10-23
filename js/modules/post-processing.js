@@ -1,208 +1,218 @@
 /**
- * POST-PROCESSING.JS
- * Manages the entire post-processing pipeline with custom shaders
+ * Post-processing ON DEMAND — composer built lazily (first card open / chaos).
  */
 
-class PostProcessing {
-    constructor(renderer, scene, camera, isMobile = false) {
+import { Utils } from './utils.js';
+
+export class PostProcessing {
+    constructor(renderer, scene, camera, options = {}) {
         this.renderer = renderer;
         this.scene = scene;
         this.camera = camera;
-        this.isMobile = isMobile;
-        
+        this.reducedMotion = options.reducedMotion ?? false;
+        this.datamoshAllowed = true;
+
         this.composer = null;
-        
-        this.passes = {
-            render: null,
-            glitch: null,
-            rgbShift: null,
-            datamosh: null
-        };
-        
-        // Reduce intensity on mobile for better performance
-        this.intensities = {
-            glitch: isMobile ? 0.03 : 0.05,
-            rgbShift: isMobile ? 0.003 : 0.005,
-            datamosh: 0.0
-        };
-        
+        this.composerActive = false;
+        this.passes = {};
         this.previousFrameTarget = null;
-        
-        this.init();
+        this.composerScale = 0.5;
+        this.readyPromise = null;
+
+        this.intensity = 0;
+        this.rgbAmount = 0;
+        this.datamosh = 0;
+        this.decayUntil = 0;
+        this.novaProgress = 0;
+        this.novaUntil = 0;
     }
-    
-    init() {
-        if (typeof THREE.EffectComposer === 'undefined') {
-            console.warn('EffectComposer not found, loading from CDN...');
-            this.loadPostProcessingScripts();
-            return;
+
+    async ensureComposer() {
+        if (this.composer) return;
+        if (!this.readyPromise) {
+            this.readyPromise = this.buildComposer();
         }
-        
-        this.setup();
+        return this.readyPromise;
     }
-    
-    loadPostProcessingScripts() {
-        // Use working version and add timeout/error handling for mobile
-        const scripts = [
-            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js',
-            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js',
-            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/ShaderPass.js',
-            'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/shaders/CopyShader.js'
-        ];
-        
-        let loaded = 0;
-        let failed = false;
-        const timeout = setTimeout(() => {
-            if (!failed && loaded < scripts.length) {
-                console.warn('Post-processing scripts timeout, falling back to basic rendering');
-                failed = true;
-                this.setupFallback();
-            }
-        }, 10000); // 10 second timeout for mobile
-        
-        scripts.forEach(src => {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = () => {
-                if (failed) return;
-                loaded++;
-                if (loaded === scripts.length) {
-                    clearTimeout(timeout);
-                    setTimeout(() => this.setup(), 100);
-                }
-            };
-            script.onerror = () => {
-                console.error('Failed to load post-processing script:', src);
-                if (loaded === 0) {
-                    clearTimeout(timeout);
-                    failed = true;
-                    this.setupFallback();
-                }
-            };
-            document.head.appendChild(script);
-        });
-    }
-    
-    setupFallback() {
-        console.warn('Using fallback rendering without post-processing');
-        this.composer = null;
-    }
-    
-    setup() {
-        this.composer = new THREE.EffectComposer(this.renderer);
-        
-        this.passes.render = new THREE.RenderPass(this.scene, this.camera);
+
+    async buildComposer() {
+        const three = await import('three');
+        const { WebGLRenderTarget } = three;
+        const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js');
+        const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js');
+        const { ShaderPass } = await import('three/addons/postprocessing/ShaderPass.js');
+        const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js');
+        const { UberGlitchShader } = await import('../shaders/uber-glitch.js');
+        const { DatamoshShader } = await import('../shaders/datamosh.js');
+
+        this.composer = new EffectComposer(this.renderer);
+        this.passes.render = new RenderPass(this.scene, this.camera);
         this.composer.addPass(this.passes.render);
-        
-        this.passes.glitch = new THREE.ShaderPass(GlitchShader);
-        this.passes.glitch.uniforms.seed.value = Math.random();
-        this.composer.addPass(this.passes.glitch);
-        
-        this.passes.rgbShift = new THREE.ShaderPass(RGBShiftShader);
-        this.composer.addPass(this.passes.rgbShift);
-        
-        this.previousFrameTarget = new THREE.WebGLRenderTarget(
-            window.innerWidth,
-            window.innerHeight
-        );
-        
-        this.passes.datamosh = new THREE.ShaderPass(DatamoshShader);
+
+        this.passes.uberGlitch = new ShaderPass(UberGlitchShader);
+        this.passes.uberGlitch.uniforms.seed.value = Math.random();
+        this.composer.addPass(this.passes.uberGlitch);
+
+        this.previousFrameTarget = new WebGLRenderTarget(16, 16);
+        this.passes.datamosh = new ShaderPass(DatamoshShader);
         this.passes.datamosh.uniforms.tPrevious.value = this.previousFrameTarget.texture;
         this.passes.datamosh.enabled = false;
         this.composer.addPass(this.passes.datamosh);
-        
-        const finalPass = new THREE.ShaderPass(THREE.CopyShader);
-        finalPass.renderToScreen = true;
-        this.composer.addPass(finalPass);
-        
-        console.log('Post-processing initialized with', this.composer.passes.length, 'passes');
+
+        const { NovaPassShader } = await import('../shaders/nova-pass.js');
+        this.passes.nova = new ShaderPass(NovaPassShader);
+        this.passes.nova.enabled = false;
+        this.composer.addPass(this.passes.nova);
+
+        this.passes.output = new OutputPass();
+        this.composer.addPass(this.passes.output);
+
+        this.setComposerSize(window.innerWidth, window.innerHeight);
+        this.disableComposer();
     }
-    
-    update(time) {
+
+    setComposerSize(w, h) {
         if (!this.composer) return;
-        
-        if (this.passes.glitch) {
-            this.passes.glitch.uniforms.time.value = time;
-            this.passes.glitch.uniforms.amount.value = this.intensities.glitch;
+        const sw = Math.max(2, Math.floor(w * this.composerScale));
+        const sh = Math.max(2, Math.floor(h * this.composerScale));
+        this.composer.setSize(sw, sh);
+        this.previousFrameTarget?.setSize(sw, sh);
+    }
+
+    enableComposer() {
+        this.composerActive = true;
+    }
+
+    disableComposer() {
+        this.composerActive = false;
+        this.intensity = 0;
+        this.rgbAmount = 0;
+        this.datamosh = 0;
+        if (this.passes.datamosh) this.passes.datamosh.enabled = false;
+    }
+
+    applyReducedMotion(reduced) {
+        this.reducedMotion = reduced;
+        if (reduced) this.disableComposer();
+    }
+
+    setDatamoshAllowed(allowed) {
+        this.datamoshAllowed = allowed;
+        if (!allowed && this.passes.datamosh) this.passes.datamosh.enabled = false;
+    }
+
+    update(time, dt = 0.016) {
+        if (this.novaUntil > 0 && performance.now() > this.novaUntil) {
+            this.novaProgress = 0;
+            if (this.passes.nova) this.passes.nova.enabled = false;
+            this.novaUntil = 0;
+            if (this.intensity <= 0) this.disableComposer();
         }
-        
-        if (this.passes.rgbShift) {
-            this.passes.rgbShift.uniforms.amount.value = this.intensities.rgbShift;
-            this.passes.rgbShift.uniforms.angle.value = Math.sin(time * 0.5) * Math.PI;
+
+        if (this.passes.nova?.enabled) {
+            this.passes.nova.uniforms.uProgress.value = this.novaProgress;
         }
-        
-        if (this.passes.datamosh && this.passes.datamosh.enabled) {
+
+        if (this.decayUntil > 0 && performance.now() > this.decayUntil) {
+            this.intensity = Utils.lerp(this.intensity, 0, 0.15);
+            this.rgbAmount = Utils.lerp(this.rgbAmount, 0, 0.15);
+            if (this.intensity < 0.005 && this.rgbAmount < 0.001) {
+                this.disableComposer();
+                this.decayUntil = 0;
+            }
+        }
+
+        if (!this.composerActive || !this.composer) return;
+
+        this.passes.uberGlitch.uniforms.time.value = time;
+        this.passes.uberGlitch.uniforms.intensity.value = this.intensity;
+        this.passes.uberGlitch.uniforms.rgbAmount.value = this.rgbAmount;
+
+        if (this.passes.datamosh.enabled) {
             this.passes.datamosh.uniforms.time.value = time;
-            this.passes.datamosh.uniforms.amount.value = this.intensities.datamosh;
+            this.passes.datamosh.uniforms.amount.value = this.datamosh;
         }
     }
-    
+
     render() {
-        if (!this.composer) {
+        const novaOn = this.passes?.nova?.enabled && this.novaProgress > 0;
+        if (!this.composerActive || !this.composer || (this.intensity <= 0 && !novaOn)) {
             this.renderer.render(this.scene, this.camera);
             return;
         }
-        
-        this.composer.render();
-        
-        if (this.passes.datamosh && this.passes.datamosh.enabled) {
+
+        if (this.passes.datamosh.enabled) {
             this.renderer.setRenderTarget(this.previousFrameTarget);
             this.renderer.render(this.scene, this.camera);
             this.renderer.setRenderTarget(null);
         }
+        this.composer.render();
     }
-    
-    setIntensity(effect, value) {
-        if (this.intensities.hasOwnProperty(effect)) {
-            this.intensities[effect] = Utils.clamp(value, 0, 1);
-        }
+
+    isComposerActive() {
+        return (
+            this.composerActive &&
+            !!this.composer &&
+            (this.intensity > 0 || this.novaProgress > 0 || this.passes?.nova?.enabled)
+        );
     }
-    
-    getIntensity(effect) {
-        return this.intensities[effect] || 0;
-    }
-    
-    chaosMode(duration = 1000) {
-        const original = { ...this.intensities };
-        
-        this.intensities.glitch = 0.8;
-        this.intensities.rgbShift = 0.03;
-        this.intensities.datamosh = 0.7;
-        
-        if (this.passes.datamosh) {
-            this.passes.datamosh.enabled = true;
-        }
-        
-        setTimeout(() => {
-            this.intensities = original;
-            if (this.passes.datamosh) {
-                this.passes.datamosh.enabled = false;
+
+    fireNova(progress = 0.5, center = [0.5, 0.5]) {
+        if (this.reducedMotion) return;
+        this.novaProgress = progress;
+        this.novaUntil = performance.now() + 220;
+        this.ensureComposer().then(() => {
+            this.enableComposer();
+            if (this.passes.nova) {
+                this.passes.nova.enabled = true;
+                this.passes.nova.uniforms.uProgress.value = progress;
+                this.passes.nova.uniforms.uCenter.value = center;
             }
-        }, duration);
+        });
     }
-    
-    burst(intensity = 0.5, duration = 200) {
-        const originalGlitch = this.intensities.glitch;
-        this.intensities.glitch = intensity;
-        
-        setTimeout(() => {
-            this.intensities.glitch = originalGlitch;
-        }, duration);
+
+    transitionBurst(intensity = 0.6, duration = 200) {
+        if (this.reducedMotion) return;
+        this.ensureComposer().then(() => {
+            this.enableComposer();
+            this.intensity = intensity;
+            this.rgbAmount = intensity * 0.045;
+            if (this.datamoshAllowed) {
+                this.datamosh = 0.35;
+                this.passes.datamosh.enabled = true;
+                setTimeout(() => {
+                    this.passes.datamosh.enabled = false;
+                    this.datamosh = 0;
+                }, duration);
+            }
+            this.decayUntil = performance.now() + duration + 120;
+        });
     }
-    
+
+    chaosMode(duration = 2000) {
+        if (this.reducedMotion) return;
+        this.ensureComposer().then(() => {
+            this.enableComposer();
+            this.intensity = 0.8;
+            this.rgbAmount = 0.04;
+            if (this.datamoshAllowed) {
+                this.datamosh = 0.7;
+                this.passes.datamosh.enabled = true;
+            }
+            this.decayUntil = performance.now() + duration;
+            setTimeout(() => {
+                this.passes.datamosh.enabled = false;
+                this.datamosh = 0;
+            }, duration);
+        });
+    }
+
     resize(width, height) {
-        if (this.composer) {
-            this.composer.setSize(width, height);
-        }
-        
-        if (this.previousFrameTarget) {
-            this.previousFrameTarget.setSize(width, height);
-        }
+        this.renderer.setSize(width, height);
+        this.setComposerSize(width, height);
     }
-    
+
     getPassCount() {
-        return this.composer ? this.composer.passes.length : 0;
+        return this.isComposerActive() ? this.composer.passes.length : 0;
     }
 }
-
-window.PostProcessing = PostProcessing;

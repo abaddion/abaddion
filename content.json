@@ -1,0 +1,340 @@
+{
+  "site": {
+    "name": "abaddion",
+    "headline": "creative technologist",
+    "intro": "PLACEHOLDER: code, math, canvas.",
+    "email": "barbora@recberry.com"
+  },
+  "floors": [
+    {
+      "id": "identity",
+      "index": "01",
+      "label": "abaddion / creative technologist",
+      "route": "/",
+      "title": "abaddion",
+      "body": "PLACEHOLDER"
+    },
+    {
+      "id": "canvas",
+      "index": "02",
+      "label": "art / canvas",
+      "route": "/canvas",
+      "title": "canvas",
+      "body": "PLACEHOLDER grid stress test",
+      "items": [
+        {
+          "slug": "placeholder-01",
+          "title": "Placeholder 01",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "40×50 cm",
+          "aspectRatio": "3 / 4",
+          "thumb": "/assets/placeholder/placeholder-01-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-01-full.jpg",
+          "placeholder": true,
+          "approved": true,
+          "price": "€ 1,200",
+          "availability": "available"
+        },
+        {
+          "slug": "placeholder-02",
+          "title": "Placeholder 02",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "110×110 cm",
+          "aspectRatio": "4 / 5",
+          "thumb": "/assets/placeholder/placeholder-02-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-02-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-03",
+          "title": "Placeholder 03",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "60×80 cm",
+          "aspectRatio": "1 / 1",
+          "thumb": "/assets/placeholder/placeholder-03-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-03-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-04",
+          "title": "Placeholder 04",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "90×120 cm",
+          "aspectRatio": "4 / 3",
+          "thumb": "/assets/placeholder/placeholder-04-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-04-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-05",
+          "title": "Placeholder 05",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "30×40 cm",
+          "aspectRatio": "16 / 9",
+          "thumb": "/assets/placeholder/placeholder-05-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-05-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-06",
+          "title": "Placeholder 06",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "150×100 cm",
+          "aspectRatio": "1 / 2",
+          "thumb": "/assets/placeholder/placeholder-06-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-06-full.jpg",
+          "placeholder": true,
+          "approved": true,
+          "price": "€ 1,200",
+          "availability": "available"
+        },
+        {
+          "slug": "placeholder-07",
+          "title": "Placeholder 07",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "50×50 cm",
+          "aspectRatio": "3 / 1",
+          "thumb": "/assets/placeholder/placeholder-07-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-07-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-08",
+          "title": "Placeholder 08",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "70×100 cm",
+          "aspectRatio": "3 / 4",
+          "thumb": "/assets/placeholder/placeholder-08-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-08-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-09",
+          "title": "Placeholder 09",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "100×100 cm",
+          "aspectRatio": "1 / 1",
+          "thumb": "/assets/placeholder/placeholder-09-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-09-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-10",
+          "title": "Placeholder 10",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "45×60 cm",
+          "aspectRatio": "16 / 10",
+          "thumb": "/assets/placeholder/placeholder-10-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-10-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-11",
+          "title": "Placeholder 11",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "80×120 cm",
+          "aspectRatio": "2 / 3",
+          "thumb": "/assets/placeholder/placeholder-11-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-11-full.jpg",
+          "placeholder": true,
+          "approved": true,
+          "price": "€ 1,200",
+          "availability": "available"
+        },
+        {
+          "slug": "placeholder-12",
+          "title": "Placeholder 12",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "55×70 cm",
+          "aspectRatio": "3 / 2",
+          "thumb": "/assets/placeholder/placeholder-12-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-12-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-13",
+          "title": "Placeholder 13",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "120×80 cm",
+          "aspectRatio": "4 / 5",
+          "thumb": "/assets/placeholder/placeholder-13-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-13-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-14",
+          "title": "Placeholder 14",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "65×85 cm",
+          "aspectRatio": "16 / 10",
+          "thumb": "/assets/placeholder/placeholder-14-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-14-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-15",
+          "title": "Placeholder 15",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "75×95 cm",
+          "aspectRatio": "1 / 1",
+          "thumb": "/assets/placeholder/placeholder-15-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-15-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-16",
+          "title": "Placeholder 16",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "85×105 cm",
+          "aspectRatio": "9 / 16",
+          "thumb": "/assets/placeholder/placeholder-16-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-16-full.jpg",
+          "placeholder": true,
+          "approved": true,
+          "price": "€ 1,200",
+          "availability": "available"
+        },
+        {
+          "slug": "placeholder-17",
+          "title": "Placeholder 17",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "95×115 cm",
+          "aspectRatio": "16 / 9",
+          "thumb": "/assets/placeholder/placeholder-17-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-17-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-18",
+          "title": "Placeholder 18",
+          "year": 2026,
+          "medium": "placeholder medium",
+          "size": "35×45 cm",
+          "aspectRatio": "2 / 3",
+          "thumb": "/assets/placeholder/placeholder-18-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-18-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-19",
+          "title": "Placeholder 19",
+          "year": 2024,
+          "medium": "placeholder medium",
+          "size": "140×90 cm",
+          "aspectRatio": "3 / 1",
+          "thumb": "/assets/placeholder/placeholder-19-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-19-full.jpg",
+          "placeholder": true,
+          "approved": true
+        },
+        {
+          "slug": "placeholder-20",
+          "title": "Placeholder 20",
+          "year": 2025,
+          "medium": "placeholder medium",
+          "size": "50×70 cm",
+          "aspectRatio": "4 / 3",
+          "thumb": "/assets/placeholder/placeholder-20-thumb.jpg",
+          "image": "/assets/placeholder/placeholder-20-full.jpg",
+          "placeholder": true,
+          "approved": true
+        }
+      ]
+    },
+    {
+      "id": "code",
+      "index": "03",
+      "label": "web / code",
+      "route": "/code",
+      "title": "code",
+      "body": "PLACEHOLDER",
+      "items": [
+        {
+          "slug": "vairee",
+          "title": "vairee.ai",
+          "url": "https://vairee.ai",
+          "summary": "PLACEHOLDER",
+          "stack": [],
+          "approved": true,
+          "thumb": "/assets/placeholder/placeholder-01-thumb.jpg",
+          "placeholder": true
+        },
+        {
+          "slug": "recberry",
+          "title": "recberry.com",
+          "url": "https://recberry.com",
+          "summary": "PLACEHOLDER",
+          "stack": [],
+          "approved": true,
+          "thumb": "/assets/placeholder/placeholder-02-thumb.jpg",
+          "placeholder": true
+        },
+        {
+          "slug": "dentalbros",
+          "title": "dentalbros.cz",
+          "url": "https://dentalbros.cz",
+          "summary": "PLACEHOLDER",
+          "stack": [],
+          "approved": false,
+          "alsoOn": [
+            "career-pages"
+          ],
+          "thumb": "/assets/placeholder/placeholder-03-thumb.jpg",
+          "placeholder": true
+        }
+      ]
+    },
+    {
+      "id": "career-pages",
+      "index": "04",
+      "label": "employer branding / career pages",
+      "route": "/career-pages",
+      "title": "career pages",
+      "body": "PLACEHOLDER pitch",
+      "caseRefs": [
+        "dentalbros"
+      ],
+      "xrayTeaser": true
+    },
+    {
+      "id": "about",
+      "index": "05",
+      "label": "about abaddion / contact",
+      "route": "/about",
+      "title": "about",
+      "body": "PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. PLACEHOLDER long about copy for scroll testing. End of placeholder about section.",
+      "contactForm": true
+    }
+  ]
+}

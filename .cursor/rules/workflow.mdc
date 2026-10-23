@@ -1,0 +1,28 @@
+---
+description: Standing deploy and PR workflow — Git merge to main only, no Vercel CLI prod
+alwaysApply: true
+---
+
+# Glitch portfolio — standing workflow
+
+## Deploys
+
+- **Production** deploys only when a PR is **merged into `main`** (Vercel Git integration).
+- **Never** run `vercel --prod` or CLI production deploys.
+- Preview URLs come from the PR’s Vercel check; test there before merge.
+
+## Per task
+
+1. `git fetch origin && git checkout main && git pull`
+2. Branch: `phase-<n>-<short-name>` (e.g. `phase-1.5-detail-webp`)
+3. Small commits: `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`
+4. Never commit `.env.local` or secrets
+5. Run `node scripts/smoke.mjs` locally before opening a PR
+6. `gh pr create` — fill `.github/pull_request_template.md`
+7. **Do not merge** unless the owner says “merge”
+8. After merge, report production deployment ID + previous ID for Instant Rollback
+
+## References
+
+- Smoke: `node scripts/smoke.mjs`
+- Lighthouse preview: `node scripts/run-lighthouse-preview.mjs <preview-url>` (needs bypass secret in `.env.local` for protected previews)
