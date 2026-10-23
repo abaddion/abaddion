@@ -1,44 +1,52 @@
 /**
- * Chunked 512×512 floor atlas — canvas 2D, yields between floors (<50 ms tasks).
+ * Floor atlas — 8×5 monitor cells per floor row (512×512).
  */
 
 import { getItems, getFloors, getSite } from './content-loader.js';
 import { yieldToMain } from './utils.js';
 
+export const ATLAS_GRID_COLS = 8;
+export const ATLAS_GRID_ROWS = 5;
 const ATLAS_SIZE = 512;
 const ROW_H = Math.floor(ATLAS_SIZE / 5);
 
-function drawTextBlock(ctx, text, x, y, w, h) {
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#ece8df';
-    ctx.font = 'bold 11px monospace';
-    const lines = text.toLowerCase().match(/.{1,14}/g) || [text];
-    lines.slice(0, 5).forEach((line, i) => {
-        ctx.fillText(line, x + 6, y + 16 + i * 14);
-    });
-}
-
-async function drawThumbGrid(ctx, items, x, y, w, h) {
+function drawTextCell(ctx, text, x, y, w, h) {
     ctx.fillStyle = '#141414';
     ctx.fillRect(x, y, w, h);
-    const cols = 4;
-    const cell = Math.min(w / cols, h / Math.ceil(items.length / cols));
-    for (let i = 0; i < Math.min(items.length, 8); i++) {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const cx = x + col * cell;
-        const cy = y + row * cell;
-        const src = items[i].thumb;
-        if (!src) continue;
-        try {
-            const img = await loadImage(src);
-            ctx.drawImage(img, cx + 1, cy + 1, cell - 2, cell - 2);
-        } catch {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(cx + 1, cy + 1, cell - 2, cell - 2);
+    ctx.fillStyle = '#ece8df';
+    ctx.font = '9px monospace';
+    const line = String(text).slice(0, 10);
+    ctx.fillText(line, x + 4, y + h * 0.55);
+}
+
+async function drawMonitorGrid(ctx, sources, x, y, w, h) {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x, y, w, h);
+    const cols = ATLAS_GRID_COLS;
+    const rows = ATLAS_GRID_ROWS;
+    const cellW = w / cols;
+    const cellH = h / rows;
+    const list = sources?.length ? sources : [{ thumb: null, title: '—' }];
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const i = r * cols + c;
+            const item = list[i % list.length];
+            const cx = x + c * cellW;
+            const cy = y + r * cellH;
+            const pad = Math.max(1, Math.floor(cellW * 0.06));
+            if (item?.thumb) {
+                try {
+                    const img = await loadImage(item.thumb);
+                    ctx.drawImage(img, cx + pad, cy + pad, cellW - pad * 2, cellH - pad * 2);
+                } catch {
+                    drawTextCell(ctx, item.title || '—', cx, cy, cellW, cellH);
+                }
+            } else {
+                drawTextCell(ctx, item?.title || item || '—', cx, cy, cellW, cellH);
+            }
+            if (i % 4 === 0) await yieldToMain();
         }
-        if (i % 2 === 0) await yieldToMain();
     }
 }
 
@@ -72,13 +80,15 @@ export async function buildFloorAtlas() {
         const floor = floors[f];
 
         if (floor.id === 'canvas') {
-            await drawThumbGrid(ctx, getItems('canvas'), x0, y0, w, h);
+            await drawMonitorGrid(ctx, getItems('canvas'), x0, y0, w, h);
         } else if (floor.id === 'code') {
-            await drawThumbGrid(ctx, getItems('code'), x0, y0, w, h);
+            await drawMonitorGrid(ctx, getItems('code'), x0, y0, w, h);
         } else {
-            const label =
-                floor.id === 'identity' ? site.name : floor.title;
-            drawTextBlock(ctx, label, x0, y0, w, h);
+            const label = floor.id === 'identity' ? site.name : floor.title;
+            const cells = Array.from({ length: ATLAS_GRID_COLS * ATLAS_GRID_ROWS }, (_, i) => ({
+                title: `${label}-${i + 1}`
+            }));
+            await drawMonitorGrid(ctx, cells, x0, y0, w, h);
         }
 
         rects[f * 4] = x0 / ATLAS_SIZE;

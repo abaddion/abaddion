@@ -1,5 +1,5 @@
 /**
- * Procedural glass-monitor slab shader (instanced focus + atlas region).
+ * Monitor-wall slab shader — grid of atlas cells, one draw call.
  */
 
 import * as THREE from 'three';
@@ -20,7 +20,7 @@ export function createSlabMaterial(reducedMotion = false) {
             uAtlas: { value: null },
             uAtlasReady: { value: 0 },
             uContentCollapse: { value: 1 },
-            uPixelGrid: { value: new THREE.Vector2(48, 32) },
+            uMonitorGrid: { value: new THREE.Vector2(8, 5) },
             uMobilePortrait: { value: 0 }
         },
         vertexShader: `
@@ -53,7 +53,7 @@ export function createSlabMaterial(reducedMotion = false) {
             uniform sampler2D uAtlas;
             uniform float uAtlasReady;
             uniform float uContentCollapse;
-            uniform vec2 uPixelGrid;
+            uniform vec2 uMonitorGrid;
             uniform float uMobilePortrait;
 
             varying float vFocus;
@@ -66,21 +66,10 @@ export function createSlabMaterial(reducedMotion = false) {
                 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
             }
 
-            float noise(vec2 p) {
-                vec2 i = floor(p);
-                vec2 f = fract(p);
-                float a = hash(i);
-                float b = hash(i + vec2(1.0, 0.0));
-                float c = hash(i + vec2(0.0, 1.0));
-                float d = hash(i + vec2(1.0, 1.0));
-                vec2 u = f * f * (3.0 - 2.0 * f);
-                return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-            }
-
-            vec3 sampleAtlas(vec2 uv) {
-                vec2 atlasUv = mix(vAtlasRect.xy, vAtlasRect.zw, uv);
-                vec2 px = floor(atlasUv * uPixelGrid * 4.0) / (uPixelGrid * 4.0);
-                return texture2D(uAtlas, px).rgb;
+            vec3 sampleAtlasCell(vec2 cellId, vec2 cellUv) {
+                vec2 grid = uMonitorGrid;
+                vec2 atlasUv = mix(vAtlasRect.xy, vAtlasRect.zw, (cellId + cellUv) / grid);
+                return texture2D(uAtlas, atlasUv).rgb;
             }
 
             void main() {
@@ -89,48 +78,47 @@ export function createSlabMaterial(reducedMotion = false) {
                 vec3 V = normalize(uCameraPos - vWorldPos);
                 float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.2);
 
-                float scan = sin(vUv.y * 900.0 + uTime * 0.5) * 0.04;
-                float grid = step(0.92, fract(vUv.x * 120.0)) + step(0.92, fract(vUv.y * 80.0));
-                grid = clamp(grid * 0.08, 0.0, 0.12);
+                vec2 grid = uMonitorGrid;
+                vec2 cellId = floor(vUv * grid);
+                vec2 cellUv = fract(vUv * grid);
+                float inset = 0.08;
+                float inBezel = step(inset, cellUv.x) * step(cellUv.x, 1.0 - inset) *
+                    step(inset, cellUv.y) * step(cellUv.y, 1.0 - inset);
+                inBezel = 1.0 - inBezel;
 
-                float snow = noise(vUv * 420.0 + uTime * 0.02);
-                snow += noise(vUv * 180.0 - uTime * 0.05) * 0.5;
-                float snowAmt = mix(0.15, 0.03, focus);
+                vec3 bezelCol = uInk * (0.35 + 0.15 * hash(cellId));
+                vec3 screenCol = bezelCol;
 
-                float band = 0.0;
-                if (uReduced < 0.5) {
-                    band = smoothstep(0.35, 0.0, abs(vUv.y - fract(uTime * 0.04)));
-                    band *= (1.0 - focus) * 0.15;
+                if (inBezel < 0.5 && uAtlasReady > 0.5) {
+                    vec2 sampleUv = (cellUv - inset) / (1.0 - 2.0 * inset);
+                    screenCol = sampleAtlasCell(cellId, sampleUv);
+                    float flickerGate = hash(cellId + 17.0);
+                    if (uReduced < 0.5 && focus > 0.2 && flickerGate > 0.992) {
+                        float t = mod(uTime + hash(cellId) * 6.0, 0.18);
+                        if (t < 0.04) {
+                            screenCol = mix(screenCol, vec3(0.85), 0.6);
+                        } else if (t < 0.08) {
+                            screenCol = vec3(hash(cellUv + uTime));
+                        }
+                    }
+                    float bright = mix(0.45, 1.05, focus);
+                    screenCol *= bright;
+                } else if (inBezel > 0.5 && focus > 0.35) {
+                    bezelCol += uSignal.rgb * 0.12;
                 }
 
-                vec3 base = mix(uInk, uInk * 1.2, 0.35);
-                base += uSignal.rgb * focus * 0.08 * (grid + 0.2);
-                base += vec3(fresnel * (0.25 + focus * 0.35));
-                base -= scan * (0.5 - focus * 0.3);
-                base += vec3(snow * snowAmt);
-                base -= vec3(band);
+                vec3 base = mix(screenCol, bezelCol, inBezel);
+                base += vec3(fresnel * (0.08 + focus * 0.12));
+                float atlasMix = focus * uContentCollapse;
+                base = mix(uInk * 0.5, base, atlasMix);
 
-                vec3 atlasCol = vec3(0.0);
-                if (uAtlasReady > 0.5) {
-                    atlasCol = sampleAtlas(vUv);
-                }
-                float atlasMix = focus * uContentCollapse * 0.92;
-                if (focus > 0.95) {
-                    snowAmt = 0.03;
-                }
-                base = mix(base, atlasCol, atlasMix);
-                base += vec3(snow * snowAmt * (1.0 - atlasMix));
-
-                float spec = pow(max(dot(reflect(-V, N), V), 0.0), 24.0);
-                spec *= 0.35 + focus * 0.4;
-                vec2 specDir = normalize(uParallax + vec2(0.001, 0.0));
-                spec += pow(max(dot(N, normalize(vec3(specDir.x, 0.6, specDir.y))), 0.0), 8.0) * 0.2;
-
+                float spec = pow(max(dot(reflect(-V, N), V), 0.0), 24.0) * (0.15 + focus * 0.2);
                 base += vec3(spec);
-                float alpha = 0.35 + fresnel * 0.25 + focus * 0.15;
+
+                float alpha = 0.4 + fresnel * 0.2 + focus * 0.12;
                 alpha *= mix(1.0, uBackdropDim, focus);
                 if (uMobilePortrait > 0.5) {
-                    alpha *= mix(0.25, 1.0, focus);
+                    alpha *= mix(0.3, 1.0, focus);
                 }
 
                 gl_FragColor = vec4(base, alpha);
