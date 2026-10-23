@@ -187,8 +187,9 @@ async function waitApp(page) {
         await page.waitForFunction(
             () =>
                 window.app?.webgl?.bootComplete &&
-                window.app?.webgl?.canvasDetail &&
-                typeof window.app?.openFloor === 'function',
+                typeof window.app?.openFloor === 'function' &&
+                (window.app?.webgl?.canvasDetail || window.app?.canvasDetail) &&
+                !document.documentElement.classList.contains('no-webgl'),
             { timeout: 120000 }
         );
     } catch (err) {

@@ -41,10 +41,13 @@ export function failWebGL(reason) {
 }
 
 function installFailureHandlers() {
+    const smokeBoot = () => location.search.includes('smoke=1');
     window.addEventListener('error', (e) => {
+        if (smokeBoot()) return;
         if (window.app?.webgl) failWebGL(e.message || 'error');
     });
     window.addEventListener('unhandledrejection', (e) => {
+        if (smokeBoot()) return;
         if (window.app?.webgl) failWebGL(e.reason?.message || 'unhandled rejection');
     });
 }
