@@ -1,5 +1,5 @@
 /**
- * CSS nova when WebGL composer not ready — never blocks transitions.
+ * CSS nova when WebGL composer not ready — removed from DOM after each transition.
  */
 
 export class NovaFallback {
@@ -14,24 +14,40 @@ export class NovaFallback {
         this.flash = this.el.querySelector('.nova-flash');
     }
 
+    resetStyles() {
+        this.line.style.transform = 'scaleY(0)';
+        this.line.style.opacity = '0';
+        this.flash.style.opacity = '0';
+        this.flash.style.transform = 'scale(0.5)';
+    }
+
     /** @param {'collapse'|'nova'|'expand'|'hide'} phase */
     setPhase(phase, progress = 0) {
         if (phase === 'hide') {
+            this.resetStyles();
             this.el.hidden = true;
             this.el.classList.remove('is-active');
+            document.documentElement.classList.remove('nova-transition');
             return;
         }
+        document.documentElement.classList.add('nova-transition');
         this.el.hidden = false;
         this.el.classList.add('is-active');
         const p = Math.max(0, Math.min(1, progress));
         if (phase === 'collapse') {
-            this.line.style.transform = `scaleY(${1 - p})`;
-            this.line.style.opacity = String(0.4 + p * 0.6);
+            this.line.style.opacity = String(0.35 + p * 0.65);
+            this.line.style.transform = `scaleY(${Math.max(0.001, 1 - p)})`;
+            this.flash.style.opacity = '0';
         } else if (phase === 'nova') {
-            this.flash.style.opacity = String(p * (1 - p * 0.5));
-            this.flash.style.transform = `scale(${0.5 + p * 1.2})`;
+            this.line.style.opacity = String(Math.max(0, 1 - p * 1.2));
+            this.line.style.transform = 'scaleY(0.001)';
+            this.flash.style.opacity = String(p * (1 - p * 0.45));
+            this.flash.style.transform = `scale(${0.4 + p * 1.4})`;
         } else if (phase === 'expand') {
-            this.line.style.transform = `scaleY(${p}) scaleX(${0.2 + p * 0.8})`;
+            this.line.style.opacity = '0';
+            this.line.style.transform = 'scaleY(0.001)';
+            this.flash.style.opacity = String(Math.max(0, 0.35 * (1 - p)));
+            this.flash.style.transform = `scale(${1 + p * 0.5})`;
         }
     }
 

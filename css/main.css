@@ -303,11 +303,6 @@ html.debug-hud #hud {
     opacity: 0.4;
 }
 
-.floor-label-anno.is-focused .floor-label-leader {
-    stroke: var(--signal);
-    stroke-opacity: 0.85;
-}
-
 .floor-label-anno.is-focused .floor-label-text {
     fill: var(--signal);
     opacity: 1;
@@ -348,11 +343,29 @@ html.debug-hud #hud {
     opacity: calc(min(1, var(--floor-expand) * 1.2));
 }
 
-.floor-view-back {
+.floor-view-topbar {
     position: fixed;
-    top: max(16px, env(safe-area-inset-top));
-    left: max(16px, env(safe-area-inset-left));
-    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    min-height: calc(env(safe-area-inset-top, 0px) + 52px);
+    padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right)) 0
+        max(16px, env(safe-area-inset-left));
+    background: linear-gradient(to bottom, rgba(10, 10, 10, 0.92) 70%, transparent);
+    pointer-events: none;
+}
+
+.floor-view-topbar .floor-view-back {
+    pointer-events: auto;
+}
+
+.floor-view-back {
+    position: relative;
+    top: auto;
+    left: auto;
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
@@ -366,7 +379,7 @@ html.debug-hud #hud {
 
 .floor-view-scroll {
     min-height: 100%;
-    padding: calc(var(--unit) * 8) calc(var(--unit) * 3) calc(var(--unit) * 4);
+    padding: calc(env(safe-area-inset-top, 0px) + 56px) calc(var(--unit) * 3) calc(var(--unit) * 4);
     max-width: 72ch;
     margin: 0 auto;
 }
@@ -396,6 +409,110 @@ html.floor-open-canvas #glitch-canvas {
     color: var(--muted);
 }
 
+.corridor-hud {
+    position: fixed;
+    z-index: 35;
+    left: max(16px, env(safe-area-inset-left));
+    bottom: calc(var(--unit) * 12);
+    pointer-events: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone);
+}
+
+.corridor-hud[hidden] {
+    display: none !important;
+}
+
+.corridor-hud .corridor-nav {
+    pointer-events: auto;
+    display: flex;
+    gap: var(--unit);
+    margin-top: var(--unit);
+}
+
+.corridor-hud button {
+    min-width: 44px;
+    min-height: 44px;
+    border: 1px solid var(--stroke);
+    background: rgba(10, 10, 10, 0.65);
+    color: var(--bone);
+    cursor: pointer;
+}
+
+.corridor-back-start {
+    pointer-events: auto;
+    margin-top: var(--unit);
+}
+
+.floor-view--about .floor-view-scroll {
+    overflow: hidden;
+    max-width: none;
+    padding-bottom: calc(var(--unit) * 6);
+}
+
+.about-crawl-scene {
+    position: relative;
+    min-height: 55dvh;
+    margin-top: var(--unit);
+    overflow: hidden;
+}
+
+.about-crawl-scene:not(.is-flat) .about-crawl-perspective {
+    perspective: 520px;
+    perspective-origin: 50% 100%;
+    height: 52dvh;
+    mask-image: linear-gradient(to top, transparent 0%, #000 18%, #000 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 18%, #000 72%, transparent 100%);
+}
+
+.about-crawl-block {
+    transform-origin: 50% 100%;
+    transform: rotateX(25deg);
+    color: var(--bone);
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: var(--unit) calc(var(--unit) * 2);
+}
+
+.about-crawl-scene.is-flat .about-crawl-block {
+    transform: none;
+    rotate: none;
+}
+
+.about-crawl-copy p {
+    font-family: var(--font-mono);
+    font-size: clamp(13px, 3.5vw, 16px);
+    line-height: 1.55;
+    margin-bottom: calc(var(--unit) * 2);
+}
+
+.about-read-toggle {
+    position: relative;
+    z-index: 2;
+    margin-top: var(--unit);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--signal);
+    background: transparent;
+    border: 1px solid var(--stroke);
+    padding: calc(var(--unit) * 1.25) calc(var(--unit) * 2);
+    min-height: 44px;
+    cursor: pointer;
+}
+
+.about-crawl-form-slot.is-settled .about-contact-form {
+    transform: none;
+    rotate: none;
+}
+
+.about-contact-form {
+    margin-top: calc(var(--unit) * 4);
+    padding: calc(var(--unit) * 3);
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid var(--stroke);
+}
+
 .nova-fallback {
     position: fixed;
     inset: 0;
@@ -406,12 +523,21 @@ html.floor-open-canvas #glitch-canvas {
     justify-content: center;
 }
 
+.nova-fallback[hidden] {
+    display: none !important;
+}
+
+html:not(.nova-transition) .nova-fallback {
+    display: none !important;
+}
+
 .nova-line {
     width: 100vw;
     height: 2px;
     background: var(--bone);
     box-shadow: 0 0 24px rgba(236, 232, 223, 0.55);
-    transform: scaleY(1);
+    transform: scaleY(0);
+    opacity: 0;
 }
 
 .nova-flash {
