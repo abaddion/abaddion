@@ -366,13 +366,13 @@ class WebGLLayer {
         if (!fromRoute && location.pathname.replace(/\/+$/, '') !== route.replace(/\/+$/, '')) {
             this.router.navigate(route, true);
         }
-        this.transition.open(index);
+        this.transition?.open(index);
         this.renderLoop.ping();
         this.updateHeroHandoffState();
     }
 
     closeFloor() {
-        this.transition.close();
+        this.transition?.close();
         this.renderLoop.ping();
     }
 

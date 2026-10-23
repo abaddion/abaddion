@@ -180,7 +180,9 @@ async function waitApp(page) {
     await page.waitForFunction(
         () =>
             document.documentElement.classList.contains('no-webgl') ||
-            (window.app?.webgl?.interactionState && window.app?.webgl?.transition),
+            (window.app?.webgl?.interactionState &&
+                window.app?.webgl?.transition &&
+                window.app?.webgl?.canvasDetail),
         { timeout: 45000 }
     );
 }
