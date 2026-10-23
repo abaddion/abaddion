@@ -36,6 +36,9 @@ class WebGLLayer {
         this.THREE = null;
         this.corridor = null;
         this.canvasDetail = null;
+        this.detailFly = null;
+        this._detailOpening = false;
+        this._detailCorridorMesh = null;
         this.novaFallback = null;
         this.canvasFloorIndex = 1;
 
@@ -151,6 +154,7 @@ class WebGLLayer {
         const { NovaFallback } = await import('./modules/nova-fallback.js');
         const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
         const { CanvasDetail } = await import('./modules/canvas-detail.js');
+        const { DetailFly } = await import('./modules/detail-fly.js');
 
         this.canvasFloorIndex = floors.findIndex((f) => f.id === 'canvas');
         this.novaFallback = new NovaFallback();
@@ -158,8 +162,17 @@ class WebGLLayer {
             qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
             onPaintingClick: (slug) => this.openCanvasDetail(slug)
         });
+        this.detailFly = new DetailFly({
+            scene: this.scene,
+            camera: this.camera,
+            reducedMotion: this.reducedMotion
+        });
         this.canvasDetail = new CanvasDetail({
-            onClose: () => this.renderLoop.ping(),
+            onClose: () => {
+                this._restoreDetailCorridorMesh();
+                this.detailFly?.cancel();
+                this.renderLoop.ping();
+            },
             onNavigateSlug: () => this.renderLoop.ping()
         });
         this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
@@ -171,11 +184,13 @@ class WebGLLayer {
             onFrame: () => this.frameRender(),
             getMode: (idleMs) => {
                 const detailOpen = this.canvasDetail && !this.canvasDetail.el.hidden;
+                const detailFlying = this.detailFly?.isActive();
                 if (
                     idleMs > 8000 &&
                     !this.transition.isAnimating() &&
                     !this.transition.isOpen() &&
                     !detailOpen &&
+                    !detailFlying &&
                     !this.cameraRig.isSettling() &&
                     !this.postProcessing.isComposerActive()
                 ) {
@@ -185,6 +200,7 @@ class WebGLLayer {
                     this.transition.isAnimating() ||
                     this.transition.isOpen() ||
                     detailOpen ||
+                    detailFlying ||
                     this.corridor?.root?.visible ||
                     this.cameraRig.isSettling() ||
                     this.postProcessing.isComposerActive()
@@ -261,6 +277,8 @@ class WebGLLayer {
         this.stack.root.visible = true;
         this.labels.container.style.visibility = '';
         this.corridor?.setVisible(false);
+        this.detailFly?.cancel();
+        this._restoreDetailCorridorMesh();
         this.canvasDetail?.close();
     }
 
@@ -270,8 +288,28 @@ class WebGLLayer {
         this.renderLoop.ping();
     }
 
-    openCanvasDetail(slug) {
-        this.canvasDetail.open(slug);
+    _restoreDetailCorridorMesh() {
+        if (this._detailCorridorMesh) {
+            this._detailCorridorMesh.visible = true;
+            this._detailCorridorMesh = null;
+        }
+    }
+
+    async openCanvasDetail(slug) {
+        if (this._detailOpening) return;
+        this._detailOpening = true;
+        try {
+            const mesh = this.corridor?.getMeshForSlug(slug) ?? null;
+            this._detailCorridorMesh = mesh;
+            let handoffRect;
+            if (mesh && this.detailFly) {
+                this.renderLoop.ping();
+                handoffRect = await this.detailFly.start(mesh);
+            }
+            await this.canvasDetail.open(slug, handoffRect?.width > 0 ? { handoffRect } : {});
+        } finally {
+            this._detailOpening = false;
+        }
         this.renderLoop.ping();
     }
 
@@ -461,6 +499,7 @@ class WebGLLayer {
             this.labels.setFocusIndex(this.focusIndex);
         }
         this.transition.update(this.camera, performance.now());
+        this.detailFly?.update();
 
         this.postProcessing.update(time, dt);
         this.renderer.info.reset();
