@@ -61,6 +61,8 @@ class WebGLLayer {
         await this.initSystems();
         await yieldToMain();
 
+        this.clock = new this.THREE.Clock();
+
         if (this.renderer.compileAsync) {
             await this.renderer.compileAsync(this.scene, this.camera);
         }
@@ -68,7 +70,6 @@ class WebGLLayer {
 
         this.setupEvents();
         this.syncFromShellFocus();
-        this.clock = new this.THREE.Clock();
         this.scheduleAtlasBuild();
         this.renderLoop.ping();
     }
@@ -485,6 +486,7 @@ class WebGLLayer {
     }
 
     frameRender() {
+        if (!this.clock) return;
         const frameStart = performance.now();
         const dt = this.clock.getDelta();
         const time = this.clock.getElapsedTime();
