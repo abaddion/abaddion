@@ -100,11 +100,12 @@ class WebGLLayer {
         this.camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 100);
         this.camera.position.set(6, 8, 10);
 
+        const smokeBoot = location.search.includes('smoke=1');
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: !this.isMobile,
+            antialias: smokeBoot ? false : !this.isMobile,
             alpha: false,
-            powerPreference: this.isMobile ? 'low-power' : 'high-performance'
+            powerPreference: smokeBoot ? 'default' : this.isMobile ? 'low-power' : 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -536,8 +537,8 @@ class WebGLLayer {
 
 export async function attachWebGL(shell) {
     const layer = new WebGLLayer(shell);
-    await layer.initAsync();
     shell.webgl = layer;
+    await layer.initAsync();
     // Capture prototype method before defineProperty shadows instance goToFloor (rail uses shell.goToFloor).
     const shellGoToFloor = Object.getPrototypeOf(shell).goToFloor.bind(shell);
     Object.defineProperty(window.app, 'stack', { get: () => layer.stack });
@@ -554,5 +555,6 @@ export async function attachWebGL(shell) {
     Object.defineProperty(window.app, 'canvasDetail', { get: () => layer.canvasDetail });
     Object.defineProperty(window.app, 'frame', { get: () => layer.frame });
     Object.defineProperty(window.app, 'frameRender', { value: () => layer.frameRender() });
+    layer.bootComplete = true;
     return layer;
 }

@@ -183,18 +183,27 @@ function smokeUrl(path = '/') {
 async function waitApp(page) {
     await page.goto(smokeUrl('/'), { waitUntil: 'networkidle0', timeout: 90000 });
     await page.waitForFunction(() => window.app?.content, { timeout: 30000 });
-    await page.waitForFunction(
-        () =>
-            window.app?.webgl?.interactionState &&
-            window.app?.webgl?.transition &&
-            window.app?.webgl?.canvasDetail &&
-            window.app?.webgl?.renderLoop,
-        { timeout: 60000 }
-    );
+    try {
+        await page.waitForFunction(
+            () =>
+                window.app?.webgl?.bootComplete &&
+                window.app?.webgl?.canvasDetail &&
+                typeof window.app?.openFloor === 'function',
+            { timeout: 120000 }
+        );
+    } catch (err) {
+        const boot = await page.evaluate(() => ({
+            noWebgl: document.documentElement.classList.contains('no-webgl'),
+            hasWebglLayer: !!window.app?.webgl,
+            bootComplete: !!window.app?.webgl?.bootComplete,
+            hasDetail: !!window.app?.webgl?.canvasDetail,
+            openFloor: typeof window.app?.openFloor
+        }));
+        throw new Error(`WebGL boot timeout (${JSON.stringify(boot)}): ${err.message}`);
+    }
     const boot = await page.evaluate(() => ({
         noWebgl: document.documentElement.classList.contains('no-webgl'),
-        hasWebglLayer: !!window.app?.webgl,
-        hasDetail: !!window.app?.webgl?.canvasDetail
+        hasWebglLayer: !!window.app?.webgl
     }));
     if (boot.noWebgl || !boot.hasWebglLayer) {
         throw new Error(`WebGL boot failed (${JSON.stringify(boot)})`);
