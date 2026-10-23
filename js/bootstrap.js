@@ -16,11 +16,6 @@ function initialCardIndex(content) {
 }
 
 function scheduleWebGLBoot(callback) {
-    const smokeBoot = location.search.includes('smoke=1');
-    if (smokeBoot) {
-        setTimeout(callback, 0);
-        return;
-    }
     if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(callback, { timeout: 1500 });
     } else {
@@ -41,14 +36,14 @@ export function failWebGL(reason) {
 }
 
 function installFailureHandlers() {
-    const smokeBoot = () => location.search.includes('smoke=1');
     window.addEventListener('error', (e) => {
-        if (smokeBoot()) return;
+        window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: e.message || 'error' };
         if (window.app?.webgl) failWebGL(e.message || 'error');
     });
     window.addEventListener('unhandledrejection', (e) => {
-        if (smokeBoot()) return;
-        if (window.app?.webgl) failWebGL(e.reason?.message || 'unhandled rejection');
+        const msg = e.reason?.message || 'unhandled rejection';
+        window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: msg };
+        if (window.app?.webgl) failWebGL(msg);
     });
 }
 
@@ -105,9 +100,11 @@ class ShellApp {
                     .then(({ attachWebGL }) => attachWebGL(this))
                     .catch((err) => {
                         console.error(err);
-                        if (!location.search.includes('smoke=1')) {
-                            failWebGL(err?.message || 'webgl boot failed');
-                        }
+                        window.__APP_STATE = {
+                            ...(window.__APP_STATE || {}),
+                            webglBootError: err?.message || String(err)
+                        };
+                        failWebGL(err?.message || 'webgl boot failed');
                     });
             });
         } catch (err) {

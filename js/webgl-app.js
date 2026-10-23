@@ -3,6 +3,7 @@
  */
 
 import { Utils, yieldToMain } from './modules/utils.js';
+import { patchAppState } from './modules/app-state.js';
 
 function detectWebGL() {
     try {
@@ -41,15 +42,17 @@ class WebGLLayer {
         this._detailCorridorMesh = null;
         this.novaFallback = null;
         this.canvasFloorIndex = 1;
+        this._canvasSystemsPromise = null;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
     }
 
     async initAsync() {
-        const smokeBoot = location.search.includes('smoke=1');
-        if (!smokeBoot && !detectWebGL()) {
+        patchAppState({ webglPhase: 'init' });
+        if (!detectWebGL()) {
             document.documentElement.classList.add('no-webgl');
+            patchAppState({ webglPhase: 'unsupported' });
             return;
         }
 
@@ -64,8 +67,7 @@ class WebGLLayer {
 
         this.clock = new this.THREE.Clock();
 
-        const smokeBoot = location.search.includes('smoke=1');
-        if (!smokeBoot && this.renderer.compileAsync) {
+        if (this.renderer.compileAsync) {
             await this.renderer.compileAsync(this.scene, this.camera);
         }
         await yieldToMain();
@@ -74,6 +76,7 @@ class WebGLLayer {
         this.syncFromShellFocus();
         this.scheduleAtlasBuild();
         this.renderLoop?.ping();
+        patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
     }
 
     scheduleAtlasBuild() {
@@ -101,12 +104,11 @@ class WebGLLayer {
         this.camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 100);
         this.camera.position.set(6, 8, 10);
 
-        const smokeBoot = location.search.includes('smoke=1');
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: smokeBoot ? false : !this.isMobile,
+            antialias: !this.isMobile,
             alpha: false,
-            powerPreference: smokeBoot ? 'default' : this.isMobile ? 'low-power' : 'high-performance'
+            powerPreference: this.isMobile ? 'low-power' : 'high-performance'
         });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -156,30 +158,9 @@ class WebGLLayer {
         const { CustomCursor } = await import('./modules/cursor.js');
         const { FloorInput } = await import('./modules/input.js');
         const { NovaFallback } = await import('./modules/nova-fallback.js');
-        const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
-        const { CanvasDetail } = await import('./modules/canvas-detail.js');
-        const { DetailFly } = await import('./modules/detail-fly.js');
 
         this.canvasFloorIndex = floors.findIndex((f) => f.id === 'canvas');
         this.novaFallback = new NovaFallback();
-        this.corridor = new CanvasCorridor(this.scene, {
-            qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
-            onPaintingClick: (slug) => this.openCanvasDetail(slug)
-        });
-        this.detailFly = new DetailFly({
-            scene: this.scene,
-            camera: this.camera,
-            reducedMotion: this.reducedMotion
-        });
-        this.canvasDetail = new CanvasDetail({
-            onClose: () => {
-                this._restoreDetailCorridorMesh();
-                this.detailFly?.cancel();
-                this.renderLoop?.ping();
-            },
-            onNavigateSlug: () => this.renderLoop?.ping()
-        });
-        this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
 
         this.interactionState = new InteractionState();
         this.interactionState.set(InteractionStates.FOCUS, this.shell.focusIndex);
@@ -257,6 +238,40 @@ class WebGLLayer {
         });
     }
 
+    ensureCanvasSystems() {
+        if (this._canvasSystemsPromise) return this._canvasSystemsPromise;
+        this._canvasSystemsPromise = this._loadCanvasSystems();
+        return this._canvasSystemsPromise;
+    }
+
+    async _loadCanvasSystems() {
+        if (this.corridor) return;
+        patchAppState({ canvasSystems: 'loading' });
+        const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
+        const { CanvasDetail } = await import('./modules/canvas-detail.js');
+        const { DetailFly } = await import('./modules/detail-fly.js');
+
+        this.corridor = new CanvasCorridor(this.scene, {
+            qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
+            onPaintingClick: (slug) => this.openCanvasDetail(slug)
+        });
+        this.detailFly = new DetailFly({
+            scene: this.scene,
+            camera: this.camera,
+            reducedMotion: this.reducedMotion
+        });
+        this.canvasDetail = new CanvasDetail({
+            onClose: () => {
+                this._restoreDetailCorridorMesh();
+                this.detailFly?.cancel();
+                this.renderLoop?.ping();
+            },
+            onNavigateSlug: () => this.renderLoop?.ping()
+        });
+        this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
+        patchAppState({ canvasSystems: 'loaded' });
+    }
+
     isCorridorActive() {
         return (
             this.interactionState.isOpen() &&
@@ -271,9 +286,12 @@ class WebGLLayer {
 
     onFloorOpened(index) {
         if (index === this.canvasFloorIndex) {
-            this.stack.root.visible = false;
-            this.labels.container.style.visibility = 'hidden';
-            this.corridor.setVisible(true);
+            void this.ensureCanvasSystems().then(() => {
+                this.stack.root.visible = false;
+                this.labels.container.style.visibility = 'hidden';
+                this.corridor?.setVisible(true);
+                this.renderLoop?.ping();
+            });
         }
     }
 
@@ -287,6 +305,10 @@ class WebGLLayer {
     }
 
     corridorScroll(delta) {
+        if (!this.corridor) {
+            void this.ensureCanvasSystems();
+            return;
+        }
         const step = delta > 0 ? 0.04 : -0.04;
         this.corridor.setProgress(this.corridor.progress + step);
         this.renderLoop?.ping();
@@ -303,6 +325,7 @@ class WebGLLayer {
         if (this._detailOpening) return;
         this._detailOpening = true;
         try {
+            await this.ensureCanvasSystems();
             const mesh = this.corridor?.getMeshForSlug(slug) ?? null;
             this._detailCorridorMesh = mesh;
             let handoffRect;
@@ -495,9 +518,9 @@ class WebGLLayer {
         const time = this.clock.getElapsedTime();
 
         this.updateParallax();
-        if (this.isCorridorActive()) {
+        if (this.isCorridorActive() && this.corridor) {
             this.corridor.update(dt, this.camera);
-        } else {
+        } else if (!this.isCorridorActive()) {
             this.cameraRig.update(dt);
             this.stack.update(time, dt, this.camera, this.parallax);
             this.labels.update(this.camera);
@@ -540,8 +563,9 @@ export async function attachWebGL(shell) {
     const layer = new WebGLLayer(shell);
     shell.webgl = layer;
     await layer.initAsync();
-    if (!layer.canvasDetail) {
+    if (!layer.renderer) {
         document.documentElement.classList.add('no-webgl');
+        patchAppState({ webglPhase: 'failed' });
         return layer;
     }
     // Capture prototype method before defineProperty shadows instance goToFloor (rail uses shell.goToFloor).
@@ -561,5 +585,6 @@ export async function attachWebGL(shell) {
     Object.defineProperty(window.app, 'frame', { get: () => layer.frame });
     Object.defineProperty(window.app, 'frameRender', { value: () => layer.frameRender() });
     layer.bootComplete = true;
+    patchAppState({ webglPhase: 'attached', bootComplete: true });
     return layer;
 }
