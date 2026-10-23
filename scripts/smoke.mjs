@@ -178,7 +178,9 @@ async function waitApp(page) {
     await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 90000 });
     await page.waitForFunction(() => window.app?.content, { timeout: 30000 });
     await page.waitForFunction(
-        () => window.app?.webgl?.interactionState || document.documentElement.classList.contains('no-webgl'),
+        () =>
+            document.documentElement.classList.contains('no-webgl') ||
+            (window.app?.webgl?.interactionState && window.app?.webgl?.transition),
         { timeout: 45000 }
     );
 }

@@ -335,7 +335,7 @@ class WebGLLayer {
     }
 
     navigateToFloor(index, route, { skipHistory = false } = {}) {
-        this.transition.interruptToFocus(index);
+        this.transition?.interruptToFocus(index);
         this.focusIndex = index;
         this.shell.focusIndex = index;
         this.stack?.setFocusedFloor(index);
