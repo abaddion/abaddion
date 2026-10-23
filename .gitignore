@@ -33,3 +33,7 @@ build/
 .env.local
 .env*.local
 three-0.160.0.tgz
+
+# Smoke screenshots (CI artifacts only)
+docs/screens/
+.smoke-progress*.json
