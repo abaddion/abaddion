@@ -191,9 +191,13 @@ async function waitApp(page) {
             window.app?.webgl?.renderLoop,
         { timeout: 60000 }
     );
-    const noWebgl = await page.evaluate(() => document.documentElement.classList.contains('no-webgl'));
-    if (noWebgl) {
-        throw new Error('WebGL boot failed (no-webgl)');
+    const boot = await page.evaluate(() => ({
+        noWebgl: document.documentElement.classList.contains('no-webgl'),
+        hasWebglLayer: !!window.app?.webgl,
+        hasDetail: !!window.app?.webgl?.canvasDetail
+    }));
+    if (boot.noWebgl || !boot.hasWebglLayer) {
+        throw new Error(`WebGL boot failed (${JSON.stringify(boot)})`);
     }
 }
 
@@ -218,9 +222,10 @@ async function runViewport(vp) {
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--ignore-gpu-blocklist',
             '--enable-webgl',
-            '--use-gl=angle',
-            '--use-angle=swiftshader'
+            '--use-gl=swiftshader'
         ]
     };
     if (fs.existsSync(chrome)) {
