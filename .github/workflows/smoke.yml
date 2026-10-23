@@ -3,9 +3,15 @@ name: Smoke test
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  smoke:
+  smoke-fast:
+    name: smoke:fast
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +30,66 @@ jobs:
       - name: Install Chromium for Puppeteer
         run: npx puppeteer browsers install chrome
 
-      - name: Run smoke
-        run: node scripts/smoke.mjs
+      - name: Run smoke:fast
+        run: node scripts/smoke.mjs --fast
         env:
           CI: true
+
+      - name: Upload smoke screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-fast-screenshots
+          path: docs/screens/
+          if-no-files-found: ignore
+
+  smoke-full:
+    name: smoke:full (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install Chrome system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgbm1 libxshmfence1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libasound2t64 libpango-1.0-0 libcairo2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for Puppeteer
+        run: npx puppeteer browsers install chrome
+
+      - name: Restore smoke checkpoint
+        uses: actions/cache/restore@v4
+        with:
+          path: .smoke-progress-shard${{ matrix.shard }}of4.json
+          key: smoke-full-${{ github.sha }}-shard${{ matrix.shard }}
+
+      - name: Run smoke:full shard
+        run: node scripts/smoke.mjs --full --shard=${{ matrix.shard }}/4 --resume
+        env:
+          CI: true
+          SMOKE_PROGRESS_FILE: .smoke-progress-shard${{ matrix.shard }}of4.json
+
+      - name: Save smoke checkpoint
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .smoke-progress-shard${{ matrix.shard }}of4.json
+          key: smoke-full-${{ github.sha }}-shard${{ matrix.shard }}
+
+      - name: Upload smoke screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-full-screenshots-shard-${{ matrix.shard }}
+          path: docs/screens/
+          if-no-files-found: ignore
