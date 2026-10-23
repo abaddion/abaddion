@@ -16,6 +16,11 @@ function initialCardIndex(content) {
 }
 
 function scheduleWebGLBoot(callback) {
+    const smokeBoot = location.search.includes('smoke=1');
+    if (smokeBoot) {
+        setTimeout(callback, 0);
+        return;
+    }
     if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(callback, { timeout: 1500 });
     } else {

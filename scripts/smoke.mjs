@@ -174,8 +174,14 @@ if (!baseUrl) {
     console.log('Smoke server', baseUrl);
 }
 
+function smokeUrl(path = '/') {
+    const u = new URL(path, baseUrl);
+    u.searchParams.set('smoke', '1');
+    return u.toString();
+}
+
 async function waitApp(page) {
-    await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 90000 });
+    await page.goto(smokeUrl('/'), { waitUntil: 'networkidle0', timeout: 90000 });
     await page.waitForFunction(() => window.app?.content, { timeout: 30000 });
     await page.waitForFunction(
         () =>
@@ -256,11 +262,11 @@ async function runViewport(vp) {
 
     const routes = ['/', '/canvas', '/code', '/about'];
     for (const r of routes) {
-        await page.goto(baseUrl + r, { waitUntil: 'networkidle0', timeout: 60000 });
+        await page.goto(smokeUrl(r), { waitUntil: 'networkidle0', timeout: 60000 });
         await page.waitForFunction(() => window.app?.content, { timeout: 20000 });
     }
 
-    await page.goto(baseUrl, { waitUntil: 'networkidle0' });
+    await page.goto(smokeUrl('/'), { waitUntil: 'networkidle0' });
     await waitApp(page);
 
     for (let i = 0; i < 6; i++) {

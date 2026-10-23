@@ -63,7 +63,8 @@ class WebGLLayer {
 
         this.clock = new this.THREE.Clock();
 
-        if (this.renderer.compileAsync) {
+        const smokeBoot = location.search.includes('smoke=1');
+        if (!smokeBoot && this.renderer.compileAsync) {
             await this.renderer.compileAsync(this.scene, this.camera);
         }
         await yieldToMain();
