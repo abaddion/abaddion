@@ -277,12 +277,21 @@ class WebGLLayer {
             reducedMotion: this.reducedMotion
         });
         this.canvasDetail = new CanvasDetail({
-            onClose: () => {
+            onBackToCorridor: () => this.backToCorridorFromDetail(),
+            onSlugRoute: (slug, { replace }) => {
+                this.corridor?.focusBySlug(slug);
+                const path = `/canvas/${slug}`;
+                if (location.pathname !== path) {
+                    if (replace) history.replaceState({}, '', path);
+                    else history.pushState({}, '', path);
+                }
+                this.renderLoop?.ping();
+            },
+            onClosed: () => {
                 this._restoreDetailCorridorMesh();
                 this.detailFly?.cancel();
                 this.renderLoop?.ping();
-            },
-            onNavigateSlug: () => this.renderLoop?.ping()
+            }
         });
         this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
         patchAppState({ canvasSystems: 'loaded' });
@@ -324,7 +333,7 @@ class WebGLLayer {
         }
         this.detailFly?.cancel();
         this._restoreDetailCorridorMesh();
-        this.canvasDetail?.close();
+        this.canvasDetail?.hide();
     }
 
     corridorScroll(delta) {
@@ -354,6 +363,7 @@ class WebGLLayer {
         this._detailOpening = true;
         try {
             await this.ensureCanvasSystems();
+            this.corridor?.focusBySlug(slug);
             const mesh = this.corridor?.getMeshForSlug(slug) ?? null;
             this._detailCorridorMesh = mesh;
             let handoffRect;
@@ -362,20 +372,67 @@ class WebGLLayer {
                 handoffRect = await this.detailFly.start(mesh);
             }
             await this.canvasDetail.open(slug, handoffRect?.width > 0 ? { handoffRect } : {});
+            this.syncCanvasTopbarBack();
         } finally {
             this._detailOpening = false;
         }
         this.renderLoop?.ping();
     }
 
+    closeCanvasDetailFromRoute() {
+        if (!this.isDetailOpen()) return;
+        const slug = this.canvasDetail.currentSlug;
+        this.canvasDetail.hide();
+        if (slug) this.corridor?.focusBySlug(slug);
+        this.syncCanvasTopbarBack();
+    }
+
+    backToCorridorFromDetail() {
+        if (!this.isDetailOpen()) return;
+        const slug = this.canvasDetail.currentSlug;
+        if (slug) this.corridor?.focusBySlug(slug);
+        this.closeCanvasDetailFromRoute();
+        if (/^\/canvas\/[^/]+/.test(location.pathname)) {
+            this.router.navigate('/canvas', true);
+        }
+    }
+
+    syncCanvasTopbarBack() {
+        const btn = document.querySelector('.floor-card.floor-view--canvas.is-open .floor-view-back');
+        if (!btn) return;
+        if (this.isDetailOpen()) {
+            if (!btn.dataset.stackLabel) btn.dataset.stackLabel = btn.textContent.trim();
+            btn.textContent = '← corridor';
+            btn.setAttribute('aria-label', 'Back to corridor');
+        } else if (btn.dataset.stackLabel) {
+            btn.textContent = btn.dataset.stackLabel;
+            btn.setAttribute('aria-label', 'Back to stack');
+        }
+    }
+
     handleRoute({ index, openOnLoad, scrollContact, canvasSlug }) {
-        this.navigateToFloor(index, this.router.routeForIndex(index), { skipHistory: true });
-        if (openOnLoad) {
-            this.openFloor(index, true);
+        const floorRoute = this.router.routeForIndex(index);
+        const canvasFloorOpen =
+            this.interactionState.isOpen() &&
+            this.interactionState.floorIndex === this.canvasFloorIndex &&
+            index === this.canvasFloorIndex;
+
+        if (!canvasFloorOpen) {
+            this.navigateToFloor(index, floorRoute, { skipHistory: true });
+            if (openOnLoad) {
+                this.openFloor(index, true);
+            }
+            if (canvasSlug) {
+                setTimeout(() => this.openCanvasDetail(canvasSlug), 700);
+            }
+        } else if (canvasSlug) {
+            if (!this.isDetailOpen() || this.canvasDetail.currentSlug !== canvasSlug) {
+                void this.openCanvasDetail(canvasSlug);
+            }
+        } else if (this.isDetailOpen()) {
+            this.closeCanvasDetailFromRoute();
         }
-        if (canvasSlug) {
-            setTimeout(() => this.openCanvasDetail(canvasSlug), 700);
-        }
+
         if (scrollContact) {
             setTimeout(() => this.cardLayer.scrollToContact(), 300);
         }

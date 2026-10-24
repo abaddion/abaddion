@@ -123,6 +123,17 @@ export class CanvasCorridor {
         this.targetCameraZ = this.meshes[next].userData.z + 1.2;
     }
 
+    /** Restore corridor camera to a painting after detail (no walk reset). */
+    focusBySlug(slug) {
+        const idx = this.meshes.findIndex((m) => m.userData.slug === slug);
+        if (idx < 0) return;
+        this.focusIndex = idx;
+        const z = this.meshes[idx].userData.z + 1.2;
+        this.targetCameraZ = z;
+        this.cameraZ = z;
+        this._syncFocusFromCamera();
+    }
+
     get progress() {
         return THREE.MathUtils.clamp(-this.cameraZ / Math.max(1, this.length), 0, 1);
     }

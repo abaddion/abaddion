@@ -8,6 +8,7 @@ import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { acquireSmokeLock } from './lib/smoke-lock.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const shotsDir = path.join(root, 'docs/screens');
@@ -463,6 +464,70 @@ async function openDetailViaCorridorCenter(page, vp, slug = null) {
     return { ok: false, reason: 'detail did not open', slug: tap.slug };
 }
 
+async function waitDetailClosed(page) {
+    await page.waitForFunction(
+        () =>
+            !window.app?.webgl?.canvasDetail ||
+            window.app.webgl.canvasDetail.el?.hidden !== false,
+        { timeout: 30000 }
+    );
+}
+
+async function waitDetailOpen(page) {
+    await page.waitForFunction(
+        () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+        { timeout: 30000 }
+    );
+}
+
+async function closeDetailViaCorridorBack(page) {
+    await page.evaluate(() => {
+        document.querySelector('.canvas-detail .detail-back')?.click();
+    });
+    await waitDetailClosed(page);
+    await page.waitForFunction(
+        () => location.pathname.replace(/\/+$/, '') === '/canvas',
+        { timeout: 15000 }
+    );
+}
+
+async function exerciseInquiryModal(page, vp) {
+    await page.evaluate(() => document.querySelector('.detail-inquire-btn')?.click());
+    await page.waitForFunction(
+        () => document.querySelector('.detail-inquiry-dialog')?.open === true,
+        { timeout: 10000 }
+    );
+    const prefilled = await page.evaluate(
+        () => document.querySelector('.detail-inquiry-dialog [name="painting"]')?.value ?? ''
+    );
+    if (!prefilled.trim()) {
+        errors.push(`${vp.name}: inquiry modal missing prefilled painting title`);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(
+        () => !document.querySelector('.detail-inquiry-dialog')?.open,
+        { timeout: 10000 }
+    );
+}
+
+async function exerciseDetailPrevNext(page, vp) {
+    const canNext = await page.evaluate(() => !document.querySelector('.detail-next')?.hidden);
+    if (!canNext) return;
+    const slugBefore = await page.evaluate(() => window.app.webgl.canvasDetail.currentSlug);
+    await page.evaluate(() => document.querySelector('.detail-next')?.click());
+    await page.waitForFunction(
+        (s) => window.app.webgl.canvasDetail.currentSlug !== s,
+        { timeout: 15000 },
+        slugBefore
+    );
+    await page.evaluate(() => document.querySelector('.detail-prev')?.click());
+    await page.waitForFunction(
+        (s) => window.app.webgl.canvasDetail.currentSlug === s,
+        { timeout: 15000 },
+        slugBefore
+    );
+}
+
 async function runFloorRailSmoke(page) {
     await page.evaluate(() => window.app.openFloor(1));
     await new Promise((r) => setTimeout(r, 400));
@@ -580,13 +645,11 @@ async function runViewportFull(vp) {
         });
         await new Promise((r) => setTimeout(r, 400));
     }
-    for (const slug of aspectSlugs) {
+    for (let i = 0; i < aspectSlugs.length; i++) {
+        const slug = aspectSlugs[i];
         if (vp.mobile) {
             await page.evaluate((s) => window.app.openCanvasDetail(s), slug);
-            await page.waitForFunction(
-                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
-                { timeout: 20000 }
-            );
+            await waitDetailOpen(page);
         } else {
             const opened = await openDetailViaCorridorCenter(page, vp, slug);
             if (!opened.ok) {
@@ -604,13 +667,17 @@ async function runViewportFull(vp) {
         if (!layout.imgInViewport || layout.overlap) {
             errors.push(`${vp.name}: detail layout ${slug} ${JSON.stringify(layout)}`);
         }
-        await page.evaluate(() => document.querySelector('.detail-inquire-btn')?.click());
-        await new Promise((r) => setTimeout(r, 200));
-        await page.evaluate(() => {
-            window.app.webgl?.canvasDetail?.close?.();
-            for (let i = 0; i < 6; i++) window.app.webgl?.frameRender?.();
-        });
-        await new Promise((r) => setTimeout(r, 300));
+        await exerciseInquiryModal(page, vp);
+        if (i === 0) {
+            await exerciseDetailPrevNext(page, vp);
+        }
+        if (i === 1) {
+            await page.keyboard.press('Escape');
+            await waitDetailClosed(page);
+        } else {
+            await closeDetailViaCorridorBack(page);
+        }
+        await new Promise((r) => setTimeout(r, 250));
     }
     await page.evaluate(() => window.app.closeFloor());
     await new Promise((r) => setTimeout(r, 700));
@@ -699,8 +766,14 @@ async function runViewportFull(vp) {
                 `${vp.name}: corridor ${verb} did not open detail (${opened.slug ?? '?'}) ${opened.reason ?? ''}`.trim()
             );
         } else {
-            await page.keyboard.press('Escape');
-            await new Promise((r) => setTimeout(r, 300));
+            await exerciseInquiryModal(page, vp);
+            await exerciseDetailPrevNext(page, vp);
+            await page.evaluate(() => history.back());
+            await waitDetailClosed(page);
+            await page.waitForFunction(
+                () => location.pathname.replace(/\/+$/, '') === '/canvas',
+                { timeout: 15000 }
+            );
         }
     }
 
@@ -797,6 +870,8 @@ async function runFullSuite() {
         }
     }
 }
+
+acquireSmokeLock('smoke-full');
 
 try {
     await runFullSuite();

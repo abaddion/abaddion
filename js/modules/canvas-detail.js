@@ -1,5 +1,5 @@
 /**
- * Technical-drawing detail view — DOM img + SVG leaders, inquiry panel.
+ * Technical-drawing detail view — DOM img + SVG leaders, inquiry modal.
  */
 
 import { getItems } from './content-loader.js';
@@ -18,8 +18,9 @@ function fullImageSrc(item) {
 
 export class CanvasDetail {
     constructor(options = {}) {
-        this.onClose = options.onClose ?? (() => {});
-        this.onNavigateSlug = options.onNavigateSlug ?? (() => {});
+        this.onBackToCorridor = options.onBackToCorridor ?? (() => {});
+        this.onSlugRoute = options.onSlugRoute ?? (() => {});
+        this.onClosed = options.onClosed ?? (() => {});
 
         this.el = document.createElement('div');
         this.el.id = 'canvas-detail';
@@ -31,51 +32,78 @@ export class CanvasDetail {
                 <svg class="detail-annotations" aria-hidden="true"></svg>
                 <img class="detail-img" alt="" decoding="async" />
             </div>
-            <div class="detail-inquiry" hidden>
-                <form class="inquiry-form glass-panel" novalidate>
-                    <h3>Inquire</h3>
+            <button type="button" class="detail-prev" hidden>
+                <span class="detail-nav-label">‹ prev</span>
+                <span class="detail-nav-title"></span>
+            </button>
+            <button type="button" class="detail-next" hidden>
+                <span class="detail-nav-label">next ›</span>
+                <span class="detail-nav-title"></span>
+            </button>
+            <dialog class="detail-inquiry-dialog glass-panel" aria-labelledby="detail-inquiry-title">
+                <button type="button" class="detail-inquiry-close" aria-label="Close inquiry">×</button>
+                <form class="inquiry-form" novalidate>
+                    <h3 id="detail-inquiry-title">Inquire</h3>
                     <input type="hidden" name="painting" />
                     <label>Name<input name="name" required autocomplete="name" /></label>
                     <label>Email<input name="email" type="email" required autocomplete="email" /></label>
                     <label>Message<textarea name="message" rows="4" required></textarea></label>
                     <button type="submit">Send (Phase 2)</button>
                 </form>
-            </div>
-            <button type="button" class="detail-prev" aria-label="Previous">‹</button>
-            <button type="button" class="detail-next" aria-label="Next">›</button>
+            </dialog>
         `;
         document.body.appendChild(this.el);
 
         this.img = this.el.querySelector('.detail-img');
         this.svg = this.el.querySelector('.detail-annotations');
-        this.inquiry = this.el.querySelector('.detail-inquiry');
+        this.inquiryDialog = this.el.querySelector('.detail-inquiry-dialog');
+        this.prevBtn = this.el.querySelector('.detail-prev');
+        this.nextBtn = this.el.querySelector('.detail-next');
+        this.inquireTrigger = null;
+        this._suppressCorridorEscapeUntil = 0;
         this.items = getItems('canvas');
         this.currentSlug = null;
         this.decodeCache = new Map();
 
-        this.el.querySelector('.detail-back').addEventListener('click', () => this.close());
-        this.el.querySelector('.detail-prev').addEventListener('click', () => this.step(-1));
-        this.el.querySelector('.detail-next').addEventListener('click', () => this.step(1));
-        this.el.querySelector('.inquiry-form').addEventListener('submit', (e) => e.preventDefault());
+        this.el.querySelector('.detail-back').addEventListener('click', () => this.requestBackToCorridor());
+        this.prevBtn.addEventListener('click', () => this.step(-1));
+        this.nextBtn.addEventListener('click', () => this.step(1));
+        this.inquiryDialog.querySelector('.inquiry-form').addEventListener('submit', (e) => e.preventDefault());
+        this.inquiryDialog.querySelector('.detail-inquiry-close')?.addEventListener('click', () => this.closeInquiry());
+        this.inquiryDialog.addEventListener('click', (e) => {
+            if (e.target === this.inquiryDialog) this.closeInquiry();
+        });
+        this.inquiryDialog.addEventListener('close', () => {
+            this.inquireTrigger?.focus?.();
+            this.inquireTrigger = null;
+        });
 
-        window.addEventListener('keydown', (e) => {
-            if (this.el.hidden) return;
-            if (e.code === 'Escape') {
-                if (!this.inquiry.hidden) {
-                    this.inquiry.hidden = true;
+        window.addEventListener(
+            'keydown',
+            (e) => {
+                if (this.el.hidden) return;
+                if (e.code === 'Escape') {
+                    if (this.inquiryDialog.open || performance.now() < this._suppressCorridorEscapeUntil) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (this.inquiryDialog.open) this.closeInquiry();
+                        return;
+                    }
+                    e.preventDefault();
+                    this.requestBackToCorridor();
                     return;
                 }
-                e.preventDefault();
-                this.close();
-            }
-            if (e.code === 'ArrowLeft') this.step(-1);
-            if (e.code === 'ArrowRight') this.step(1);
-        });
+                if (this.inquiryDialog.open) return;
+                if (e.code === 'ArrowLeft') this.step(-1);
+                if (e.code === 'ArrowRight') this.step(1);
+            },
+            true
+        );
     }
 
     /**
      * @param {string} slug
-     * @param {{ handoffRect?: DOMRect }} [options]
+     * @param {{ handoffRect?: DOMRect, replaceRoute?: boolean }} [options]
      */
     async open(slug, options = {}) {
         const item = this.items.find((i) => i.slug === slug);
@@ -114,28 +142,67 @@ export class CanvasDetail {
         }
 
         requestAnimationFrame(() => this._drawAnnotations(item));
-        const route = `/canvas/${slug}`;
-        if (location.pathname !== route) history.replaceState({}, '', route);
-        this.onNavigateSlug(slug);
+        this._updateNavButtons();
+        this.onSlugRoute(slug, { replace: !!options.replaceRoute });
     }
 
-    close() {
+    /** Hide detail UI (route / corridor restore handled by WebGL layer). */
+    hide() {
+        if (this.inquiryDialog.open) this.inquiryDialog.close();
         this.el.hidden = true;
-        this.inquiry.hidden = true;
         document.documentElement.classList.remove('detail-open');
-        this.onClose();
+        this.onClosed();
+    }
+
+    requestBackToCorridor() {
+        if (this.inquiryDialog.open) {
+            this.closeInquiry();
+            return;
+        }
+        this.onBackToCorridor();
     }
 
     step(dir) {
         const idx = this.items.findIndex((i) => i.slug === this.currentSlug);
-        const next = this.items[(idx + dir + this.items.length) % this.items.length];
-        if (next) this.open(next.slug);
+        if (idx < 0) return;
+        const nextIdx = idx + dir;
+        if (nextIdx < 0 || nextIdx >= this.items.length) return;
+        this.open(this.items[nextIdx].slug, { replaceRoute: true });
     }
 
-    openInquiry() {
+    _updateNavButtons() {
+        const idx = this.items.findIndex((i) => i.slug === this.currentSlug);
+        const prev = idx > 0 ? this.items[idx - 1] : null;
+        const next = idx >= 0 && idx < this.items.length - 1 ? this.items[idx + 1] : null;
+
+        this.prevBtn.hidden = !prev;
+        this.nextBtn.hidden = !next;
+
+        const prevTitle = this.prevBtn.querySelector('.detail-nav-title');
+        const nextTitle = this.nextBtn.querySelector('.detail-nav-title');
+        if (prev) {
+            this.prevBtn.title = prev.title;
+            if (prevTitle) prevTitle.textContent = prev.title;
+        } else if (prevTitle) prevTitle.textContent = '';
+        if (next) {
+            this.nextBtn.title = next.title;
+            if (nextTitle) nextTitle.textContent = next.title;
+        } else if (nextTitle) nextTitle.textContent = '';
+    }
+
+    openInquiry(triggerEl) {
         const item = this.items.find((i) => i.slug === this.currentSlug);
-        this.inquiry.hidden = false;
-        this.inquiry.querySelector('[name="painting"]').value = item?.title ?? '';
+        this.inquireTrigger = triggerEl ?? document.activeElement;
+        this.inquiryDialog.querySelector('[name="painting"]').value = item?.title ?? '';
+        if (typeof this.inquiryDialog.showModal === 'function') {
+            this.inquiryDialog.showModal();
+        }
+    }
+
+    closeInquiry() {
+        if (!this.inquiryDialog.open) return;
+        this._suppressCorridorEscapeUntil = performance.now() + 120;
+        this.inquiryDialog.close();
     }
 
     async _ensureDecoded(src) {
@@ -207,7 +274,8 @@ export class CanvasDetail {
         );
 
         this.svg.innerHTML = lines.join('');
-        this.svg.querySelector('.detail-inquire-btn')?.addEventListener('click', () => this.openInquiry());
+        const inquireBtn = this.svg.querySelector('.detail-inquire-btn');
+        inquireBtn?.addEventListener('click', () => this.openInquiry(inquireBtn));
     }
 
     /** @returns {{ imgInViewport: boolean, overlap: boolean }} */
