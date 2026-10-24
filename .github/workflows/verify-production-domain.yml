@@ -1,0 +1,27 @@
+# Non-required: after Vercel production deploy on main, assert www serves that commit.
+name: Verify production domain
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full git commit SHA deployed to production
+        required: true
+
+jobs:
+  verify-domain:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.ref == 'refs/heads/main' &&
+       (github.event.deployment.environment == 'Production' ||
+        github.event.deployment.environment == 'production'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify www.abaddion.com build marker
+        env:
+          EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || github.event.deployment.sha }}
+          PRODUCTION_URL: https://www.abaddion.com
+        run: node scripts/verify-production-domain.mjs
