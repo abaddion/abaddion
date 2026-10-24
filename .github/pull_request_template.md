@@ -8,7 +8,7 @@
 
 ## Smoke test result
 
-<!-- Paste output: `node scripts/smoke.mjs` — PASSED / FAILED + date -->
+<!-- CI: check-static + smoke-boot (automatic). Paste `npm run smoke:full` — PASSED / FAILED + date -->
 
 ## Perf numbers
 

@@ -25,7 +25,8 @@ Vanilla ES modules + vendored Three.js r160. Five stacked board floors, nova ope
 ```bash
 npm install          # puppeteer for smoke (optional)
 ./start.sh           # npx serve — http://localhost:8799
-node scripts/smoke.mjs
+npm run check:static && npm run smoke:boot
+npm run smoke:full   # manual, before merge
 ```
 
 ## Deploy

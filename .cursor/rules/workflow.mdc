@@ -17,12 +17,13 @@ alwaysApply: true
 2. Branch: `phase-<n>-<short-name>` (e.g. `phase-1.5-detail-webp`)
 3. Small commits: `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`
 4. Never commit `.env.local` or secrets
-5. Run `node scripts/smoke.mjs` locally before opening a PR
+5. Run `npm run check:static` and `npm run smoke:boot` before opening a PR; run `npm run smoke:full` locally and paste results in the PR body
 6. `gh pr create` — fill `.github/pull_request_template.md`
 7. **Do not merge** unless the owner says “merge”
 8. After merge, report production deployment ID + previous ID for Instant Rollback
 
 ## References
 
-- Smoke: `node scripts/smoke.mjs`
+- CI gates: `npm run check:static`, `npm run smoke:boot`
+- Manual: `npm run smoke:full`
 - Lighthouse preview: `node scripts/run-lighthouse-preview.mjs <preview-url>` (needs bypass secret in `.env.local` for protected previews)

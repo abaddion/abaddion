@@ -3,6 +3,7 @@
  */
 
 import { Utils, yieldToMain } from './modules/utils.js';
+import { patchAppState } from './modules/app-state.js';
 
 function detectWebGL() {
     try {
@@ -36,16 +37,22 @@ class WebGLLayer {
         this.THREE = null;
         this.corridor = null;
         this.canvasDetail = null;
+        this.detailFly = null;
+        this._detailOpening = false;
+        this._detailCorridorMesh = null;
         this.novaFallback = null;
         this.canvasFloorIndex = 1;
+        this._canvasSystemsPromise = null;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
     }
 
     async initAsync() {
+        patchAppState({ webglPhase: 'init' });
         if (!detectWebGL()) {
             document.documentElement.classList.add('no-webgl');
+            patchAppState({ webglPhase: 'unsupported' });
             return;
         }
 
@@ -58,6 +65,8 @@ class WebGLLayer {
         await this.initSystems();
         await yieldToMain();
 
+        this.clock = new this.THREE.Clock();
+
         if (this.renderer.compileAsync) {
             await this.renderer.compileAsync(this.scene, this.camera);
         }
@@ -65,9 +74,9 @@ class WebGLLayer {
 
         this.setupEvents();
         this.syncFromShellFocus();
-        this.clock = new this.THREE.Clock();
         this.scheduleAtlasBuild();
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
+        patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
     }
 
     scheduleAtlasBuild() {
@@ -149,20 +158,9 @@ class WebGLLayer {
         const { CustomCursor } = await import('./modules/cursor.js');
         const { FloorInput } = await import('./modules/input.js');
         const { NovaFallback } = await import('./modules/nova-fallback.js');
-        const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
-        const { CanvasDetail } = await import('./modules/canvas-detail.js');
 
         this.canvasFloorIndex = floors.findIndex((f) => f.id === 'canvas');
         this.novaFallback = new NovaFallback();
-        this.corridor = new CanvasCorridor(this.scene, {
-            qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
-            onPaintingClick: (slug) => this.openCanvasDetail(slug)
-        });
-        this.canvasDetail = new CanvasDetail({
-            onClose: () => this.renderLoop.ping(),
-            onNavigateSlug: () => this.renderLoop.ping()
-        });
-        this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
 
         this.interactionState = new InteractionState();
         this.interactionState.set(InteractionStates.FOCUS, this.shell.focusIndex);
@@ -171,11 +169,13 @@ class WebGLLayer {
             onFrame: () => this.frameRender(),
             getMode: (idleMs) => {
                 const detailOpen = this.canvasDetail && !this.canvasDetail.el.hidden;
+                const detailFlying = this.detailFly?.isActive();
                 if (
                     idleMs > 8000 &&
                     !this.transition.isAnimating() &&
                     !this.transition.isOpen() &&
                     !detailOpen &&
+                    !detailFlying &&
                     !this.cameraRig.isSettling() &&
                     !this.postProcessing.isComposerActive()
                 ) {
@@ -185,6 +185,7 @@ class WebGLLayer {
                     this.transition.isAnimating() ||
                     this.transition.isOpen() ||
                     detailOpen ||
+                    detailFlying ||
                     this.corridor?.root?.visible ||
                     this.cameraRig.isSettling() ||
                     this.postProcessing.isComposerActive()
@@ -203,7 +204,7 @@ class WebGLLayer {
             cameraRig: this.cameraRig,
             reducedMotion: this.reducedMotion,
             novaFallback: this.novaFallback,
-            onActivity: () => this.renderLoop.ping(),
+            onActivity: () => this.renderLoop?.ping(),
             onFloorOpen: (idx) => this.onFloorOpened(idx),
             onFloorClose: () => this.onFloorClosed()
         });
@@ -212,7 +213,7 @@ class WebGLLayer {
         this.gyroscope.onChange((v) => {
             this.gyroOffset.x = v.x;
             this.gyroOffset.y = v.y;
-            this.renderLoop.ping();
+            this.renderLoop?.ping();
         });
 
         this.cursor = new CustomCursor();
@@ -229,12 +230,46 @@ class WebGLLayer {
             isTransitioning: () => this.interactionState.isTransitioning(),
             onCancelTransition: () =>
                 this.transition.interruptToFocus(this.focusIndex),
-            onActivity: () => this.renderLoop.ping(),
+            onActivity: () => this.renderLoop?.ping(),
             isCorridorActive: () => this.isCorridorActive(),
             isDetailOpen: () => this.isDetailOpen(),
             onCorridorScroll: (delta) => this.corridorScroll(delta),
             onCorridorStep: (delta) => this.corridor?.stepPainting(delta)
         });
+    }
+
+    ensureCanvasSystems() {
+        if (this._canvasSystemsPromise) return this._canvasSystemsPromise;
+        this._canvasSystemsPromise = this._loadCanvasSystems();
+        return this._canvasSystemsPromise;
+    }
+
+    async _loadCanvasSystems() {
+        if (this.corridor) return;
+        patchAppState({ canvasSystems: 'loading' });
+        const { CanvasCorridor } = await import('./modules/canvas-corridor.js');
+        const { CanvasDetail } = await import('./modules/canvas-detail.js');
+        const { DetailFly } = await import('./modules/detail-fly.js');
+
+        this.corridor = new CanvasCorridor(this.scene, {
+            qualityTier: this.quality.glassBlurAllowed ? 'high' : 'low',
+            onPaintingClick: (slug) => this.openCanvasDetail(slug)
+        });
+        this.detailFly = new DetailFly({
+            scene: this.scene,
+            camera: this.camera,
+            reducedMotion: this.reducedMotion
+        });
+        this.canvasDetail = new CanvasDetail({
+            onClose: () => {
+                this._restoreDetailCorridorMesh();
+                this.detailFly?.cancel();
+                this.renderLoop?.ping();
+            },
+            onNavigateSlug: () => this.renderLoop?.ping()
+        });
+        this.cardLayer.setCanvasDetailOpener((slug) => this.openCanvasDetail(slug));
+        patchAppState({ canvasSystems: 'loaded' });
     }
 
     isCorridorActive() {
@@ -251,9 +286,12 @@ class WebGLLayer {
 
     onFloorOpened(index) {
         if (index === this.canvasFloorIndex) {
-            this.stack.root.visible = false;
-            this.labels.container.style.visibility = 'hidden';
-            this.corridor.setVisible(true);
+            void this.ensureCanvasSystems().then(() => {
+                this.stack.root.visible = false;
+                this.labels.container.style.visibility = 'hidden';
+                this.corridor?.setVisible(true);
+                this.renderLoop?.ping();
+            });
         }
     }
 
@@ -261,18 +299,45 @@ class WebGLLayer {
         this.stack.root.visible = true;
         this.labels.container.style.visibility = '';
         this.corridor?.setVisible(false);
+        this.detailFly?.cancel();
+        this._restoreDetailCorridorMesh();
         this.canvasDetail?.close();
     }
 
     corridorScroll(delta) {
+        if (!this.corridor) {
+            void this.ensureCanvasSystems();
+            return;
+        }
         const step = delta > 0 ? 0.04 : -0.04;
         this.corridor.setProgress(this.corridor.progress + step);
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
-    openCanvasDetail(slug) {
-        this.canvasDetail.open(slug);
-        this.renderLoop.ping();
+    _restoreDetailCorridorMesh() {
+        if (this._detailCorridorMesh) {
+            this._detailCorridorMesh.visible = true;
+            this._detailCorridorMesh = null;
+        }
+    }
+
+    async openCanvasDetail(slug) {
+        if (this._detailOpening) return;
+        this._detailOpening = true;
+        try {
+            await this.ensureCanvasSystems();
+            const mesh = this.corridor?.getMeshForSlug(slug) ?? null;
+            this._detailCorridorMesh = mesh;
+            let handoffRect;
+            if (mesh && this.detailFly) {
+                this.renderLoop?.ping();
+                handoffRect = await this.detailFly.start(mesh);
+            }
+            await this.canvasDetail.open(slug, handoffRect?.width > 0 ? { handoffRect } : {});
+        } finally {
+            this._detailOpening = false;
+        }
+        this.renderLoop?.ping();
     }
 
     handleRoute({ index, openOnLoad, scrollContact, canvasSlug }) {
@@ -297,7 +362,7 @@ class WebGLLayer {
     }
 
     navigateToFloor(index, route, { skipHistory = false } = {}) {
-        this.transition.interruptToFocus(index);
+        this.transition?.interruptToFocus(index);
         this.focusIndex = index;
         this.shell.focusIndex = index;
         this.stack?.setFocusedFloor(index);
@@ -327,14 +392,14 @@ class WebGLLayer {
         if (!fromRoute && location.pathname.replace(/\/+$/, '') !== route.replace(/\/+$/, '')) {
             this.router.navigate(route, true);
         }
-        this.transition.open(index);
-        this.renderLoop.ping();
+        this.transition?.open(index);
+        this.renderLoop?.ping();
         this.updateHeroHandoffState();
     }
 
     closeFloor() {
-        this.transition.close();
-        this.renderLoop.ping();
+        this.transition?.close();
+        this.renderLoop?.ping();
     }
 
     updateHeroHandoffState() {
@@ -353,7 +418,7 @@ class WebGLLayer {
     }
 
     setupEvents() {
-        const ping = () => this.renderLoop.ping();
+        const ping = () => this.renderLoop?.ping();
         window.addEventListener('resize', () => this.onResize());
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
@@ -362,7 +427,7 @@ class WebGLLayer {
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) this.renderLoop.stop();
-            else this.renderLoop.ping();
+            else this.renderLoop?.ping();
         });
 
         window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
@@ -391,11 +456,11 @@ class WebGLLayer {
     onMouseMove(event) {
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     onKeyDown(event) {
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
         if (this.isCorridorActive() && (event.code === 'ArrowLeft' || event.code === 'ArrowRight')) {
             event.preventDefault();
             this.corridor.stepPainting(event.code === 'ArrowRight' ? 1 : -1);
@@ -418,7 +483,7 @@ class WebGLLayer {
         this.camera.updateProjectionMatrix();
         this.stack?.applyViewportLayout();
         this.postProcessing?.resize(w, h);
-        this.renderLoop.ping();
+        this.renderLoop?.ping();
     }
 
     updateParallax() {
@@ -447,20 +512,22 @@ class WebGLLayer {
     }
 
     frameRender() {
+        if (!this.clock) return;
         const frameStart = performance.now();
         const dt = this.clock.getDelta();
         const time = this.clock.getElapsedTime();
 
         this.updateParallax();
-        if (this.isCorridorActive()) {
+        if (this.isCorridorActive() && this.corridor) {
             this.corridor.update(dt, this.camera);
-        } else {
+        } else if (!this.isCorridorActive()) {
             this.cameraRig.update(dt);
             this.stack.update(time, dt, this.camera, this.parallax);
             this.labels.update(this.camera);
             this.labels.setFocusIndex(this.focusIndex);
         }
         this.transition.update(this.camera, performance.now());
+        this.detailFly?.update();
 
         this.postProcessing.update(time, dt);
         this.renderer.info.reset();
@@ -494,8 +561,13 @@ class WebGLLayer {
 
 export async function attachWebGL(shell) {
     const layer = new WebGLLayer(shell);
-    await layer.initAsync();
     shell.webgl = layer;
+    await layer.initAsync();
+    if (!layer.renderer) {
+        document.documentElement.classList.add('no-webgl');
+        patchAppState({ webglPhase: 'failed' });
+        return layer;
+    }
     // Capture prototype method before defineProperty shadows instance goToFloor (rail uses shell.goToFloor).
     const shellGoToFloor = Object.getPrototypeOf(shell).goToFloor.bind(shell);
     Object.defineProperty(window.app, 'stack', { get: () => layer.stack });
@@ -512,5 +584,7 @@ export async function attachWebGL(shell) {
     Object.defineProperty(window.app, 'canvasDetail', { get: () => layer.canvasDetail });
     Object.defineProperty(window.app, 'frame', { get: () => layer.frame });
     Object.defineProperty(window.app, 'frameRender', { value: () => layer.frameRender() });
+    layer.bootComplete = true;
+    patchAppState({ webglPhase: 'attached', bootComplete: true });
     return layer;
 }

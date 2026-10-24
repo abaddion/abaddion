@@ -29,12 +29,13 @@
           "medium": "placeholder medium",
           "size": "40×50 cm",
           "aspectRatio": "3 / 4",
-          "thumb": "/assets/placeholder/placeholder-01-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-01-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-01-thumb.webp",
+          "image": "/assets/placeholder/placeholder-01-full.webp",
           "placeholder": true,
           "approved": true,
           "price": "€ 1,200",
-          "availability": "available"
+          "availability": "available",
+          "imageWebp": "/assets/placeholder/placeholder-01-full.webp"
         },
         {
           "slug": "placeholder-02",
@@ -43,10 +44,11 @@
           "medium": "placeholder medium",
           "size": "110×110 cm",
           "aspectRatio": "4 / 5",
-          "thumb": "/assets/placeholder/placeholder-02-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-02-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-02-thumb.webp",
+          "image": "/assets/placeholder/placeholder-02-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-02-full.webp"
         },
         {
           "slug": "placeholder-03",
@@ -55,10 +57,11 @@
           "medium": "placeholder medium",
           "size": "60×80 cm",
           "aspectRatio": "1 / 1",
-          "thumb": "/assets/placeholder/placeholder-03-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-03-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-03-thumb.webp",
+          "image": "/assets/placeholder/placeholder-03-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-03-full.webp"
         },
         {
           "slug": "placeholder-04",
@@ -67,10 +70,11 @@
           "medium": "placeholder medium",
           "size": "90×120 cm",
           "aspectRatio": "4 / 3",
-          "thumb": "/assets/placeholder/placeholder-04-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-04-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-04-thumb.webp",
+          "image": "/assets/placeholder/placeholder-04-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-04-full.webp"
         },
         {
           "slug": "placeholder-05",
@@ -79,10 +83,11 @@
           "medium": "placeholder medium",
           "size": "30×40 cm",
           "aspectRatio": "16 / 9",
-          "thumb": "/assets/placeholder/placeholder-05-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-05-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-05-thumb.webp",
+          "image": "/assets/placeholder/placeholder-05-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-05-full.webp"
         },
         {
           "slug": "placeholder-06",
@@ -91,12 +96,13 @@
           "medium": "placeholder medium",
           "size": "150×100 cm",
           "aspectRatio": "1 / 2",
-          "thumb": "/assets/placeholder/placeholder-06-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-06-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-06-thumb.webp",
+          "image": "/assets/placeholder/placeholder-06-full.webp",
           "placeholder": true,
           "approved": true,
           "price": "€ 1,200",
-          "availability": "available"
+          "availability": "available",
+          "imageWebp": "/assets/placeholder/placeholder-06-full.webp"
         },
         {
           "slug": "placeholder-07",
@@ -105,10 +111,11 @@
           "medium": "placeholder medium",
           "size": "50×50 cm",
           "aspectRatio": "3 / 1",
-          "thumb": "/assets/placeholder/placeholder-07-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-07-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-07-thumb.webp",
+          "image": "/assets/placeholder/placeholder-07-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-07-full.webp"
         },
         {
           "slug": "placeholder-08",
@@ -117,10 +124,11 @@
           "medium": "placeholder medium",
           "size": "70×100 cm",
           "aspectRatio": "3 / 4",
-          "thumb": "/assets/placeholder/placeholder-08-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-08-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-08-thumb.webp",
+          "image": "/assets/placeholder/placeholder-08-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-08-full.webp"
         },
         {
           "slug": "placeholder-09",
@@ -129,10 +137,11 @@
           "medium": "placeholder medium",
           "size": "100×100 cm",
           "aspectRatio": "1 / 1",
-          "thumb": "/assets/placeholder/placeholder-09-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-09-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-09-thumb.webp",
+          "image": "/assets/placeholder/placeholder-09-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-09-full.webp"
         },
         {
           "slug": "placeholder-10",
@@ -141,10 +150,11 @@
           "medium": "placeholder medium",
           "size": "45×60 cm",
           "aspectRatio": "16 / 10",
-          "thumb": "/assets/placeholder/placeholder-10-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-10-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-10-thumb.webp",
+          "image": "/assets/placeholder/placeholder-10-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-10-full.webp"
         },
         {
           "slug": "placeholder-11",
@@ -153,12 +163,13 @@
           "medium": "placeholder medium",
           "size": "80×120 cm",
           "aspectRatio": "2 / 3",
-          "thumb": "/assets/placeholder/placeholder-11-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-11-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-11-thumb.webp",
+          "image": "/assets/placeholder/placeholder-11-full.webp",
           "placeholder": true,
           "approved": true,
           "price": "€ 1,200",
-          "availability": "available"
+          "availability": "available",
+          "imageWebp": "/assets/placeholder/placeholder-11-full.webp"
         },
         {
           "slug": "placeholder-12",
@@ -167,10 +178,11 @@
           "medium": "placeholder medium",
           "size": "55×70 cm",
           "aspectRatio": "3 / 2",
-          "thumb": "/assets/placeholder/placeholder-12-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-12-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-12-thumb.webp",
+          "image": "/assets/placeholder/placeholder-12-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-12-full.webp"
         },
         {
           "slug": "placeholder-13",
@@ -179,10 +191,11 @@
           "medium": "placeholder medium",
           "size": "120×80 cm",
           "aspectRatio": "4 / 5",
-          "thumb": "/assets/placeholder/placeholder-13-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-13-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-13-thumb.webp",
+          "image": "/assets/placeholder/placeholder-13-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-13-full.webp"
         },
         {
           "slug": "placeholder-14",
@@ -191,10 +204,11 @@
           "medium": "placeholder medium",
           "size": "65×85 cm",
           "aspectRatio": "16 / 10",
-          "thumb": "/assets/placeholder/placeholder-14-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-14-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-14-thumb.webp",
+          "image": "/assets/placeholder/placeholder-14-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-14-full.webp"
         },
         {
           "slug": "placeholder-15",
@@ -203,10 +217,11 @@
           "medium": "placeholder medium",
           "size": "75×95 cm",
           "aspectRatio": "1 / 1",
-          "thumb": "/assets/placeholder/placeholder-15-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-15-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-15-thumb.webp",
+          "image": "/assets/placeholder/placeholder-15-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-15-full.webp"
         },
         {
           "slug": "placeholder-16",
@@ -215,12 +230,13 @@
           "medium": "placeholder medium",
           "size": "85×105 cm",
           "aspectRatio": "9 / 16",
-          "thumb": "/assets/placeholder/placeholder-16-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-16-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-16-thumb.webp",
+          "image": "/assets/placeholder/placeholder-16-full.webp",
           "placeholder": true,
           "approved": true,
           "price": "€ 1,200",
-          "availability": "available"
+          "availability": "available",
+          "imageWebp": "/assets/placeholder/placeholder-16-full.webp"
         },
         {
           "slug": "placeholder-17",
@@ -229,10 +245,11 @@
           "medium": "placeholder medium",
           "size": "95×115 cm",
           "aspectRatio": "16 / 9",
-          "thumb": "/assets/placeholder/placeholder-17-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-17-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-17-thumb.webp",
+          "image": "/assets/placeholder/placeholder-17-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-17-full.webp"
         },
         {
           "slug": "placeholder-18",
@@ -241,10 +258,11 @@
           "medium": "placeholder medium",
           "size": "35×45 cm",
           "aspectRatio": "2 / 3",
-          "thumb": "/assets/placeholder/placeholder-18-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-18-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-18-thumb.webp",
+          "image": "/assets/placeholder/placeholder-18-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-18-full.webp"
         },
         {
           "slug": "placeholder-19",
@@ -253,10 +271,11 @@
           "medium": "placeholder medium",
           "size": "140×90 cm",
           "aspectRatio": "3 / 1",
-          "thumb": "/assets/placeholder/placeholder-19-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-19-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-19-thumb.webp",
+          "image": "/assets/placeholder/placeholder-19-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-19-full.webp"
         },
         {
           "slug": "placeholder-20",
@@ -265,10 +284,11 @@
           "medium": "placeholder medium",
           "size": "50×70 cm",
           "aspectRatio": "4 / 3",
-          "thumb": "/assets/placeholder/placeholder-20-thumb.jpg",
-          "image": "/assets/placeholder/placeholder-20-full.jpg",
+          "thumb": "/assets/placeholder/placeholder-20-thumb.webp",
+          "image": "/assets/placeholder/placeholder-20-full.webp",
           "placeholder": true,
-          "approved": true
+          "approved": true,
+          "imageWebp": "/assets/placeholder/placeholder-20-full.webp"
         }
       ]
     },

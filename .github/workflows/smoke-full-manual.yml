@@ -1,0 +1,36 @@
+name: smoke-full (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install Chrome system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgbm1 libxshmfence1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libasound2t64 libpango-1.0-0 libcairo2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for Puppeteer
+        run: npx puppeteer browsers install chrome
+
+      - name: smoke-full
+        run: node scripts/smoke-full.mjs
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-full-screenshots
+          path: docs/screens/
+          if-no-files-found: ignore

@@ -37,10 +37,13 @@ export function failWebGL(reason) {
 
 function installFailureHandlers() {
     window.addEventListener('error', (e) => {
+        window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: e.message || 'error' };
         if (window.app?.webgl) failWebGL(e.message || 'error');
     });
     window.addEventListener('unhandledrejection', (e) => {
-        if (window.app?.webgl) failWebGL(e.reason?.message || 'unhandled rejection');
+        const msg = e.reason?.message || 'unhandled rejection';
+        window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: msg };
+        if (window.app?.webgl) failWebGL(msg);
     });
 }
 
@@ -97,6 +100,10 @@ class ShellApp {
                     .then(({ attachWebGL }) => attachWebGL(this))
                     .catch((err) => {
                         console.error(err);
+                        window.__APP_STATE = {
+                            ...(window.__APP_STATE || {}),
+                            webglBootError: err?.message || String(err)
+                        };
                         failWebGL(err?.message || 'webgl boot failed');
                     });
             });
