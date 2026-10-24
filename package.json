@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "check:static": "node scripts/check-static.mjs",
+    "build": "node scripts/inject-build-meta.mjs",
+    "verify:production-domain": "node scripts/verify-production-domain.mjs",
     "smoke:boot": "node scripts/smoke-boot.mjs",
     "smoke:full": "node scripts/smoke-full.mjs",
     "lighthouse:preview": "node scripts/run-lighthouse-preview.mjs"
