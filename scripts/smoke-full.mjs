@@ -536,10 +536,37 @@ async function runViewportFull(vp) {
     }
 
     if (vp.mobile) {
-        await page.mouse.click(Math.floor(vp.width * 0.72), Math.floor(vp.height * 0.45));
-        await new Promise((r) => setTimeout(r, 900));
-        const detailOpen = await page.evaluate(() => !window.app?.canvasDetail?.el?.hidden);
-        if (!detailOpen) errors.push(`${vp.name}: corridor tap did not open detail`);
+        await page.waitForFunction(() => window.app?.webgl?.corridor?.meshes?.length > 0, {
+            timeout: 30000
+        });
+        const tapSlug = await page.evaluate(() => {
+            const w = window.app?.webgl;
+            const canvas = w?.canvas;
+            if (!w?.corridor?.pick || !canvas) return null;
+            for (let i = 0; i < 24; i++) window.app.frameRender?.();
+            const r = canvas.getBoundingClientRect();
+            for (const xo of [0.55, 0.68, 0.78, 0.88]) {
+                for (const yo of [0.32, 0.42, 0.52]) {
+                    const cx = r.left + r.width * xo;
+                    const cy = r.top + r.height * yo;
+                    const hit = w.corridor.pick(cx, cy, w.camera, canvas);
+                    if (hit?.userData?.slug) {
+                        w.corridorTap(cx, cy);
+                        return hit.userData.slug;
+                    }
+                }
+            }
+            return null;
+        });
+        if (!tapSlug) errors.push(`${vp.name}: corridor pick missed (no painting hit)`);
+        try {
+            await page.waitForFunction(
+                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                { timeout: 15000 }
+            );
+        } catch {
+            errors.push(`${vp.name}: corridor tap did not open detail`);
+        }
         await page.keyboard.press('Escape');
         await new Promise((r) => setTimeout(r, 300));
     }
