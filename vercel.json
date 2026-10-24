@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": null,
+  "buildCommand": "node scripts/inject-build-meta.mjs",
   "outputDirectory": ".",
   "headers": [
     {
