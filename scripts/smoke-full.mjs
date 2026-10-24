@@ -325,6 +325,144 @@ async function preparePage(browser, vp) {
     return page;
 }
 
+async function waitCorridorPaintingOnScreen(page, slug = null) {
+    await page.waitForFunction(
+        (targetSlug) => {
+            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const margin = 8;
+            return list.some((p) => {
+                if (targetSlug && p.slug !== targetSlug) return false;
+                if (targetSlug) {
+                    return (
+                        p.focused &&
+                        p.onScreen &&
+                        p.screenRect?.cx > margin &&
+                        p.screenRect.cx < vw - margin &&
+                        p.screenRect.cy > margin &&
+                        p.screenRect.cy < vh - margin
+                    );
+                }
+                return (
+                    p.focused &&
+                    p.onScreen &&
+                    p.screenRect?.cx > margin &&
+                    p.screenRect.cx < vw - margin &&
+                    p.screenRect.cy > margin &&
+                    p.screenRect.cy < vh - margin
+                );
+            });
+        },
+        { timeout: 30000 },
+        slug
+    );
+}
+
+async function getCorridorTapTarget(page, slug = null) {
+    return page.evaluate((targetSlug) => {
+        const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+        const target = targetSlug
+            ? list.find((p) => p.slug === targetSlug && p.onScreen && p.focused)
+            : list.find((p) => p.focused && p.onScreen) ?? list.find((p) => p.onScreen);
+        if (!target?.screenRect) return null;
+        return {
+            x: target.screenRect.cx,
+            y: target.screenRect.cy,
+            slug: target.slug
+        };
+    }, slug);
+}
+
+/** Walk corridor with real wheel until slug is focused and on-screen. */
+async function corridorWalkToSlug(page, slug) {
+    for (let step = 0; step < 80; step++) {
+        const dir = await page.evaluate((s) => {
+            window.app.webgl?.frameRender?.();
+            const c = window.app.webgl?.corridor;
+            if (!c) return null;
+            const idx = c.meshes.findIndex((m) => m.userData.slug === s);
+            if (idx < 0) return null;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const margin = 8;
+            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+            const onScreen = list.some(
+                (p) =>
+                    p.slug === s &&
+                    p.focused &&
+                    p.onScreen &&
+                    p.screenRect?.cx > margin &&
+                    p.screenRect.cx < vw - margin &&
+                    p.screenRect.cy > margin &&
+                    p.screenRect.cy < vh - margin
+            );
+            if (onScreen) return 'done';
+            if (idx !== c.focusIndex) return idx > c.focusIndex ? 'forward' : 'back';
+            return 'forward';
+        }, slug);
+        if (dir === null) throw new Error(`corridor slug missing: ${slug}`);
+        if (dir === 'done') return;
+        await page.mouse.wheel({ deltaY: dir === 'forward' ? 120 : -120 });
+        await new Promise((r) => setTimeout(r, 80));
+    }
+    throw new Error(`corridor walk timeout: ${slug}`);
+}
+
+async function openDetailViaCorridorCenter(page, vp, slug = null) {
+    if (slug) await corridorWalkToSlug(page, slug);
+    await waitCorridorPaintingOnScreen(page, slug);
+    await page.evaluate(() => {
+        for (let i = 0; i < 10; i++) window.app.webgl?.frameRender?.();
+    });
+    await new Promise((r) => setTimeout(r, 350));
+    let tap = await getCorridorTapTarget(page, slug);
+    if (!tap) {
+        return { ok: false, reason: 'no on-screen tap target', slug };
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const pickOk = await page.evaluate(
+            ({ x, y, expected }) => {
+                const hit = window.app.webgl?.corridor?.pick(
+                    x,
+                    y,
+                    window.app.webgl.camera,
+                    window.app.webgl.canvas
+                );
+                return hit?.userData?.slug === expected;
+            },
+            { x: tap.x, y: tap.y, expected: tap.slug }
+        );
+        if (!pickOk) {
+            await page.evaluate(() => {
+                for (let i = 0; i < 12; i++) window.app.webgl?.frameRender?.();
+            });
+            await new Promise((r) => setTimeout(r, 350));
+            tap = (await getCorridorTapTarget(page, slug)) ?? tap;
+        }
+        if (vp.mobile) {
+            await page.touchscreen.tap(tap.x, tap.y);
+        } else {
+            await page.mouse.move(tap.x, tap.y);
+            await page.mouse.click(tap.x, tap.y);
+        }
+        try {
+            await page.waitForFunction(
+                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                { timeout: 30000 }
+            );
+            return { ok: true, slug: tap.slug };
+        } catch {
+            await page.evaluate(() => {
+                for (let i = 0; i < 8; i++) window.app.webgl?.frameRender?.();
+            });
+            await new Promise((r) => setTimeout(r, 400));
+            tap = (await getCorridorTapTarget(page, slug)) ?? tap;
+        }
+    }
+    return { ok: false, reason: 'detail did not open', slug: tap.slug };
+}
+
 async function runFloorRailSmoke(page) {
     await page.evaluate(() => window.app.openFloor(1));
     await new Promise((r) => setTimeout(r, 400));
@@ -435,12 +573,29 @@ async function runViewportFull(vp) {
         await new Promise((r) => setTimeout(r, 80));
     }
     const aspectSlugs = ['placeholder-01', 'placeholder-02', 'placeholder-03', 'placeholder-05', 'placeholder-09'];
+    if (!vp.mobile) {
+        await page.evaluate(() => {
+            window.app.webgl?.corridor?.resetWalk?.();
+            for (let i = 0; i < 12; i++) window.app.webgl?.frameRender?.();
+        });
+        await new Promise((r) => setTimeout(r, 400));
+    }
     for (const slug of aspectSlugs) {
-        await page.evaluate((s) => window.app.openCanvasDetail(s), slug);
-        await page.waitForFunction(
-            () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
-            { timeout: 20000 }
-        );
+        if (vp.mobile) {
+            await page.evaluate((s) => window.app.openCanvasDetail(s), slug);
+            await page.waitForFunction(
+                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                { timeout: 20000 }
+            );
+        } else {
+            const opened = await openDetailViaCorridorCenter(page, vp, slug);
+            if (!opened.ok) {
+                errors.push(
+                    `${vp.name}: corridor click did not open detail (${slug}) ${opened.reason ?? ''}`.trim()
+                );
+                continue;
+            }
+        }
         await new Promise((r) => setTimeout(r, 400));
         const layout = await page.evaluate(() => {
             const d = window.app.canvasDetail;
@@ -451,10 +606,11 @@ async function runViewportFull(vp) {
         }
         await page.evaluate(() => document.querySelector('.detail-inquire-btn')?.click());
         await new Promise((r) => setTimeout(r, 200));
-        await page.keyboard.press('Escape');
-        await new Promise((r) => setTimeout(r, 150));
-        await page.keyboard.press('Escape');
-        await new Promise((r) => setTimeout(r, 200));
+        await page.evaluate(() => {
+            window.app.webgl?.canvasDetail?.close?.();
+            for (let i = 0; i < 6; i++) window.app.webgl?.frameRender?.();
+        });
+        await new Promise((r) => setTimeout(r, 300));
     }
     await page.evaluate(() => window.app.closeFloor());
     await new Promise((r) => setTimeout(r, 700));
@@ -535,36 +691,17 @@ async function runViewportFull(vp) {
         errors.push(`${vp.name}: corridor did not walk on wheel`);
     }
 
-    if (vp.mobile) {
-        await page.waitForFunction(
-            () => {
-                const list = window.__APP_STATE?.corridor?.visiblePaintings;
-                return list?.some((p) => p.focused && p.screenRect?.cx > 0);
-            },
-            { timeout: 30000 }
-        );
-        const tap = await page.evaluate(() => {
-            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
-            const target =
-                list.find((p) => p.focused) ?? list.find((p) => p.screenRect?.cx > 0) ?? null;
-            if (!target?.screenRect) return null;
-            return { x: target.screenRect.cx, y: target.screenRect.cy, slug: target.slug };
-        });
-        if (!tap) {
-            errors.push(`${vp.name}: no focused painting screenRect in __APP_STATE`);
+    {
+        const opened = await openDetailViaCorridorCenter(page, vp);
+        if (!opened.ok) {
+            const verb = vp.mobile ? 'touch tap' : 'click';
+            errors.push(
+                `${vp.name}: corridor ${verb} did not open detail (${opened.slug ?? '?'}) ${opened.reason ?? ''}`.trim()
+            );
         } else {
-            await page.touchscreen.tap(tap.x, tap.y);
-            try {
-                await page.waitForFunction(
-                    () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
-                    { timeout: 20000 }
-                );
-            } catch {
-                errors.push(`${vp.name}: corridor touch tap did not open detail (${tap.slug})`);
-            }
+            await page.keyboard.press('Escape');
+            await new Promise((r) => setTimeout(r, 300));
         }
-        await page.keyboard.press('Escape');
-        await new Promise((r) => setTimeout(r, 300));
     }
 
     const drawCalls = await page.evaluate(() => {
