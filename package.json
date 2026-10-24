@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "smoke": "node scripts/smoke.mjs --full",
-    "smoke:fast": "node scripts/smoke.mjs --fast",
-    "smoke:full": "node scripts/smoke.mjs --full",
+    "check:static": "node scripts/check-static.mjs",
+    "smoke:boot": "node scripts/smoke-boot.mjs",
+    "smoke:full": "node scripts/smoke-full.mjs",
     "lighthouse:preview": "node scripts/run-lighthouse-preview.mjs"
   },
   "devDependencies": {

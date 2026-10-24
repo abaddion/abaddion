@@ -1,0 +1,21 @@
+name: Preview deploy assets
+
+on:
+  deployment_status:
+
+jobs:
+  preview-asset-check:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: HEAD index assets on deployment
+        run: node scripts/check-deploy-preview.mjs
+        env:
+          DEPLOY_URL: ${{ github.event.deployment_status.target_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}

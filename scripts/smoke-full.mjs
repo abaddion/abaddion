@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 /**
- * Smoke — fast (<2 min) or full (sharded + resumable).
- * Usage:
- *   node scripts/smoke.mjs --fast
- *   node scripts/smoke.mjs --full [--shard 0/4] [--resume]
+ * Full manual smoke — corridor, aspects, all viewports. Not a CI gate.
+ * Usage: node scripts/smoke-full.mjs [--resume] [--shard=0/4]
  */
 
 import fs from 'fs';
@@ -36,15 +34,7 @@ const ALL_VIEWPORTS = [
     { name: '2560x1400', width: 2560, height: 1400 }
 ];
 
-const FAST_VIEWPORTS = ALL_VIEWPORTS.filter((v) => v.name === '390x844' || v.name === '1440x900');
-
 function parseArgs(argv) {
-    const fast = argv.includes('--fast');
-    const full = argv.includes('--full');
-    if (fast === full) {
-        console.error('Specify exactly one of --fast or --full');
-        process.exit(1);
-    }
     let shardIndex = 0;
     let shardCount = 1;
     const shardArg = argv.find((a) => a.startsWith('--shard='));
@@ -56,18 +46,8 @@ function parseArgs(argv) {
         }
         shardIndex = Number(m[1]);
         shardCount = Number(m[2]);
-        if (shardIndex >= shardCount) {
-            console.error('shard index must be < shard count');
-            process.exit(1);
-        }
     }
-    const resume = argv.includes('--resume');
-    return {
-        mode: fast ? 'fast' : 'full',
-        shardIndex,
-        shardCount,
-        resume
-    };
+    return { shardIndex, shardCount, resume: argv.includes('--resume') };
 }
 
 const cli = parseArgs(process.argv.slice(2));
@@ -138,78 +118,6 @@ if (!baseUrl) {
 
 function pageUrl(route = '/') {
     return new URL(route, baseUrl).toString();
-}
-
-/** Paths index.html must load (preload, modulepreload, stylesheet, import map, entry script). */
-function collectIndexHeadAssets() {
-    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    const paths = new Set();
-    const attrRe = /(?:href|src)=["']([^"']+)["']/g;
-    let m;
-    while ((m = attrRe.exec(html)) !== null) {
-        const p = m[1];
-        if (p.startsWith('http') || p.startsWith('#') || p.startsWith('data:')) continue;
-        paths.add(p.startsWith('/') ? p : `/${p}`);
-    }
-    const mapMatch = html.match(/<script type="importmap">\s*([\s\S]*?)<\/script>/);
-    if (mapMatch) {
-        const map = JSON.parse(mapMatch[1]);
-        for (const v of Object.values(map.imports || {})) {
-            if (typeof v !== 'string' || v.startsWith('http')) continue;
-            const rel = v.startsWith('./') ? v.slice(2) : v;
-            paths.add(rel.startsWith('/') ? rel : `/${rel}`);
-        }
-    }
-    return [...paths].sort();
-}
-
-function deployFetchHeaders() {
-    const headers = {};
-    const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    if (secret) {
-        headers['x-vercel-protection-bypass'] = secret;
-        headers['x-vercel-set-bypass-cookie'] = 'true';
-    }
-    return headers;
-}
-
-async function assertDeployAssets(deployBase) {
-    const base = deployBase.replace(/\/$/, '');
-    const headers = deployFetchHeaders();
-    const paths = collectIndexHeadAssets();
-    const bad = [];
-    for (const p of paths) {
-        const url = `${base}${p}`;
-        let res;
-        try {
-            res = await fetch(url, { headers, redirect: 'follow' });
-        } catch (e) {
-            bad.push(`${p} fetch failed: ${e.message}`);
-            continue;
-        }
-        if (res.status !== 200) {
-            bad.push(`${p} → HTTP ${res.status}`);
-            continue;
-        }
-        if (p.endsWith('.js')) {
-            const ct = res.headers.get('content-type') || '';
-            if (!/javascript|ecmascript|module/i.test(ct)) {
-                bad.push(`${p} expected JS, got ${ct || 'no content-type'}`);
-            }
-        }
-    }
-    if (bad.length) throw new Error(`deploy assets: ${bad.join('; ')}`);
-    console.log('OK deploy assets', paths.length, 'urls @', base);
-}
-
-async function runDeployAssetsPhase() {
-    const deployUrl = process.env.SMOKE_DEPLOY_URL;
-    if (!deployUrl) {
-        if (process.env.CI) throw new Error('SMOKE_DEPLOY_URL required in CI');
-        console.log('skip deploy-assets (set SMOKE_DEPLOY_URL to check a Vercel preview)');
-        return;
-    }
-    await assertDeployAssets(deployUrl);
 }
 
 function collectAppModules() {
@@ -475,25 +383,6 @@ async function assertMobileChrome(page, vp) {
     }
 }
 
-async function runViewportFast(vp) {
-    const browser = await launch(chromeLaunchOpts());
-    const page = await preparePage(browser, vp);
-    const consoleErrors = [];
-    attachConsoleCollectors(page, consoleErrors);
-
-    await waitApp(page);
-    fs.mkdirSync(shotsDir, { recursive: true });
-    await page.screenshot({ path: path.join(shotsDir, `smoke-${vp.name}-home.png`) });
-    await runFloorRailSmoke(page);
-    await page.screenshot({ path: path.join(shotsDir, `smoke-${vp.name}-final.png`) });
-
-    if (consoleErrors.length) {
-        errors.push(`${vp.name}: console errors: ${consoleErrors.slice(0, 3).join(' | ')}`);
-    }
-    await browser.close();
-    console.log(`OK fast ${vp.name}`);
-}
-
 async function runViewportFull(vp) {
     const browser = await launch(chromeLaunchOpts());
     const page = await preparePage(browser, vp);
@@ -638,15 +527,6 @@ async function runNoWebGLPhase() {
     await runNoWebGLFallbackCase();
 }
 
-async function runFastSuite() {
-    const progress = loadProgress();
-    await runPhase('deploy-assets', runDeployAssetsPhase, progress);
-    await runPhase('module-graph', runModuleGraphPhase, progress);
-    for (const vp of FAST_VIEWPORTS) {
-        await runPhase(`fast-${vp.name}`, () => runViewportFast(vp), progress);
-    }
-}
-
 async function runFullSuite() {
     const progress = loadProgress();
     const phases = fullPhasesForShard(cli.shardIndex, cli.shardCount);
@@ -660,11 +540,7 @@ async function runFullSuite() {
 }
 
 try {
-    if (cli.mode === 'fast') {
-        await runFastSuite();
-    } else {
-        await runFullSuite();
-    }
+    await runFullSuite();
 } catch (e) {
     errors.push(e.message);
 }
@@ -672,7 +548,7 @@ try {
 if (ownedServer) ownedServer.close();
 
 if (errors.length) {
-    console.error(`SMOKE ${cli.mode.toUpperCase()} FAILED\n`, errors.join('\n'));
+    console.error('SMOKE-FULL FAILED\n', errors.join('\n'));
     process.exit(1);
 }
-console.log(`SMOKE ${cli.mode.toUpperCase()} PASSED`);
+console.log('SMOKE-FULL PASSED');
