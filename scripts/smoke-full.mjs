@@ -536,36 +536,32 @@ async function runViewportFull(vp) {
     }
 
     if (vp.mobile) {
-        await page.waitForFunction(() => window.app?.webgl?.corridor?.meshes?.length > 0, {
-            timeout: 30000
+        await page.waitForFunction(
+            () => {
+                const list = window.__APP_STATE?.corridor?.visiblePaintings;
+                return list?.some((p) => p.focused && p.screenRect?.cx > 0);
+            },
+            { timeout: 30000 }
+        );
+        const tap = await page.evaluate(() => {
+            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+            const target =
+                list.find((p) => p.focused) ?? list.find((p) => p.screenRect?.cx > 0) ?? null;
+            if (!target?.screenRect) return null;
+            return { x: target.screenRect.cx, y: target.screenRect.cy, slug: target.slug };
         });
-        const tapSlug = await page.evaluate(() => {
-            const w = window.app?.webgl;
-            const canvas = w?.canvas;
-            if (!w?.corridor?.pick || !canvas) return null;
-            for (let i = 0; i < 24; i++) window.app.frameRender?.();
-            const r = canvas.getBoundingClientRect();
-            for (const xo of [0.55, 0.68, 0.78, 0.88]) {
-                for (const yo of [0.32, 0.42, 0.52]) {
-                    const cx = r.left + r.width * xo;
-                    const cy = r.top + r.height * yo;
-                    const hit = w.corridor.pick(cx, cy, w.camera, canvas);
-                    if (hit?.userData?.slug) {
-                        w.corridorTap(cx, cy);
-                        return hit.userData.slug;
-                    }
-                }
+        if (!tap) {
+            errors.push(`${vp.name}: no focused painting screenRect in __APP_STATE`);
+        } else {
+            await page.touchscreen.tap(tap.x, tap.y);
+            try {
+                await page.waitForFunction(
+                    () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                    { timeout: 20000 }
+                );
+            } catch {
+                errors.push(`${vp.name}: corridor touch tap did not open detail (${tap.slug})`);
             }
-            return null;
-        });
-        if (!tapSlug) errors.push(`${vp.name}: corridor pick missed (no painting hit)`);
-        try {
-            await page.waitForFunction(
-                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
-                { timeout: 15000 }
-            );
-        } catch {
-            errors.push(`${vp.name}: corridor tap did not open detail`);
         }
         await page.keyboard.press('Escape');
         await new Promise((r) => setTimeout(r, 300));

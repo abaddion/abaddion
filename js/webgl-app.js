@@ -538,6 +538,14 @@ class WebGLLayer {
         this.updateParallax();
         if (this.isCorridorActive() && this.corridor) {
             this.corridor.update(dt, this.camera);
+            patchAppState({
+                corridor: {
+                    visiblePaintings: this.corridor.getVisiblePaintingScreenRects(
+                        this.camera,
+                        this.canvas
+                    )
+                }
+            });
         } else if (!this.isCorridorActive()) {
             this.cameraRig.update(dt);
             this.stack.update(time, dt, this.camera, this.parallax);

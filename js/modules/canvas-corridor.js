@@ -215,14 +215,76 @@ export class CanvasCorridor {
     }
 
     pick(clientX, clientY, camera, domElement) {
+        const rect = domElement.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        if (w < 1 || h < 1) return null;
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2(
-            (clientX / domElement.clientWidth) * 2 - 1,
-            -(clientY / domElement.clientHeight) * 2 + 1
+            ((clientX - rect.left) / w) * 2 - 1,
+            -((clientY - rect.top) / h) * 2 + 1
         );
         raycaster.setFromCamera(ndc, camera);
         const hits = raycaster.intersectObjects(this.meshes, false);
         return hits[0]?.object ?? null;
+    }
+
+    /** Read-only screen projection for tests / introspection (viewport client px). */
+    getVisiblePaintingScreenRects(camera, canvas) {
+        if (!this.root.visible || !canvas) return [];
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        if (w < 1 || h < 1) return [];
+
+        const box3 = new THREE.Box3();
+        const world = new THREE.Vector3();
+        const out = [];
+
+        for (const mesh of this.meshes) {
+            if (!mesh.visible) continue;
+            box3.setFromObject(mesh);
+            const xs = [box3.min.x, box3.max.x];
+            const ys = [box3.min.y, box3.max.y];
+            const zs = [box3.min.z, box3.max.z];
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+            let visible = false;
+
+            for (const x of xs) {
+                for (const y of ys) {
+                    for (const z of zs) {
+                        world.set(x, y, z);
+                        world.project(camera);
+                        if (world.z > 1) continue;
+                        visible = true;
+                        const sx = rect.left + (world.x * 0.5 + 0.5) * w;
+                        const sy = rect.top + (-world.y * 0.5 + 0.5) * h;
+                        minX = Math.min(minX, sx);
+                        maxX = Math.max(maxX, sx);
+                        minY = Math.min(minY, sy);
+                        maxY = Math.max(maxY, sy);
+                    }
+                }
+            }
+            if (!visible) continue;
+            out.push({
+                slug: mesh.userData.slug,
+                index: mesh.userData.index,
+                focused: mesh.userData.index === this.focusIndex,
+                screenRect: {
+                    cx: (minX + maxX) / 2,
+                    cy: (minY + maxY) / 2,
+                    left: minX,
+                    top: minY,
+                    right: maxX,
+                    bottom: maxY
+                }
+            });
+        }
+        return out;
     }
 
     dispose() {

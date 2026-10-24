@@ -117,9 +117,8 @@ export class FloorInput {
                 this.touchStartX = null;
 
                 if (this.isCorridorActive()) {
-                    if (Math.hypot(dx, dy) < 12) {
-                        this.onCorridorTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                    } else {
+                    // Tap → pointerup (Pointer Events). Touchend only handles swipe scroll.
+                    if (Math.hypot(dx, dy) >= 12) {
                         this.onCorridorScroll(dy);
                     }
                     return;

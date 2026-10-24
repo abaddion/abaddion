@@ -397,6 +397,7 @@ html.debug-hud #hud {
 
 html.floor-open-canvas #glitch-canvas {
     z-index: 32;
+    touch-action: none;
 }
 
 .corridor-hint {
