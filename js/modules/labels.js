@@ -1,5 +1,5 @@
 /**
- * Floor labels — technical SVG annotations with leader lines.
+ * Floor labels — floating mono captions above slabs (no leader lines).
  */
 
 import * as THREE from 'three';
@@ -61,17 +61,13 @@ export class FloorLabels {
             g.setAttribute('class', 'floor-label-anno');
             g.dataset.floorIndex = String(index);
 
-            const line = document.createElementNS(SVG_NS, 'line');
-            line.setAttribute('class', 'floor-label-leader');
-
             const text = document.createElementNS(SVG_NS, 'text');
             text.setAttribute('class', 'floor-label-text');
             text.textContent = `${meta.index} ———— ${meta.label}`;
 
-            g.appendChild(line);
             g.appendChild(text);
             this.svg.appendChild(g);
-            this.groups.push({ g, line, text, index });
+            this.groups.push({ g, text, index });
         });
 
         this.corner = new THREE.Vector3();
@@ -109,7 +105,7 @@ export class FloorLabels {
         const forbiddenBottom = this.getForbiddenBottom();
         const placements = [];
 
-        this.groups.forEach(({ g, line, text, index }) => {
+        this.groups.forEach(({ g, text, index }) => {
             if (index === 0 && heroHandoff) {
                 g.setAttribute('visibility', 'hidden');
                 return;
@@ -151,13 +147,9 @@ export class FloorLabels {
 
             text?.setAttribute('x', String(textX));
             text?.setAttribute('y', String(textY));
-            line?.setAttribute('x1', String(cx));
-            line?.setAttribute('y1', String(cy));
-            line?.setAttribute('x2', String(textX));
-            line?.setAttribute('y2', String(textY));
 
             const rect = textBBox(text);
-            placements.push({ index, rect, g, line, text, textY, focused, cx, cy, textX });
+            placements.push({ index, rect, g, text, textY, focused, cx, cy, textX });
         });
 
         this._resolveCollisions(placements, forbiddenBottom);
@@ -171,7 +163,7 @@ export class FloorLabels {
         const railTop = this.getRailRect().top;
         if (railTop >= window.innerHeight) return;
 
-        this.groups.forEach(({ g, text, line, index }) => {
+        this.groups.forEach(({ g, text, index }) => {
             if (g.getAttribute('visibility') === 'hidden') return;
             let rect;
             try {
@@ -191,7 +183,6 @@ export class FloorLabels {
             const curY = parseFloat(text.getAttribute('y') || '0');
             const nextY = Math.max(20, curY - overflow - 6);
             text.setAttribute('y', String(nextY));
-            line?.setAttribute('y2', String(nextY));
         });
     }
 
@@ -225,7 +216,6 @@ export class FloorLabels {
                 if (hitRail || hitForbidden) {
                     p.textY -= 12;
                     p.text?.setAttribute('y', String(p.textY));
-                    p.line?.setAttribute('y2', String(p.textY));
                     rect = textBBox(p.text);
                     tries++;
                     if (tries >= 6 && (rect.bottom > rail.top - 6 || rect.bottom > forbiddenBottom - 4)) {
@@ -243,7 +233,6 @@ export class FloorLabels {
                 const shift = (tries % 2 === 0 ? -1 : 1) * 14 * (Math.floor(tries / 2) + 1);
                 p.textY += shift;
                 p.text?.setAttribute('y', String(p.textY));
-                p.line?.setAttribute('y2', String(p.textY));
                 rect = textBBox(p.text);
                 tries++;
             }

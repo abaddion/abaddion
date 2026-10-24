@@ -272,7 +272,10 @@ async function waitApp(page) {
             appState: window.__APP_STATE,
             openFloor: typeof window.app?.openFloor
         }));
-        throw new Error(`WebGL boot timeout (${JSON.stringify(boot)}): ${err.message}`);
+        const webglErr = await page.evaluate(() => window.__WEBGL_ERR || null);
+        throw new Error(
+            `WebGL boot timeout (${JSON.stringify(boot)}${webglErr ? ` err=${webglErr}` : ''}): ${err.message}`
+        );
     }
     const boot = await page.evaluate(() => ({
         noWebgl: document.documentElement.classList.contains('no-webgl'),
@@ -320,6 +323,144 @@ async function preparePage(browser, vp) {
         await page.setViewport({ width: vp.width, height: vp.height });
     }
     return page;
+}
+
+async function waitCorridorPaintingOnScreen(page, slug = null) {
+    await page.waitForFunction(
+        (targetSlug) => {
+            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const margin = 8;
+            return list.some((p) => {
+                if (targetSlug && p.slug !== targetSlug) return false;
+                if (targetSlug) {
+                    return (
+                        p.focused &&
+                        p.onScreen &&
+                        p.screenRect?.cx > margin &&
+                        p.screenRect.cx < vw - margin &&
+                        p.screenRect.cy > margin &&
+                        p.screenRect.cy < vh - margin
+                    );
+                }
+                return (
+                    p.focused &&
+                    p.onScreen &&
+                    p.screenRect?.cx > margin &&
+                    p.screenRect.cx < vw - margin &&
+                    p.screenRect.cy > margin &&
+                    p.screenRect.cy < vh - margin
+                );
+            });
+        },
+        { timeout: 30000 },
+        slug
+    );
+}
+
+async function getCorridorTapTarget(page, slug = null) {
+    return page.evaluate((targetSlug) => {
+        const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+        const target = targetSlug
+            ? list.find((p) => p.slug === targetSlug && p.onScreen && p.focused)
+            : list.find((p) => p.focused && p.onScreen) ?? list.find((p) => p.onScreen);
+        if (!target?.screenRect) return null;
+        return {
+            x: target.screenRect.cx,
+            y: target.screenRect.cy,
+            slug: target.slug
+        };
+    }, slug);
+}
+
+/** Walk corridor with real wheel until slug is focused and on-screen. */
+async function corridorWalkToSlug(page, slug) {
+    for (let step = 0; step < 80; step++) {
+        const dir = await page.evaluate((s) => {
+            window.app.webgl?.frameRender?.();
+            const c = window.app.webgl?.corridor;
+            if (!c) return null;
+            const idx = c.meshes.findIndex((m) => m.userData.slug === s);
+            if (idx < 0) return null;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const margin = 8;
+            const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+            const onScreen = list.some(
+                (p) =>
+                    p.slug === s &&
+                    p.focused &&
+                    p.onScreen &&
+                    p.screenRect?.cx > margin &&
+                    p.screenRect.cx < vw - margin &&
+                    p.screenRect.cy > margin &&
+                    p.screenRect.cy < vh - margin
+            );
+            if (onScreen) return 'done';
+            if (idx !== c.focusIndex) return idx > c.focusIndex ? 'forward' : 'back';
+            return 'forward';
+        }, slug);
+        if (dir === null) throw new Error(`corridor slug missing: ${slug}`);
+        if (dir === 'done') return;
+        await page.mouse.wheel({ deltaY: dir === 'forward' ? 120 : -120 });
+        await new Promise((r) => setTimeout(r, 80));
+    }
+    throw new Error(`corridor walk timeout: ${slug}`);
+}
+
+async function openDetailViaCorridorCenter(page, vp, slug = null) {
+    if (slug) await corridorWalkToSlug(page, slug);
+    await waitCorridorPaintingOnScreen(page, slug);
+    await page.evaluate(() => {
+        for (let i = 0; i < 10; i++) window.app.webgl?.frameRender?.();
+    });
+    await new Promise((r) => setTimeout(r, 350));
+    let tap = await getCorridorTapTarget(page, slug);
+    if (!tap) {
+        return { ok: false, reason: 'no on-screen tap target', slug };
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const pickOk = await page.evaluate(
+            ({ x, y, expected }) => {
+                const hit = window.app.webgl?.corridor?.pick(
+                    x,
+                    y,
+                    window.app.webgl.camera,
+                    window.app.webgl.canvas
+                );
+                return hit?.userData?.slug === expected;
+            },
+            { x: tap.x, y: tap.y, expected: tap.slug }
+        );
+        if (!pickOk) {
+            await page.evaluate(() => {
+                for (let i = 0; i < 12; i++) window.app.webgl?.frameRender?.();
+            });
+            await new Promise((r) => setTimeout(r, 350));
+            tap = (await getCorridorTapTarget(page, slug)) ?? tap;
+        }
+        if (vp.mobile) {
+            await page.touchscreen.tap(tap.x, tap.y);
+        } else {
+            await page.mouse.move(tap.x, tap.y);
+            await page.mouse.click(tap.x, tap.y);
+        }
+        try {
+            await page.waitForFunction(
+                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                { timeout: 30000 }
+            );
+            return { ok: true, slug: tap.slug };
+        } catch {
+            await page.evaluate(() => {
+                for (let i = 0; i < 8; i++) window.app.webgl?.frameRender?.();
+            });
+            await new Promise((r) => setTimeout(r, 400));
+            tap = (await getCorridorTapTarget(page, slug)) ?? tap;
+        }
+    }
+    return { ok: false, reason: 'detail did not open', slug: tap.slug };
 }
 
 async function runFloorRailSmoke(page) {
@@ -432,12 +573,29 @@ async function runViewportFull(vp) {
         await new Promise((r) => setTimeout(r, 80));
     }
     const aspectSlugs = ['placeholder-01', 'placeholder-02', 'placeholder-03', 'placeholder-05', 'placeholder-09'];
+    if (!vp.mobile) {
+        await page.evaluate(() => {
+            window.app.webgl?.corridor?.resetWalk?.();
+            for (let i = 0; i < 12; i++) window.app.webgl?.frameRender?.();
+        });
+        await new Promise((r) => setTimeout(r, 400));
+    }
     for (const slug of aspectSlugs) {
-        await page.evaluate((s) => window.app.openCanvasDetail(s), slug);
-        await page.waitForFunction(
-            () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
-            { timeout: 20000 }
-        );
+        if (vp.mobile) {
+            await page.evaluate((s) => window.app.openCanvasDetail(s), slug);
+            await page.waitForFunction(
+                () => window.app?.webgl?.canvasDetail && !window.app.webgl.canvasDetail.el?.hidden,
+                { timeout: 20000 }
+            );
+        } else {
+            const opened = await openDetailViaCorridorCenter(page, vp, slug);
+            if (!opened.ok) {
+                errors.push(
+                    `${vp.name}: corridor click did not open detail (${slug}) ${opened.reason ?? ''}`.trim()
+                );
+                continue;
+            }
+        }
         await new Promise((r) => setTimeout(r, 400));
         const layout = await page.evaluate(() => {
             const d = window.app.canvasDetail;
@@ -448,13 +606,114 @@ async function runViewportFull(vp) {
         }
         await page.evaluate(() => document.querySelector('.detail-inquire-btn')?.click());
         await new Promise((r) => setTimeout(r, 200));
-        await page.keyboard.press('Escape');
-        await new Promise((r) => setTimeout(r, 150));
-        await page.keyboard.press('Escape');
-        await new Promise((r) => setTimeout(r, 200));
+        await page.evaluate(() => {
+            window.app.webgl?.canvasDetail?.close?.();
+            for (let i = 0; i < 6; i++) window.app.webgl?.frameRender?.();
+        });
+        await new Promise((r) => setTimeout(r, 300));
     }
     await page.evaluate(() => window.app.closeFloor());
     await new Promise((r) => setTimeout(r, 700));
+
+    const novaSettled = await page.evaluate(() => {
+        const el = document.getElementById('nova-fallback');
+        const novaPass = window.app?.postProcessing?.passes?.nova?.enabled ?? false;
+        return {
+            novaHidden: !el || el.hidden,
+            novaTransition: document.documentElement.classList.contains('nova-transition'),
+            novaPass,
+            leaderLines: document.querySelectorAll('.floor-label-leader').length
+        };
+    });
+    if (!novaSettled.novaHidden || novaSettled.novaTransition || novaSettled.novaPass) {
+        errors.push(`${vp.name}: nova remnant ${JSON.stringify(novaSettled)}`);
+    }
+    if (novaSettled.leaderLines > 0) {
+        errors.push(`${vp.name}: label leader lines present (${novaSettled.leaderLines})`);
+    }
+
+    const aboutIdx = await page.evaluate(() =>
+        window.app.content.floors.findIndex((f) => f.id === 'about')
+    );
+
+    await page.evaluate((i) => window.app.openFloor(i), aboutIdx);
+    await new Promise((r) => setTimeout(r, 900));
+    const topBar = await page.evaluate(() => {
+        const bar = document.querySelector('.floor-view-topbar')?.getBoundingClientRect();
+        const title = document.querySelector('.floor-card.is-open .card-title')?.getBoundingClientRect();
+        if (!bar || !title) return { ok: false };
+        return { ok: title.top >= bar.bottom - 4, titleTop: title.top, barBottom: bar.bottom };
+    });
+    if (!topBar.ok) errors.push(`${vp.name}: top bar overlaps title ${JSON.stringify(topBar)}`);
+    const crawlBefore = await page.evaluate(
+        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
+        aboutIdx
+    );
+    await page.mouse.wheel({ deltaY: 400 });
+    await new Promise((r) => setTimeout(r, 400));
+    const crawlAfter = await page.evaluate(
+        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
+        aboutIdx
+    );
+    if (crawlAfter <= crawlBefore) {
+        const flat = await page.evaluate(
+            () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat') ?? true
+        );
+        if (!flat) errors.push(`${vp.name}: about crawl did not advance on wheel`);
+    }
+
+    await page.evaluate(() => {
+        const form = document.querySelector('#contact-form, .about-contact-form');
+        if (!form) return;
+        form.querySelector('[name="name"]').value = 'Smoke';
+        form.querySelector('[name="email"]').value = 'smoke@test.com';
+        form.querySelector('[name="message"]').value = 'Hello';
+        form.requestSubmit();
+    });
+    const formOk = await page.evaluate(
+        () => document.querySelector('[data-form-error]')?.hidden !== false
+    );
+    if (!formOk) errors.push(`${vp.name}: contact form validation failed`);
+
+    await page.evaluate(() => window.app.closeFloor());
+    await new Promise((r) => setTimeout(r, 500));
+
+    await page.evaluate(() => window.app.openFloor(1));
+    await new Promise((r) => setTimeout(r, 1000));
+    const zBefore = await page.evaluate(() => window.app.webgl?.corridor?.cameraZ ?? 0);
+    for (let i = 0; i < 8; i++) {
+        await page.mouse.wheel({ deltaY: 120 });
+        await new Promise((r) => setTimeout(r, 60));
+    }
+    await new Promise((r) => setTimeout(r, 400));
+    const zAfter = await page.evaluate(() => window.app.webgl?.corridor?.cameraZ ?? 0);
+    if (Math.abs(zAfter - zBefore) < 0.05) {
+        errors.push(`${vp.name}: corridor did not walk on wheel`);
+    }
+
+    {
+        const opened = await openDetailViaCorridorCenter(page, vp);
+        if (!opened.ok) {
+            const verb = vp.mobile ? 'touch tap' : 'click';
+            errors.push(
+                `${vp.name}: corridor ${verb} did not open detail (${opened.slug ?? '?'}) ${opened.reason ?? ''}`.trim()
+            );
+        } else {
+            await page.keyboard.press('Escape');
+            await new Promise((r) => setTimeout(r, 300));
+        }
+    }
+
+    const drawCalls = await page.evaluate(() => {
+        window.app.webgl?.frameRender?.();
+        return window.app?.renderer?.info?.render?.calls ?? null;
+    });
+    if (drawCalls != null && drawCalls > 80) {
+        errors.push(`${vp.name}: high draw calls in corridor ${drawCalls}`);
+    }
+
+    await page.evaluate(() => window.app.closeFloor());
+    await new Promise((r) => setTimeout(r, 500));
 
     for (let i = 0; i < 20; i++) {
         await page.mouse.wheel({ deltaY: i % 2 ? 80 : -80 });

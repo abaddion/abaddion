@@ -24,6 +24,7 @@ export function chromeLaunchOpts() {
         process.env.CHROME_PATH ||
         process.env.PUPPETEER_EXECUTABLE_PATH ||
         '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    const useGpu = process.env.SMOKE_GPU === '1';
     const launchOpts = {
         headless: 'new',
         args: [
@@ -31,12 +32,16 @@ export function chromeLaunchOpts() {
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--ignore-gpu-blocklist',
-            '--enable-webgl',
+            '--enable-webgl'
+        ]
+    };
+    if (!useGpu) {
+        launchOpts.args.push(
             '--use-angle=swiftshader',
             '--enable-unsafe-swiftshader',
             '--use-gl=angle'
-        ]
-    };
+        );
+    }
     if (fs.existsSync(chrome)) launchOpts.executablePath = chrome;
     return launchOpts;
 }

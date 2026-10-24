@@ -22,6 +22,11 @@ alwaysApply: true
 7. **Do not merge** unless the owner says “merge”
 8. After merge, report production deployment ID + previous ID for Instant Rollback
 
+## Smoke / QA
+
+- **Never** change a test to pass without proving user-facing behavior via **real input** (e.g. `touchscreen.tap`, wheel, keyboard)—not direct API calls to app handlers or raycast helpers from test code.
+- Mobile corridor tap: use `__APP_STATE` screen geometry from the app; if real touch fails, fix the **input / raycast path** in the app.
+
 ## References
 
 - CI gates: `npm run check:static`, `npm run smoke:boot`

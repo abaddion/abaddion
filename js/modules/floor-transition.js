@@ -48,6 +48,7 @@ export class FloorTransition {
     }
 
     safeNova(progress, center = [0.5, 0.5]) {
+        if (this.phase !== 'nova' && this.phase !== 'close-nova') return;
         try {
             this.postProcessing?.fireNova?.(progress, center);
         } catch {
@@ -56,12 +57,22 @@ export class FloorTransition {
         this.novaFallback?.setPhase('nova', progress);
     }
 
+    clearNova() {
+        try {
+            this.postProcessing?.clearNova?.();
+        } catch {
+            /* ignore */
+        }
+        this.novaFallback?.setPhase('hide');
+        document.documentElement.classList.remove('nova-transition');
+    }
+
     interruptToFocus(focusIndex) {
         this.phase = 'idle';
         this.stack.resetFloorVisuals();
         this.stack.setContentCollapse(1);
         this.floorView.hideActive(true);
-        this.novaFallback?.setPhase('hide');
+        this.clearNova();
         this.onFloorClose();
         this.state.set(InteractionStates.FOCUS, focusIndex);
         this.cameraRig.setFocus(focusIndex);
@@ -111,7 +122,7 @@ export class FloorTransition {
     finishClose() {
         this.stack.resetFloorVisuals();
         this.stack.setContentCollapse(1);
-        this.novaFallback?.setPhase('hide');
+        this.clearNova();
         this.floorView.hideActive(false);
         this.onFloorClose();
         const idx = this.state.floorIndex;
@@ -124,7 +135,7 @@ export class FloorTransition {
     finishOpenVisual(index) {
         this.stack.setFloorOpenRotation(index, this.openRotationTarget);
         this.stack.setContentCollapse(1);
-        this.novaFallback?.setPhase('hide');
+        this.clearNova();
         this.state.set(InteractionStates.OPEN, index);
         this.onFloorOpen(index);
         this.phase = 'idle';
@@ -208,6 +219,7 @@ export class FloorTransition {
             const p = Math.min(1, t / EXPAND_MS);
             this.novaFallback?.setPhase('expand', p);
             this.floorView.showFloor(index, { progress: p, instant: true });
+            if (p >= 0.98) this.novaFallback?.setPhase('hide');
             if (p >= 1) {
                 this.finishOpenVisual(index);
             }

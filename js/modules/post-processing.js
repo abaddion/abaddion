@@ -103,9 +103,7 @@ export class PostProcessing {
 
     update(time, dt = 0.016) {
         if (this.novaUntil > 0 && performance.now() > this.novaUntil) {
-            this.novaProgress = 0;
-            if (this.passes.nova) this.passes.nova.enabled = false;
-            this.novaUntil = 0;
+            this.clearNova();
             if (this.intensity <= 0) this.disableComposer();
         }
 
@@ -155,6 +153,15 @@ export class PostProcessing {
             !!this.composer &&
             (this.intensity > 0 || this.novaProgress > 0 || this.passes?.nova?.enabled)
         );
+    }
+
+    clearNova() {
+        this.novaProgress = 0;
+        this.novaUntil = 0;
+        if (this.passes?.nova) {
+            this.passes.nova.enabled = false;
+            this.passes.nova.uniforms.uProgress.value = 0;
+        }
     }
 
     fireNova(progress = 0.5, center = [0.5, 0.5]) {

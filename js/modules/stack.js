@@ -111,6 +111,10 @@ export class BoardStack {
             this.material.uniforms.uMobilePortrait.value =
                 mobile && window.innerHeight > window.innerWidth ? 1 : 0;
         }
+        if (this.material.uniforms.uMonitorGrid) {
+            const portrait = mobile && window.innerHeight > window.innerWidth;
+            this.material.uniforms.uMonitorGrid.value.set(portrait ? 6 : 8, portrait ? 4 : 5);
+        }
     }
 
     setFocusedFloor(index, instant = false) {

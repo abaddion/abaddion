@@ -87,8 +87,8 @@ function renderCareer(floor) {
 function renderAbout(floor, site) {
     return `
         <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
-        <p class="card-body">${escapeHtml(floor.body)}</p>
-        <p class="card-body"><a href="mailto:${escapeHtml(site.email)}">${escapeHtml(site.email)}</a></p>
+        <p class="card-body about-email"><a href="mailto:${escapeHtml(site.email)}">${escapeHtml(site.email)}</a></p>
+        <div class="about-crawl-root"></div>
         <form id="contact-form" class="contact-form" novalidate>
             <label>Name<input name="name" required autocomplete="name" /></label>
             <label>Email<input name="email" type="email" required autocomplete="email" /></label>
@@ -126,6 +126,12 @@ export class CardLayer {
         this.built = new Set();
         this.contactFormBound = false;
         this.openCanvasPiece = () => {};
+        this.aboutCrawls = new Map();
+        this.reducedMotion = false;
+    }
+
+    setReducedMotion(v) {
+        this.reducedMotion = v;
     }
 
     build(content, { initialIndex = 0 } = {}) {
@@ -150,7 +156,9 @@ export class CardLayer {
         section.setAttribute('aria-labelledby', `card-title-${floor.id}`);
         section.hidden = true;
         section.innerHTML = `
-            <button type="button" class="floor-view-back">← stack</button>
+            <header class="floor-view-topbar">
+                <button type="button" class="floor-view-back">← stack</button>
+            </header>
             <div class="floor-card-inner floor-view-scroll">${inner}</div>`;
         section.querySelector('.floor-view-back')?.addEventListener('click', () => {
             window.app?.closeFloor?.();
@@ -162,24 +170,51 @@ export class CardLayer {
             section.querySelector('.floor-card-inner')?.replaceChildren();
             section.querySelector('.floor-card-inner')?.insertAdjacentHTML(
                 'beforeend',
-                '<p class="corridor-hint">Walk the corridor — click a painting for detail.</p>'
+                '<p class="corridor-hint">Swipe or scroll to walk — tap a painting for detail.</p>'
             );
         }
 
-        if (floor.id === 'about' && !this.contactFormBound) {
-            section.querySelector('#contact-form')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const form = e.target;
-                const data = new FormData(form);
-                const ok =
-                    data.get('name') &&
-                    data.get('email') &&
-                    String(data.get('email')).includes('@') &&
-                    data.get('message');
-                form.querySelector('[data-form-error]').hidden = !!ok;
-            });
-            this.contactFormBound = true;
+        if (floor.id === 'about') {
+            const crawlRoot = section.querySelector('.about-crawl-root');
+            const form = section.querySelector('#contact-form');
+            if (crawlRoot && !this.aboutCrawls.has(index)) {
+                import('./about-crawl.js').then(({ AboutCrawl }) => {
+                    const crawl = new AboutCrawl(crawlRoot, {
+                        body: crawlRoot.dataset.aboutBody || floor.body,
+                        reducedMotion: this.reducedMotion
+                    });
+                    crawl.mount();
+                    if (form) {
+                        form.remove();
+                        crawl.attachForm(form);
+                    }
+                    this.aboutCrawls.set(index, crawl);
+                });
+            }
+            if (!this.contactFormBound && form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const data = new FormData(e.target);
+                    const ok =
+                        data.get('name') &&
+                        data.get('email') &&
+                        String(data.get('email')).includes('@') &&
+                        data.get('message');
+                    e.target.querySelector('[data-form-error]').hidden = !!ok;
+                });
+                this.contactFormBound = true;
+            }
         }
+    }
+
+    /** @returns {import('./about-crawl.js').AboutCrawl | null} */
+    getAboutCrawl(index) {
+        return this.aboutCrawls.get(index) ?? null;
+    }
+
+    isAboutFloorOpen() {
+        if (this.activeIndex == null) return false;
+        return this.floors[this.activeIndex]?.id === 'about';
     }
 
     showFloor(index, options = {}) {
@@ -198,6 +233,7 @@ export class CardLayer {
             c.classList.toggle('is-fade-only', false);
             c.classList.toggle('floor-card--glass', idx === index);
             c.classList.toggle('floor-view--canvas', idx === index && c.dataset.floorId === 'canvas');
+            c.classList.toggle('floor-view--about', idx === index && c.dataset.floorId === 'about');
         });
 
         const card = this.root.querySelector(`.floor-card[data-floor-index="${index}"]`);
@@ -211,6 +247,9 @@ export class CardLayer {
         if (progress >= 1 && !options.instant) {
             this.lastFocus = document.activeElement;
             card.querySelector('.floor-view-back')?.focus?.();
+            if (card.dataset.floorId === 'about') {
+                this.getAboutCrawl(index)?.startAuto?.();
+            }
         }
     }
 
