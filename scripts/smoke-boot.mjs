@@ -9,6 +9,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createStaticServer } from './lib/static-server.mjs';
 import { chromeLaunchOpts, loadPuppeteer } from './lib/puppeteer-launch.mjs';
+import { acquireSmokeLock } from './lib/smoke-lock.mjs';
+
+acquireSmokeLock('smoke-boot');
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BOOT_TIMEOUT_MS = 45000;

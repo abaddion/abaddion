@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Full manual smoke — corridor, aspects, all viewports. Not a CI gate.
+ * Desktop corridor: prefer `SMOKE_GPU=1 node scripts/smoke-desktop-corridor-case.mjs` (one process).
  * Usage: node scripts/smoke-full.mjs [--resume] [--shard=0/4]
  */
 
@@ -8,6 +9,7 @@ import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { acquireSmokeLock } from './lib/smoke-lock.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const shotsDir = path.join(root, 'docs/screens');
@@ -538,11 +540,11 @@ async function runViewportFull(vp) {
 
     const routes = ['/', '/canvas', '/code', '/about'];
     for (const r of routes) {
-        await page.goto(pageUrl(r), { waitUntil: 'networkidle0', timeout: 60000 });
+        await page.goto(pageUrl(r), { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForFunction(() => window.app?.content, { timeout: 20000 });
     }
 
-    await page.goto(pageUrl('/'), { waitUntil: 'networkidle0' });
+    await page.goto(pageUrl('/'), { waitUntil: 'domcontentloaded', timeout: 60000 });
     await waitApp(page);
 
     for (let i = 0; i < 6; i++) {
@@ -797,6 +799,8 @@ async function runFullSuite() {
         }
     }
 }
+
+acquireSmokeLock('smoke-full');
 
 try {
     await runFullSuite();
