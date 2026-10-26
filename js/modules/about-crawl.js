@@ -5,11 +5,17 @@
 export class AboutCrawl {
     /**
      * @param {HTMLElement} root
-     * @param {{ body: string, reducedMotion?: boolean }} options
+     * @param {{ body?: string, paragraphs?: string[], byline?: string, ctaLinks?: { lead: string, href: string, label: string }[], closingLine?: string, reducedMotion?: boolean }} options
      */
     constructor(root, options = {}) {
         this.root = root;
         this.body = options.body ?? '';
+        this.paragraphs = options.paragraphs?.length
+            ? options.paragraphs
+            : this.body.split(/\n\n+/).filter(Boolean);
+        this.byline = options.byline ?? '';
+        this.ctaLinks = options.ctaLinks ?? [];
+        this.closingLine = options.closingLine ?? '';
         this.reducedMotion = options.reducedMotion ?? false;
         this.offset = 0;
         this.auto = true;
@@ -25,8 +31,10 @@ export class AboutCrawl {
             <div class="about-crawl-scene${this.flat ? ' is-flat' : ''}">
                 <div class="about-crawl-perspective">
                     <div class="about-crawl-block">
-                        <div class="about-crawl-copy">${this._paragraphs()}</div>
-                        <div class="about-crawl-form-slot"></div>
+                        <div class="about-crawl-copy">${this._copyHtml()}</div>
+                        <div class="about-crawl-form-slot">
+                            <div class="about-crawl-tail">${this._tailHtml()}</div>
+                        </div>
                     </div>
                 </div>
                 <button type="button" class="about-read-toggle">${this.flat ? 'cinematic crawl' : 'read as text'}</button>
@@ -36,6 +44,7 @@ export class AboutCrawl {
         this.block = this.root.querySelector('.about-crawl-block');
         this.toggle = this.root.querySelector('.about-read-toggle');
         this.formSlot = this.root.querySelector('.about-crawl-form-slot');
+        this.tail = this.root.querySelector('.about-crawl-tail');
 
         this.toggle?.addEventListener('click', () => this.setFlat(!this.flat));
         this.scene?.addEventListener('click', (e) => {
@@ -43,12 +52,35 @@ export class AboutCrawl {
             this.paused = !this.paused;
         });
 
-        if (!this.flat) this.startAuto();
+        if (this.flat) {
+            this.formSlot?.classList.add('is-settled');
+        } else {
+            this.startAuto();
+        }
     }
 
-    _paragraphs() {
-        const chunks = this.body.split(/(?<=\.)\s+/).filter(Boolean);
-        return chunks.map((p) => `<p>${escapeHtml(p)}</p>`).join('');
+    _copyHtml() {
+        const parts = [];
+        if (this.byline) {
+            parts.push(`<p class="about-crawl-byline">${escapeHtml(this.byline)}</p>`);
+        }
+        for (const para of this.paragraphs) {
+            parts.push(`<p>${escapeHtml(para)}</p>`);
+        }
+        return parts.join('');
+    }
+
+    _tailHtml() {
+        const lines = [];
+        for (const cta of this.ctaLinks) {
+            lines.push(
+                `<p class="about-crawl-cta">${escapeHtml(cta.lead)} <a href="${escapeHtml(cta.href)}">→ ${escapeHtml(cta.label)}</a></p>`
+            );
+        }
+        if (this.closingLine) {
+            lines.push(`<p class="about-crawl-closing">${escapeHtml(this.closingLine)}</p>`);
+        }
+        return lines.join('');
     }
 
     attachForm(formEl) {
@@ -64,8 +96,10 @@ export class AboutCrawl {
         if (flat) {
             this.stopAuto();
             this.block.style.transform = '';
+            this.formSlot?.classList.add('is-settled');
         } else {
             this.offset = 0;
+            this.formSlot?.classList.remove('is-settled');
             this.startAuto();
         }
     }
@@ -103,7 +137,7 @@ export class AboutCrawl {
 
     _applyOffset() {
         if (!this.block || this.flat) return;
-        const max = 2200;
+        const max = Math.max(2400, this.block.scrollHeight * 0.85);
         this.offset = Math.max(-200, Math.min(max, this.offset));
         this.block.style.transform = `translate3d(0, ${-this.offset}px, 0)`;
         const atEnd = this.offset > max * 0.85;

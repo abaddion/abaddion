@@ -481,11 +481,50 @@ html.floor-open-canvas #glitch-canvas {
     rotate: none;
 }
 
-.about-crawl-copy p {
+.about-crawl-copy p,
+.about-crawl-tail p {
     font-family: var(--font-mono);
     font-size: clamp(13px, 3.5vw, 16px);
     line-height: 1.55;
     margin-bottom: calc(var(--unit) * 2);
+}
+
+.about-crawl-byline {
+    color: var(--signal);
+    font-size: clamp(12px, 3.2vw, 14px);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+}
+
+.about-crawl-cta a {
+    color: var(--signal);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.about-crawl-cta a:hover,
+.about-crawl-cta a:focus-visible {
+    text-decoration: underline;
+}
+
+.about-crawl-tail {
+    opacity: 0.35;
+    transform: translate3d(0, 24px, 0);
+    transition:
+        opacity 0.45s var(--ease),
+        transform 0.45s var(--ease);
+    pointer-events: none;
+}
+
+.about-crawl-form-slot.is-settled .about-crawl-tail,
+.about-crawl-scene.is-flat .about-crawl-tail {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.about-crawl-closing {
+    color: var(--muted);
 }
 
 .about-read-toggle {
@@ -502,9 +541,17 @@ html.floor-open-canvas #glitch-canvas {
     cursor: pointer;
 }
 
-.about-crawl-form-slot.is-settled .about-contact-form {
+.about-crawl-form-slot.is-settled .about-contact-form,
+.about-crawl-scene.is-flat .about-contact-form {
     transform: none;
     rotate: none;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.about-crawl-form-slot:not(.is-settled) .about-contact-form {
+    opacity: 0.35;
+    pointer-events: none;
 }
 
 .about-contact-form {

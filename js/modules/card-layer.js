@@ -161,6 +161,10 @@ export class CardLayer {
             </header>
             <div class="floor-card-inner floor-view-scroll">${inner}</div>`;
         section.querySelector('.floor-view-back')?.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('detail-open')) {
+                window.app?.webgl?.backToCorridorFromDetail?.();
+                return;
+            }
             window.app?.closeFloor?.();
         });
         this.root.appendChild(section);
@@ -180,7 +184,11 @@ export class CardLayer {
             if (crawlRoot && !this.aboutCrawls.has(index)) {
                 import('./about-crawl.js').then(({ AboutCrawl }) => {
                     const crawl = new AboutCrawl(crawlRoot, {
-                        body: crawlRoot.dataset.aboutBody || floor.body,
+                        body: floor.body,
+                        paragraphs: floor.paragraphs,
+                        byline: floor.byline,
+                        ctaLinks: floor.ctaLinks,
+                        closingLine: floor.closingLine,
                         reducedMotion: this.reducedMotion
                     });
                     crawl.mount();
