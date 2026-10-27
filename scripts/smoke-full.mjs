@@ -668,22 +668,35 @@ async function runViewportFull(vp) {
             errors.push(`${vp.name}: about crawl did not advance on wheel`);
         }
     }
-    const copyVisible = await page.evaluate(
-        () => (document.querySelector('.about-crawl-copy')?.textContent?.length ?? 0) > 80
-    );
-    if (!copyVisible) {
-        errors.push(`${vp.name}: about crawl copy not visible in flat mode`);
+    const copyOk = await page.evaluate(() => {
+        const flatLen = document.querySelector('.about-crawl-copy')?.textContent?.length ?? 0;
+        const seoLen = document.querySelector('.about-seo-copy')?.textContent?.length ?? 0;
+        const sphereOn = window.app?.webgl?.aboutSphere?.group?.visible === true;
+        return flatLen > 80 || (seoLen > 80 && sphereOn);
+    });
+    if (!copyOk) {
+        errors.push(`${vp.name}: about copy missing (sphere default or flat)`);
     }
 
-    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
-    await page.waitForFunction(
-        () => !document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
-        { timeout: 10000 }
+    const startsFlat = await page.evaluate(() =>
+        document.querySelector('.about-crawl-scene')?.classList.contains('is-flat')
     );
-    await new Promise((r) => setTimeout(r, 600));
+    if (startsFlat) {
+        await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
+        await page.waitForFunction(
+            () => !document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
+            { timeout: 10000 }
+        );
+    }
     await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
     await page.waitForFunction(
         () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
+        { timeout: 10000 }
+    );
+    await new Promise((r) => setTimeout(r, 400));
+    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
+    await page.waitForFunction(
+        () => !document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
         { timeout: 10000 }
     );
 

@@ -125,6 +125,9 @@ export class FloorInput {
                 }
 
                 if (this.isOpen()) {
+                    if (this.isAboutOpen() && Math.abs(dy) > 24 && Math.abs(dy) > Math.abs(dx)) {
+                        if (this.onAboutWheel(-dy * 1.2)) return;
+                    }
                     this.handleSwipeOpen(dy);
                     return;
                 }
