@@ -1,5 +1,6 @@
 /**
  * About floor — inner-sphere text crawl (WebGL), lazy-loaded.
+ * Band: vertical great circle facing −Z (meridian), scroll along phi.
  */
 
 import * as THREE from 'three';
@@ -7,7 +8,10 @@ import { createAboutBandMaterial } from '../shaders/about-sphere-band.js';
 import { rasterizeAboutCopy } from './about-text-texture.js';
 
 const R = 5;
-const LOOP_SEC = 65;
+const LOOP_SEC = 78;
+const THETA_CENTER = Math.PI * 1.5;
+const H_BAND_DESK = (35 * Math.PI) / 180;
+const H_BAND_MOBILE = (26 * Math.PI) / 180;
 
 export class AboutSphere {
     /**
@@ -40,7 +44,7 @@ export class AboutSphere {
     }
 
     _buildPlaceholder() {
-        const geo = new THREE.SphereGeometry(R, 48, 32, 0, Math.PI * 2, 0, Math.PI);
+        const geo = new THREE.SphereGeometry(R, 8, 8, 0, Math.PI, THETA_CENTER - 0.1, 0.2);
         const mat = new THREE.MeshBasicMaterial({ visible: false });
         this.bandMesh = new THREE.Mesh(geo, mat);
         this.group.add(this.bandMesh);
@@ -73,18 +77,16 @@ export class AboutSphere {
         if (this.bandMaterial) this.bandMaterial.dispose();
         this.bandMaterial = createAboutBandMaterial(this.texture, this.reducedMotion);
 
-        const hBand = (52 * Math.PI) / 180;
-        const phiStart = Math.PI / 2 - hBand;
-        const phiLen = hBand * 2;
+        const hBand = mobilePortrait ? H_BAND_MOBILE : H_BAND_DESK;
         if (this.bandMesh.geometry) this.bandMesh.geometry.dispose();
         this.bandMesh.geometry = new THREE.SphereGeometry(
             R * 0.998,
-            64,
-            64,
-            phiStart,
-            phiLen,
+            32,
+            128,
             0,
-            Math.PI
+            Math.PI,
+            THETA_CENTER - hBand,
+            hBand * 2
         );
         this.bandMesh.material = this.bandMaterial;
 
@@ -93,13 +95,14 @@ export class AboutSphere {
             this.gridMesh.material.dispose();
             this.group.remove(this.gridMesh);
         }
-        const gridGeo = new THREE.SphereGeometry(R, 24, 16);
+        const gridGeo = new THREE.SphereGeometry(R, 28, 18);
         const gridMat = new THREE.MeshBasicMaterial({
             color: 0xece8df,
             wireframe: true,
             transparent: true,
-            opacity: 0.07,
-            depthWrite: false
+            opacity: 0.06,
+            depthWrite: false,
+            side: THREE.BackSide
         });
         this.gridMesh = new THREE.Mesh(gridGeo, gridMat);
         this.group.add(this.gridMesh);
@@ -125,12 +128,13 @@ export class AboutSphere {
         if (this.paused) this.paused = false;
         this.autoScroll = false;
         clearTimeout(this.resumeTimer);
-        this.scroll = (this.scroll + deltaY * 0.00035) % 1;
+        this.scroll = (this.scroll + deltaY * 0.0004) % 1;
         if (this.scroll < 0) this.scroll += 1;
         this._syncUniforms();
         this.resumeTimer = setTimeout(() => {
             this.autoScroll = true;
         }, 2000);
+        this.renderLoopPing?.();
         return true;
     }
 
@@ -154,12 +158,18 @@ export class AboutSphere {
 
         this._syncUniforms(time);
 
-        const px = parallax.x * 0.15;
-        const py = parallax.y * 0.1;
-        camera.fov = 62;
+        const mobilePortrait = this.breakpointKey === 'mp';
+        const px = parallax.x * (mobilePortrait ? 0.12 : 0.15);
+        const py = parallax.y * (mobilePortrait ? 0.08 : 0.1);
+
+        camera.fov = mobilePortrait ? 66 : 58;
         camera.updateProjectionMatrix();
-        camera.position.set(px * 0.35, 0.12 + py * 0.25, px * 0.15 + 0.35);
-        camera.lookAt(px * 0.25, -0.35 + py * 0.35, -4.2);
+        camera.position.set(
+            px * 0.35,
+            (mobilePortrait ? 0.2 : 0.12) + py * 0.25,
+            (mobilePortrait ? 0.12 : 0.2) + px * 0.1
+        );
+        camera.lookAt(px * 0.25, mobilePortrait ? -0.12 : -0.28, -3.8);
     }
 
     _syncUniforms(time = 0) {

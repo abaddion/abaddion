@@ -2,11 +2,11 @@
  * About floor — sphere crawl (WebGL) or flat text; SEO copy always in DOM.
  */
 
-/** @returns {boolean} WebGL inner-sphere only when explicitly requested */
-export function resolveAboutSphereEnabled(location = globalThis.location) {
+/** @returns {boolean} Force flat HTML crawl (?about=flat) */
+export function resolveAboutFlatFromUrl(location = globalThis.location) {
     const params = new URLSearchParams(location?.search ?? '');
-    const flag = (params.get('about') ?? params.get('sphere') ?? '').toLowerCase();
-    return flag === 'sphere' || flag === '1' || flag === 'true';
+    const flag = (params.get('about') ?? '').toLowerCase();
+    return flag === 'flat' || flag === 'text';
 }
 
 export class AboutCrawl {
@@ -27,14 +27,15 @@ export class AboutCrawl {
         const webglOk =
             !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
         this.sphereCapable = options.sphereCapable ?? webglOk;
-        this.startInSphere = options.startInSphere ?? resolveAboutSphereEnabled();
+        const forceFlat = resolveAboutFlatFromUrl();
+        this.flat = this.reducedMotion || !this.sphereCapable || forceFlat;
+        this.startInSphere = options.startInSphere ?? !this.flat;
 
         this.offset = 0;
         this.auto = true;
         this.paused = false;
         this.resumeTimer = null;
         this.raf = null;
-        this.flat = this.reducedMotion || !this.startInSphere;
         this.sphereActive = false;
         this.tailRevealed = false;
         this.onWheel = this.onWheel.bind(this);
@@ -78,7 +79,7 @@ export class AboutCrawl {
             this.formSlot?.classList.add('is-settled');
             this.scene?.classList.add('tail-visible');
             this.startAuto();
-        } else if (this.sphereCapable && this.startInSphere) {
+        } else if (this.startInSphere && this.sphereCapable) {
             this.sphereActive = true;
             void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
                 if (window.app?.cardLayer?.isAboutFloorOpen?.()) {

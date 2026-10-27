@@ -1,5 +1,5 @@
 /**
- * Inner-sphere text band — scroll + opacity falloff + rare glitch.
+ * Inner-sphere text band — scroll along meridian + loop opacity + rare glitch.
  */
 
 import * as THREE from 'three';
@@ -51,15 +51,17 @@ export function createAboutBandMaterial(textTexture, reducedMotion = false) {
                 vec4 tex = texture2D(uTextMap, scrollUv);
                 float glyph = max(tex.a, dot(tex.rgb, vec3(0.299, 0.587, 0.114)));
 
-                vec3 viewDir = normalize(cameraPosition - vWorldPos);
-                vec3 inward = normalize(-vLocalPos);
-                float facing = dot(normalize(inward), viewDir);
-
                 vec3 nPos = normalize(vLocalPos);
-                float frontWall = smoothstep(0.05, 0.72, -nPos.z);
-                float horizon = smoothstep(0.55, 0.95, nPos.y);
-                float opacity = mix(0.12, 1.0, frontWall);
-                opacity = mix(opacity, opacity * 0.35, horizon);
+                float phiNorm = acos(clamp(nPos.y, -1.0, 1.0)) / 3.14159265;
+
+                float overhead = 1.0 - smoothstep(0.02, 0.2, phiNorm);
+                float frontLower = smoothstep(0.38, 0.58, phiNorm) * (1.0 - smoothstep(0.78, 0.96, phiNorm));
+                float midArc = smoothstep(0.22, 0.42, phiNorm) * (1.0 - smoothstep(0.55, 0.72, phiNorm));
+                float legibility = max(frontLower, midArc * 0.75);
+                legibility = max(legibility, 0.08);
+
+                float opacity = mix(0.1, 1.0, legibility);
+                opacity = mix(opacity, opacity * 0.1, overhead);
                 opacity *= glyph * uDim;
 
                 vec3 col = tex.rgb;

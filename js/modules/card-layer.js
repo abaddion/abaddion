@@ -172,7 +172,7 @@ export class CardLayer {
         if (floor.id === 'about') {
             const crawlRoot = section.querySelector('.about-crawl-root');
             if (crawlRoot && !this.aboutCrawls.has(index)) {
-                import('./about-crawl.js').then(({ AboutCrawl, resolveAboutSphereEnabled }) => {
+                import('./about-crawl.js').then(({ AboutCrawl }) => {
                     const crawl = new AboutCrawl(crawlRoot, {
                         body: floor.body,
                         paragraphs: floor.paragraphs,
@@ -182,8 +182,7 @@ export class CardLayer {
                         reducedMotion: this.reducedMotion,
                         sphereCapable:
                             !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl'),
-                        startInSphere: resolveAboutSphereEnabled()
+                            !document.documentElement.classList.contains('no-webgl')
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
