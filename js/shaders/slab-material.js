@@ -1,10 +1,17 @@
 /**
- * Monitor-wall slab shader — grid of atlas cells, one draw call.
+ * Glass chess slab shader — atlas mosaic under etched 8×8 frost, one draw call.
  */
 
 import * as THREE from 'three';
 
-export function createSlabMaterial(reducedMotion = false) {
+/** @returns {0 | 1} uVariant: 0 = slab a (default), 1 = slab b */
+export function resolveSlabVariantFromUrl(location = globalThis.location) {
+    const params = new URLSearchParams(location?.search ?? '');
+    const slab = (params.get('slab') ?? 'a').toLowerCase();
+    return slab === 'b' ? 1 : 0;
+}
+
+export function createSlabMaterial(reducedMotion = false, variant = 0) {
     return new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: true,
@@ -20,7 +27,7 @@ export function createSlabMaterial(reducedMotion = false) {
             uAtlas: { value: null },
             uAtlasReady: { value: 0 },
             uContentCollapse: { value: 1 },
-            uMonitorGrid: { value: new THREE.Vector2(8, 5) },
+            uVariant: { value: variant === 1 ? 1 : 0 },
             uMobilePortrait: { value: 0 }
         },
         vertexShader: `
@@ -53,7 +60,7 @@ export function createSlabMaterial(reducedMotion = false) {
             uniform sampler2D uAtlas;
             uniform float uAtlasReady;
             uniform float uContentCollapse;
-            uniform vec2 uMonitorGrid;
+            uniform float uVariant;
             uniform float uMobilePortrait;
 
             varying float vFocus;
@@ -66,63 +73,119 @@ export function createSlabMaterial(reducedMotion = false) {
                 return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
             }
 
-            vec3 sampleAtlasCell(vec2 cellId, vec2 cellUv) {
-                vec2 grid = uMonitorGrid;
-                vec2 atlasUv = mix(vAtlasRect.xy, vAtlasRect.zw, (cellId + cellUv) / grid);
-                return texture2D(uAtlas, atlasUv).rgb;
+            vec2 atlasUvFromLocal(vec2 uv01) {
+                return mix(vAtlasRect.xy, vAtlasRect.zw, uv01);
+            }
+
+            vec3 sampleMosaic(vec2 uv, float focus, float seed) {
+                if (uAtlasReady < 0.5) {
+                    return uInk.rgb * 0.35;
+                }
+
+                float blockBase = mix(0.105, 0.068, uVariant);
+                float blockJitter = hash(floor(uv / blockBase) + seed) * 0.35 + 0.82;
+                float blockSize = blockBase * blockJitter;
+                vec2 blockId = floor(uv / blockSize);
+                vec2 blockLocal = fract(uv / blockSize);
+
+                if (hash(blockId + seed + 19.7) < 0.15) {
+                    return uInk.rgb * mix(0.08, 0.14, focus);
+                }
+
+                vec2 shift = (vec2(hash(blockId + seed), hash(blockId + seed + 3.1)) - 0.5);
+                shift *= mix(0.07, 0.035, uVariant);
+                vec2 sampleUv = clamp(blockLocal + shift, 0.02, 0.98);
+
+                vec2 atlasBase = atlasUvFromLocal(sampleUv);
+                float rgbSplit = mix(0.014, 0.006, uVariant);
+                vec2 px = vec2(rgbSplit, rgbSplit * 0.65);
+
+                float r = texture2D(uAtlas, atlasBase + px).r;
+                float g = texture2D(uAtlas, atlasBase).g;
+                float b = texture2D(uAtlas, atlasBase - px).b;
+                vec3 col = vec3(r, g, b);
+
+                float gate = hash(blockId + seed + 9.0);
+                if (uReduced < 0.5 && focus > 0.25 && gate > 0.985) {
+                    col = mix(col, vec3(0.9), 0.35);
+                }
+
+                float bright = mix(0.38, 0.95, focus);
+                return col * bright;
+            }
+
+            vec3 glassTopColor(vec2 uv, vec3 mosaic, float focus, vec3 N, vec3 V) {
+                vec2 chess = floor(uv * 8.0);
+                float checker = mod(chess.x + chess.y, 2.0);
+                float frostAmt = mix(0.55, 0.22, uVariant);
+                frostAmt = mix(frostAmt + 0.18, frostAmt - 0.08, focus);
+
+                float frost = mix(0.12, 0.38, checker) * frostAmt;
+                frost += hash(chess + checker) * 0.04;
+
+                vec3 glassBase = mix(vec3(0.02), vec3(0.06), checker * 0.5);
+                glassBase = mix(glassBase, mosaic, (0.35 + focus * 0.55) * uContentCollapse);
+
+                float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.4);
+                glassBase += uBone.rgb * fresnel * (0.05 + focus * 0.1);
+
+                float sweepSpeed = mix(1.15, 0.75, uVariant);
+                float sweep = sin(dot(V, vec3(0.4, 0.9, 0.2)) * 6.0 + uTime * sweepSpeed);
+                sweep = pow(max(sweep, 0.0), mix(3.2, 2.4, uVariant));
+                float specGain = mix(0.18, 0.32, uVariant);
+                glassBase += vec3(sweep * specGain * (0.25 + focus * 0.75));
+
+                float innerRefl = pow(max(dot(reflect(-V, N), vec3(0.0, 1.0, 0.0)), 0.0), 8.0);
+                glassBase += vec3(innerRefl * 0.04 * (0.4 + focus));
+
+                if (focus > 0.35 && checker > 0.5) {
+                    glassBase += uBone.rgb * 0.04 * focus;
+                }
+
+                glassBase = mix(glassBase, mix(glassBase, mosaic, 0.15), frost);
+                return glassBase;
+            }
+
+            vec3 sideBevelColor(vec3 N) {
+                vec3 L = normalize(vec3(0.25, 1.0, 0.35));
+                float ndotl = max(dot(N, L), 0.0);
+                vec3 base = uInk.rgb * (0.22 + ndotl * 0.45);
+                base += vec3(0.04, 0.04, 0.05) * ndotl;
+                return base;
             }
 
             void main() {
                 float focus = clamp(vFocus, 0.0, 1.0);
                 vec3 N = normalize(vNormal);
                 vec3 V = normalize(uCameraPos - vWorldPos);
-                float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.2);
 
-                vec2 grid = uMonitorGrid;
-                vec2 cellId = floor(vUv * grid);
-                vec2 cellUv = fract(vUv * grid);
-                float inset = 0.08;
-                float inBezel = step(inset, cellUv.x) * step(cellUv.x, 1.0 - inset) *
-                    step(inset, cellUv.y) * step(cellUv.y, 1.0 - inset);
-                inBezel = 1.0 - inBezel;
+                float reseedPeriod = mix(3.0, 4.5, uVariant);
+                float seed = uReduced > 0.5 ? 0.0 : floor(uTime / reseedPeriod);
 
-                vec3 glassBase = mix(uInk * 0.55, uBone, 0.12 + fresnel * 0.38);
-                vec3 bezelCol = glassBase * (0.52 + 0.08 * hash(cellId));
-                vec3 screenCol = bezelCol;
+                vec3 col;
+                float alpha;
 
-                if (inBezel < 0.5 && uAtlasReady > 0.5) {
-                    vec2 sampleUv = (cellUv - inset) / (1.0 - 2.0 * inset);
-                    screenCol = sampleAtlasCell(cellId, sampleUv);
-                    float flickerGate = hash(cellId + 17.0);
-                    if (uReduced < 0.5 && focus > 0.2 && flickerGate > 0.992) {
-                        float t = mod(uTime + hash(cellId) * 6.0, 0.18);
-                        if (t < 0.04) {
-                            screenCol = mix(screenCol, vec3(0.85), 0.6);
-                        } else if (t < 0.08) {
-                            screenCol = vec3(hash(cellUv + uTime));
-                        }
-                    }
-                    float bright = mix(0.5, 1.05, focus);
-                    screenCol *= bright;
-                } else if (inBezel > 0.5) {
-                    bezelCol = mix(bezelCol, uBone * 0.12, fresnel * (0.35 + focus * 0.25));
+                if (N.y > 0.72) {
+                    vec2 mosaicUv = vUv + uParallax * 0.012 * (1.0 - focus);
+                    vec3 mosaic = sampleMosaic(mosaicUv, focus, seed);
+                    col = glassTopColor(vUv, mosaic, focus, N, V);
+                    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.0);
+                    alpha = 0.44 + fresnel * 0.26 + focus * 0.1;
+                } else if (N.y < -0.72) {
+                    col = uInk.rgb * 0.18;
+                    alpha = 0.35;
+                } else {
+                    col = sideBevelColor(N);
+                    alpha = 0.72;
                 }
 
-                vec3 base = mix(screenCol, bezelCol, inBezel);
-                base += uBone * fresnel * (0.04 + focus * 0.06);
-                float atlasMix = focus * uContentCollapse;
-                base = mix(uInk * 0.35, base, atlasMix);
-
-                float spec = pow(max(dot(reflect(-V, N), V), 0.0), 28.0) * (0.12 + focus * 0.18);
-                base += uBone * spec;
-
-                float alpha = 0.38 + fresnel * 0.34 + focus * 0.08;
+                col = mix(uInk.rgb * 0.35, col, mix(0.65, 1.0, focus) * uContentCollapse);
                 alpha *= mix(1.0, uBackdropDim, focus);
                 if (uMobilePortrait > 0.5) {
-                    alpha *= mix(0.3, 1.0, focus);
+                    alpha *= mix(0.35, 1.0, focus);
                 }
 
-                gl_FragColor = vec4(base, alpha);
+                gl_FragColor = vec4(col, alpha);
             }
         `
     });

@@ -1,12 +1,12 @@
 /**
- * Five glass-monitor slabs — one InstancedMesh + merged edge lines.
+ * Five glass chess slabs — one InstancedMesh + merged edge lines.
  */
 
 import * as THREE from 'three';
-import { createSlabMaterial } from '../shaders/slab-material.js';
+import { createSlabMaterial, resolveSlabVariantFromUrl } from '../shaders/slab-material.js';
 
 const SLAB_W = 4;
-const SLAB_H = 0.04;
+const SLAB_H = 0.14;
 const SLAB_D = 3;
 const FLOOR_GAP = 2.2;
 const FLOOR_GAP_MOBILE_PORTRAIT = 2.85;
@@ -42,7 +42,7 @@ export class BoardStack {
         this.atlasAttr = new THREE.InstancedBufferAttribute(this.atlasRects, 4);
         geometry.setAttribute('aAtlasRect', this.atlasAttr);
 
-        this.material = createSlabMaterial(this.reducedMotion);
+        this.material = createSlabMaterial(this.reducedMotion, resolveSlabVariantFromUrl());
         this.backdropDim = 1;
         this.slabs = new THREE.InstancedMesh(geometry, this.material, floorCount);
         this.slabs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -110,10 +110,6 @@ export class BoardStack {
         if (this.material.uniforms.uMobilePortrait) {
             this.material.uniforms.uMobilePortrait.value =
                 mobile && window.innerHeight > window.innerWidth ? 1 : 0;
-        }
-        if (this.material.uniforms.uMonitorGrid) {
-            const portrait = mobile && window.innerHeight > window.innerWidth;
-            this.material.uniforms.uMonitorGrid.value.set(portrait ? 6 : 8, portrait ? 4 : 5);
         }
     }
 
