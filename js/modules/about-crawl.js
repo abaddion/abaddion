@@ -2,10 +2,17 @@
  * About floor — sphere crawl (WebGL) or flat text; SEO copy always in DOM.
  */
 
+/** @returns {boolean} WebGL inner-sphere only when explicitly requested */
+export function resolveAboutSphereEnabled(location = globalThis.location) {
+    const params = new URLSearchParams(location?.search ?? '');
+    const flag = (params.get('about') ?? params.get('sphere') ?? '').toLowerCase();
+    return flag === 'sphere' || flag === '1' || flag === 'true';
+}
+
 export class AboutCrawl {
     /**
      * @param {HTMLElement} root
-     * @param {{ body?: string, paragraphs?: string[], byline?: string, ctaLinks?: { lead: string, href: string, label: string }[], closingLine?: string, reducedMotion?: boolean, useSphere?: boolean }} options
+     * @param {{ body?: string, paragraphs?: string[], byline?: string, ctaLinks?: { lead: string, href: string, label: string }[], closingLine?: string, reducedMotion?: boolean, sphereCapable?: boolean, startInSphere?: boolean }} options
      */
     constructor(root, options = {}) {
         this.root = root;
@@ -17,16 +24,17 @@ export class AboutCrawl {
         this.ctaLinks = options.ctaLinks ?? [];
         this.closingLine = options.closingLine ?? '';
         this.reducedMotion = options.reducedMotion ?? false;
-        this.useSphere =
-            options.useSphere ??
-            (!this.reducedMotion && !document.documentElement.classList.contains('no-webgl'));
+        const webglOk =
+            !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
+        this.sphereCapable = options.sphereCapable ?? webglOk;
+        this.startInSphere = options.startInSphere ?? resolveAboutSphereEnabled();
 
         this.offset = 0;
         this.auto = true;
         this.paused = false;
         this.resumeTimer = null;
         this.raf = null;
-        this.flat = this.reducedMotion || !this.useSphere;
+        this.flat = this.reducedMotion || !this.startInSphere;
         this.sphereActive = false;
         this.tailRevealed = false;
         this.onWheel = this.onWheel.bind(this);
@@ -69,14 +77,15 @@ export class AboutCrawl {
         if (this.flat) {
             this.formSlot?.classList.add('is-settled');
             this.scene?.classList.add('tail-visible');
-        } else if (this.useSphere) {
+            this.startAuto();
+        } else if (this.sphereCapable && this.startInSphere) {
             this.sphereActive = true;
             void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
                 if (window.app?.cardLayer?.isAboutFloorOpen?.()) {
                     window.app?.webgl?.setAboutSphereActive?.(true);
                 }
             });
-        } else {
+        } else if (!this.flat) {
             this.startAuto();
         }
     }
@@ -128,12 +137,12 @@ export class AboutCrawl {
         }
 
         if (flat) {
-            this.stopAuto();
             window.app?.webgl?.setAboutSphereActive?.(false);
             this.sphereActive = false;
             this.formSlot?.classList.add('is-settled');
             this.scene?.classList.add('tail-visible');
-        } else if (this.useSphere) {
+            this.startAuto();
+        } else if (this.sphereCapable) {
             this.formSlot?.classList.remove('is-settled');
             this.scene?.classList.toggle('tail-visible', this.tailRevealed);
             this.sphereActive = true;

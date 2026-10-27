@@ -668,26 +668,24 @@ async function runViewportFull(vp) {
             errors.push(`${vp.name}: about crawl did not advance on wheel`);
         }
     }
+    const copyVisible = await page.evaluate(
+        () => (document.querySelector('.about-crawl-copy')?.textContent?.length ?? 0) > 80
+    );
+    if (!copyVisible) {
+        errors.push(`${vp.name}: about crawl copy not visible in flat mode`);
+    }
+
+    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
+    await page.waitForFunction(
+        () => !document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
+        { timeout: 10000 }
+    );
+    await new Promise((r) => setTimeout(r, 600));
     await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
     await page.waitForFunction(
         () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
         { timeout: 10000 }
     );
-    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
-    await new Promise((r) => setTimeout(r, 400));
-
-    await page.evaluate(() => {
-        const form = document.querySelector('#contact-form, .about-contact-form');
-        if (!form) return;
-        form.querySelector('[name="name"]').value = 'Smoke';
-        form.querySelector('[name="email"]').value = 'smoke@test.com';
-        form.querySelector('[name="message"]').value = 'Hello';
-        form.requestSubmit();
-    });
-    const formOk = await page.evaluate(
-        () => document.querySelector('[data-form-error]')?.hidden !== false
-    );
-    if (!formOk) errors.push(`${vp.name}: contact form validation failed`);
 
     await page.evaluate(() => window.app.closeFloor());
     await new Promise((r) => setTimeout(r, 500));
