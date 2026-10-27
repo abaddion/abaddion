@@ -189,6 +189,14 @@ assertTracked('content.json');
 assertTracked('index.html');
 assertTracked('css/main.css');
 
+const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const buildMeta = indexHtml.match(/<meta\s+name="build"\s+content="([^"]*)"/i);
+if (!buildMeta) {
+    fail('index.html: missing <meta name="build">');
+} else if (buildMeta[1] !== '__BUILD_SHA__' && !/^[0-9a-f]{40}$/i.test(buildMeta[1])) {
+    fail('index.html: build meta must be __BUILD_SHA__ in git (injected at deploy)');
+}
+
 console.log('check-static: content.json');
 validateContentJson();
 
