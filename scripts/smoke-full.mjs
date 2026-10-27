@@ -645,22 +645,36 @@ async function runViewportFull(vp) {
         return { ok: title.top >= bar.bottom - 4, titleTop: title.top, barBottom: bar.bottom };
     });
     if (!topBar.ok) errors.push(`${vp.name}: top bar overlaps title ${JSON.stringify(topBar)}`);
-    const crawlBefore = await page.evaluate(
-        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
-        aboutIdx
-    );
+    const crawlBefore = await page.evaluate((i) => {
+        const sphere = window.app?.webgl?.aboutSphere;
+        if (sphere?.group?.visible) return sphere.scroll;
+        return window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0;
+    }, aboutIdx);
     await page.mouse.wheel({ deltaY: 400 });
     await new Promise((r) => setTimeout(r, 400));
-    const crawlAfter = await page.evaluate(
-        (i) => window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0,
-        aboutIdx
-    );
+    const crawlAfter = await page.evaluate((i) => {
+        const sphere = window.app?.webgl?.aboutSphere;
+        if (sphere?.group?.visible) return sphere.scroll;
+        return window.app.cardLayer?.getAboutCrawl?.(i)?.offset ?? 0;
+    }, aboutIdx);
     if (crawlAfter <= crawlBefore) {
-        const flat = await page.evaluate(
-            () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat') ?? true
-        );
-        if (!flat) errors.push(`${vp.name}: about crawl did not advance on wheel`);
+        const mode = await page.evaluate(() => ({
+            flat: document.querySelector('.about-crawl-scene')?.classList.contains('is-flat') ?? true,
+            sphere: document.querySelector('.about-crawl-scene')?.classList.contains('is-sphere') ?? false
+        }));
+        if (!mode.flat && mode.sphere) {
+            errors.push(`${vp.name}: about sphere crawl did not advance on wheel`);
+        } else if (!mode.flat && !mode.sphere) {
+            errors.push(`${vp.name}: about crawl did not advance on wheel`);
+        }
     }
+    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
+    await page.waitForFunction(
+        () => document.querySelector('.about-crawl-scene')?.classList.contains('is-flat'),
+        { timeout: 10000 }
+    );
+    await page.evaluate(() => document.querySelector('.about-read-toggle')?.click());
+    await new Promise((r) => setTimeout(r, 400));
 
     await page.evaluate(() => {
         const form = document.querySelector('#contact-form, .about-contact-form');

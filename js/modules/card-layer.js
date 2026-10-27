@@ -87,7 +87,6 @@ function renderCareer(floor) {
 function renderAbout(floor, site) {
     return `
         <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
-        <p class="card-body about-email"><a href="mailto:${escapeHtml(site.email)}">${escapeHtml(site.email)}</a></p>
         <div class="about-crawl-root"></div>
         <form id="contact-form" class="contact-form" novalidate>
             <label>Name<input name="name" required autocomplete="name" /></label>
@@ -189,7 +188,10 @@ export class CardLayer {
                         byline: floor.byline,
                         ctaLinks: floor.ctaLinks,
                         closingLine: floor.closingLine,
-                        reducedMotion: this.reducedMotion
+                        reducedMotion: this.reducedMotion,
+                        useSphere:
+                            !this.reducedMotion &&
+                            !document.documentElement.classList.contains('no-webgl')
                     });
                     crawl.mount();
                     if (form) {

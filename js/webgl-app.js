@@ -43,7 +43,11 @@ class WebGLLayer {
         this._detailCorridorMesh = null;
         this.novaFallback = null;
         this.canvasFloorIndex = 1;
+        this.aboutFloorIndex = -1;
         this._canvasSystemsPromise = null;
+        this._aboutSystemsPromise = null;
+        this.aboutSphere = null;
+        this.aboutCrawlRef = null;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
@@ -190,6 +194,7 @@ class WebGLLayer {
                     detailOpen ||
                     detailFlying ||
                     this.corridor?.root?.visible ||
+                    this.aboutSphere?.group?.visible ||
                     this.cameraRig.isSettling() ||
                     this.postProcessing.isComposerActive()
                 ) {
@@ -312,9 +317,17 @@ class WebGLLayer {
                 this.renderLoop?.ping();
             });
         }
+        if (index === this.aboutFloorIndex) {
+            const crawl = this.cardLayer.getAboutCrawl(this.aboutFloorIndex);
+            if (crawl?.sphereActive) {
+                void this.attachAboutSphere(crawl).then(() => this.setAboutSphereActive(true));
+            }
+        }
     }
 
     onFloorClosed() {
+        this.setAboutSphereActive(false);
+        document.documentElement.classList.remove('about-sphere-active');
         this.stack.root.visible = true;
         this.labels.container.style.visibility = '';
         this.corridor?.setVisible(false);
@@ -325,6 +338,57 @@ class WebGLLayer {
         this.detailFly?.cancel();
         this._restoreDetailCorridorMesh();
         this.canvasDetail?.close();
+        if (this.cameraRig) this.cameraRig.setFocus(this.focusIndex);
+    }
+
+    async ensureAboutSystems() {
+        if (this.aboutSphere) return;
+        if (this._aboutSystemsPromise) return this._aboutSystemsPromise;
+        this._aboutSystemsPromise = (async () => {
+            const { AboutSphere } = await import('./modules/about-sphere.js');
+            this.aboutSphere = new AboutSphere(this.scene, {
+                reducedMotion: this.reducedMotion,
+                onFirstLoopComplete: () => this.aboutCrawlRef?.onFirstSphereLoopComplete?.()
+            });
+            this.aboutSphere.bindRenderLoopPing(() => this.renderLoop?.ping());
+        })();
+        return this._aboutSystemsPromise;
+    }
+
+    async attachAboutSphere(crawl) {
+        await this.ensureAboutSystems();
+        this.aboutCrawlRef = crawl;
+        this.aboutSphere.setCopy(crawl.getCopyForSphere());
+    }
+
+    setAboutSphereActive(active) {
+        if (!this.aboutSphere) return;
+        document.documentElement.classList.toggle('about-sphere-active', active);
+        if (active) {
+            this.stack.root.visible = false;
+            this.labels.container.style.visibility = 'hidden';
+            this.aboutSphere.setVisible(true);
+            this.aboutSphere.resetScroll();
+            if (this.scene) this.scene.fog = null;
+        } else {
+            this.aboutSphere.setVisible(false);
+            const aboutStillOpen =
+                this.interactionState.isOpen() &&
+                this.interactionState.floorIndex === this.aboutFloorIndex;
+            if (!aboutStillOpen) {
+                this.stack.root.visible = true;
+                this.labels.container.style.visibility = '';
+                if (this.scene && this.THREE && !this.scene.fog) {
+                    this.scene.fog = new this.THREE.Fog(0x0a0a0a, 12, 40);
+                }
+            }
+            if (this.cameraRig && !aboutStillOpen) this.cameraRig.setFocus(this.focusIndex);
+        }
+        this.renderLoop?.ping();
+    }
+
+    disposeAboutSphere() {
+        this.aboutCrawlRef = null;
     }
 
     corridorScroll(delta) {
@@ -536,7 +600,10 @@ class WebGLLayer {
         const time = this.clock.getElapsedTime();
 
         this.updateParallax();
-        if (this.isCorridorActive() && this.corridor) {
+        const aboutSphereLive = this.aboutSphere?.group?.visible;
+        if (aboutSphereLive) {
+            this.aboutSphere.update(dt, time, this.camera, this.parallax);
+        } else if (this.isCorridorActive() && this.corridor) {
             this.corridor.update(dt, this.camera);
             patchAppState({
                 corridor: {
