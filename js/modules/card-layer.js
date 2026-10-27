@@ -84,17 +84,10 @@ function renderCareer(floor) {
     `;
 }
 
-function renderAbout(floor, site) {
+function renderAbout(floor) {
     return `
         <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
         <div class="about-crawl-root"></div>
-        <form id="contact-form" class="contact-form" novalidate>
-            <label>Name<input name="name" required autocomplete="name" /></label>
-            <label>Email<input name="email" type="email" required autocomplete="email" /></label>
-            <label>Message<textarea name="message" required rows="4"></textarea></label>
-            <button type="submit">Send (Phase 2)</button>
-            <p class="form-hint" hidden data-form-error>Please fill all fields with a valid email.</p>
-        </form>
     `;
 }
 
@@ -109,7 +102,7 @@ function renderFloorInner(floor, site) {
         case 'career-pages':
             return renderCareer(floor);
         case 'about':
-            return renderAbout(floor, site);
+            return renderAbout(floor);
         default:
             return `<h2 id="card-title-${floor.id}">${escapeHtml(floor.title)}</h2>`;
     }
@@ -123,7 +116,6 @@ export class CardLayer {
         this.floors = [];
         this.site = null;
         this.built = new Set();
-        this.contactFormBound = false;
         this.openCanvasPiece = () => {};
         this.aboutCrawls = new Map();
         this.reducedMotion = false;
@@ -179,9 +171,8 @@ export class CardLayer {
 
         if (floor.id === 'about') {
             const crawlRoot = section.querySelector('.about-crawl-root');
-            const form = section.querySelector('#contact-form');
             if (crawlRoot && !this.aboutCrawls.has(index)) {
-                import('./about-crawl.js').then(({ AboutCrawl }) => {
+                import('./about-crawl.js').then(({ AboutCrawl, resolveAboutSphereEnabled }) => {
                     const crawl = new AboutCrawl(crawlRoot, {
                         body: floor.body,
                         paragraphs: floor.paragraphs,
@@ -189,15 +180,12 @@ export class CardLayer {
                         ctaLinks: floor.ctaLinks,
                         closingLine: floor.closingLine,
                         reducedMotion: this.reducedMotion,
-                        useSphere:
+                        sphereCapable:
                             !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl')
+                            !document.documentElement.classList.contains('no-webgl'),
+                        startInSphere: resolveAboutSphereEnabled()
                     });
                     crawl.mount();
-                    if (form) {
-                        form.remove();
-                        crawl.attachForm(form);
-                    }
                     this.aboutCrawls.set(index, crawl);
                     if (this.activeIndex === index && crawl.sphereActive) {
                         void window.app?.webgl?.attachAboutSphere?.(crawl)?.then?.(() =>
@@ -205,19 +193,6 @@ export class CardLayer {
                         );
                     }
                 });
-            }
-            if (!this.contactFormBound && form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const data = new FormData(e.target);
-                    const ok =
-                        data.get('name') &&
-                        data.get('email') &&
-                        String(data.get('email')).includes('@') &&
-                        data.get('message');
-                    e.target.querySelector('[data-form-error]').hidden = !!ok;
-                });
-                this.contactFormBound = true;
             }
         }
     }
@@ -291,7 +266,10 @@ export class CardLayer {
     scrollToContact() {
         const aboutIndex = this.floors.findIndex((f) => f.id === 'about');
         if (aboutIndex >= 0) this.ensureBuilt(aboutIndex);
-        document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('.about-crawl-tail, .about-crawl-root')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
     }
 
     /** @param {(slug: string) => void} fn */
