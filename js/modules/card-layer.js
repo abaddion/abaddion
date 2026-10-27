@@ -199,6 +199,11 @@ export class CardLayer {
                         crawl.attachForm(form);
                     }
                     this.aboutCrawls.set(index, crawl);
+                    if (this.activeIndex === index && crawl.sphereActive) {
+                        void window.app?.webgl?.attachAboutSphere?.(crawl)?.then?.(() =>
+                            window.app?.webgl?.setAboutSphereActive?.(true)
+                        );
+                    }
                 });
             }
             if (!this.contactFormBound && form) {

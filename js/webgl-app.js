@@ -48,6 +48,7 @@ class WebGLLayer {
         this._aboutSystemsPromise = null;
         this.aboutSphere = null;
         this.aboutCrawlRef = null;
+        this._savedCameraFov = null;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
@@ -365,6 +366,7 @@ class WebGLLayer {
         if (!this.aboutSphere) return;
         document.documentElement.classList.toggle('about-sphere-active', active);
         if (active) {
+            if (this._savedCameraFov == null) this._savedCameraFov = this.camera.fov;
             this.stack.root.visible = false;
             this.labels.container.style.visibility = 'hidden';
             this.aboutSphere.setVisible(true);
@@ -372,6 +374,11 @@ class WebGLLayer {
             if (this.scene) this.scene.fog = null;
         } else {
             this.aboutSphere.setVisible(false);
+            if (this._savedCameraFov != null) {
+                this.camera.fov = this._savedCameraFov;
+                this.camera.updateProjectionMatrix();
+                this._savedCameraFov = null;
+            }
             const aboutStillOpen =
                 this.interactionState.isOpen() &&
                 this.interactionState.floorIndex === this.aboutFloorIndex;

@@ -71,7 +71,11 @@ export class AboutCrawl {
             this.scene?.classList.add('tail-visible');
         } else if (this.useSphere) {
             this.sphereActive = true;
-            void window.app?.webgl?.attachAboutSphere?.(this);
+            void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
+                if (window.app?.cardLayer?.isAboutFloorOpen?.()) {
+                    window.app?.webgl?.setAboutSphereActive?.(true);
+                }
+            });
         } else {
             this.startAuto();
         }
@@ -133,7 +137,9 @@ export class AboutCrawl {
             this.formSlot?.classList.remove('is-settled');
             this.scene?.classList.toggle('tail-visible', this.tailRevealed);
             this.sphereActive = true;
-            void window.app?.webgl?.setAboutSphereActive?.(true);
+            void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() =>
+                window.app?.webgl?.setAboutSphereActive?.(true)
+            );
         } else {
             this.offset = 0;
             this.formSlot?.classList.remove('is-settled');

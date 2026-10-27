@@ -7,7 +7,7 @@ import { createAboutBandMaterial } from '../shaders/about-sphere-band.js';
 import { rasterizeAboutCopy } from './about-text-texture.js';
 
 const R = 5;
-const LOOP_SEC = 75;
+const LOOP_SEC = 65;
 
 export class AboutSphere {
     /**
@@ -73,18 +73,18 @@ export class AboutSphere {
         if (this.bandMaterial) this.bandMaterial.dispose();
         this.bandMaterial = createAboutBandMaterial(this.texture, this.reducedMotion);
 
-        const hBand = (35 * Math.PI) / 180;
+        const hBand = (52 * Math.PI) / 180;
         const phiStart = Math.PI / 2 - hBand;
         const phiLen = hBand * 2;
         if (this.bandMesh.geometry) this.bandMesh.geometry.dispose();
         this.bandMesh.geometry = new THREE.SphereGeometry(
             R * 0.998,
             64,
-            48,
+            64,
             phiStart,
             phiLen,
             0,
-            Math.PI * 2
+            Math.PI
         );
         this.bandMesh.material = this.bandMaterial;
 
@@ -95,10 +95,10 @@ export class AboutSphere {
         }
         const gridGeo = new THREE.SphereGeometry(R, 24, 16);
         const gridMat = new THREE.MeshBasicMaterial({
-            color: 0xc6ff00,
+            color: 0xece8df,
             wireframe: true,
             transparent: true,
-            opacity: 0.06,
+            opacity: 0.07,
             depthWrite: false
         });
         this.gridMesh = new THREE.Mesh(gridGeo, gridMat);
@@ -156,8 +156,10 @@ export class AboutSphere {
 
         const px = parallax.x * 0.15;
         const py = parallax.y * 0.1;
-        camera.position.set(px, 0.35 + py, 0.05);
-        camera.lookAt(px * 0.5, -0.25 + py * 0.5, -1);
+        camera.fov = 62;
+        camera.updateProjectionMatrix();
+        camera.position.set(px * 0.35, 0.12 + py * 0.25, px * 0.15 + 0.35);
+        camera.lookAt(px * 0.25, -0.35 + py * 0.35, -4.2);
     }
 
     _syncUniforms(time = 0) {

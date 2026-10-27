@@ -477,6 +477,11 @@ html.about-sphere-active .floor-view--about .floor-view-topbar {
 
 .about-crawl-scene.is-sphere {
     min-height: 50dvh;
+    background: transparent;
+}
+
+.about-crawl-scene.is-sphere:not(.is-flat) .about-crawl-perspective {
+    display: none;
 }
 
 .about-crawl-flat-panel.hidden {
@@ -514,14 +519,33 @@ html.about-sphere-active .about-tail-panel {
     border-radius: 2px;
 }
 
+html.about-sphere-active #glitch-canvas {
+    z-index: 28;
+}
+
 html.about-sphere-active .floor-view--about {
     background: transparent;
+}
+
+html.about-sphere-active .floor-view--about.is-open {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 html.about-sphere-active .floor-card--glass.is-open {
     background: transparent;
     border-color: transparent;
     box-shadow: none;
+}
+
+html.about-sphere-active .floor-view--about .floor-card-inner {
+    background: transparent;
+}
+
+html.about-sphere-active .floor-view--about .card-title {
+    color: var(--bone);
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.85);
 }
 
 .about-crawl-scene {

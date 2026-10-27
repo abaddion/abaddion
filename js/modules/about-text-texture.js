@@ -74,11 +74,13 @@ export function rasterizeAboutCopy(copy) {
     let y = pad;
     for (const b of blocks) {
         ctx.font = `${b.size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif`;
-        ctx.fillStyle = b.type === 'byline' ? '#c6ff00' : BONE;
+        ctx.fillStyle = BONE;
+        if (b.type === 'byline') ctx.globalAlpha = 0.92;
         for (const line of b.lines) {
             ctx.fillText(line, w / 2, y);
             y += b.size * 1.55;
         }
+        ctx.globalAlpha = 1;
         y += b.gap;
     }
 

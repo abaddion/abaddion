@@ -49,17 +49,18 @@ export function createAboutBandMaterial(textTexture, reducedMotion = false) {
             void main() {
                 vec2 scrollUv = vec2(vUv.x, fract(vUv.y + uScroll));
                 vec4 tex = texture2D(uTextMap, scrollUv);
+                float glyph = max(tex.a, dot(tex.rgb, vec3(0.299, 0.587, 0.114)));
 
                 vec3 viewDir = normalize(cameraPosition - vWorldPos);
                 vec3 inward = normalize(-vLocalPos);
                 float facing = dot(normalize(inward), viewDir);
 
-                float yNorm = vLocalPos.y / max(length(vLocalPos), 0.001);
-                float frontBottom = smoothstep(-0.15, 0.55, facing) * smoothstep(0.95, -0.35, yNorm);
-                float overhead = smoothstep(0.2, 0.85, yNorm) * (1.0 - smoothstep(0.85, 1.0, yNorm));
-                float opacity = mix(0.08, 1.0, frontBottom);
-                opacity = mix(opacity, 0.1, overhead);
-                opacity *= tex.a * uDim;
+                vec3 nPos = normalize(vLocalPos);
+                float frontWall = smoothstep(0.05, 0.72, -nPos.z);
+                float horizon = smoothstep(0.55, 0.95, nPos.y);
+                float opacity = mix(0.12, 1.0, frontWall);
+                opacity = mix(opacity, opacity * 0.35, horizon);
+                opacity *= glyph * uDim;
 
                 vec3 col = tex.rgb;
 
