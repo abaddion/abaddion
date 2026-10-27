@@ -13,8 +13,8 @@ export function createSlabMaterial(reducedMotion = false) {
             uTime: { value: 0 },
             uCameraPos: { value: new THREE.Vector3() },
             uParallax: { value: new THREE.Vector2() },
-            uSignal: { value: new THREE.Color(0xc6ff00) },
             uInk: { value: new THREE.Color(0x0a0a0a) },
+            uBone: { value: new THREE.Color(0xece8df) },
             uReduced: { value: reducedMotion ? 1 : 0 },
             uBackdropDim: { value: 1 },
             uAtlas: { value: null },
@@ -46,8 +46,8 @@ export function createSlabMaterial(reducedMotion = false) {
             uniform float uTime;
             uniform vec3 uCameraPos;
             uniform vec2 uParallax;
-            uniform vec3 uSignal;
             uniform vec3 uInk;
+            uniform vec3 uBone;
             uniform float uReduced;
             uniform float uBackdropDim;
             uniform sampler2D uAtlas;
@@ -86,7 +86,8 @@ export function createSlabMaterial(reducedMotion = false) {
                     step(inset, cellUv.y) * step(cellUv.y, 1.0 - inset);
                 inBezel = 1.0 - inBezel;
 
-                vec3 bezelCol = uInk * (0.35 + 0.15 * hash(cellId));
+                vec3 glassBase = mix(uInk * 0.55, uBone, 0.12 + fresnel * 0.38);
+                vec3 bezelCol = glassBase * (0.52 + 0.08 * hash(cellId));
                 vec3 screenCol = bezelCol;
 
                 if (inBezel < 0.5 && uAtlasReady > 0.5) {
@@ -101,21 +102,21 @@ export function createSlabMaterial(reducedMotion = false) {
                             screenCol = vec3(hash(cellUv + uTime));
                         }
                     }
-                    float bright = mix(0.45, 1.05, focus);
+                    float bright = mix(0.5, 1.05, focus);
                     screenCol *= bright;
-                } else if (inBezel > 0.5 && focus > 0.35) {
-                    bezelCol += uSignal.rgb * 0.12;
+                } else if (inBezel > 0.5) {
+                    bezelCol = mix(bezelCol, uBone * 0.12, fresnel * (0.35 + focus * 0.25));
                 }
 
                 vec3 base = mix(screenCol, bezelCol, inBezel);
-                base += vec3(fresnel * (0.08 + focus * 0.12));
+                base += uBone * fresnel * (0.04 + focus * 0.06);
                 float atlasMix = focus * uContentCollapse;
-                base = mix(uInk * 0.5, base, atlasMix);
+                base = mix(uInk * 0.35, base, atlasMix);
 
-                float spec = pow(max(dot(reflect(-V, N), V), 0.0), 24.0) * (0.15 + focus * 0.2);
-                base += vec3(spec);
+                float spec = pow(max(dot(reflect(-V, N), V), 0.0), 28.0) * (0.12 + focus * 0.18);
+                base += uBone * spec;
 
-                float alpha = 0.4 + fresnel * 0.2 + focus * 0.12;
+                float alpha = 0.38 + fresnel * 0.34 + focus * 0.08;
                 alpha *= mix(1.0, uBackdropDim, focus);
                 if (uMobilePortrait > 0.5) {
                     alpha *= mix(0.3, 1.0, focus);

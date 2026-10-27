@@ -446,10 +446,106 @@ html.floor-open-canvas #glitch-canvas {
     margin-top: var(--unit);
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+html.about-sphere-active .floor-view--about .floor-view-scroll {
+    background: transparent;
+    pointer-events: none;
+}
+
+html.about-sphere-active .floor-view--about .about-tail-dock,
+html.about-sphere-active .floor-view--about .about-read-toggle,
+html.about-sphere-active .floor-view--about .floor-view-topbar {
+    pointer-events: auto;
+}
+
 .floor-view--about .floor-view-scroll {
     overflow: hidden;
     max-width: none;
     padding-bottom: calc(var(--unit) * 6);
+}
+
+.about-crawl-scene.is-sphere {
+    min-height: 50dvh;
+    background: transparent;
+}
+
+.about-crawl-scene.is-sphere:not(.is-flat) .about-crawl-perspective {
+    display: none;
+}
+
+.about-crawl-flat-panel.hidden {
+    display: none;
+}
+
+.about-tail-dock {
+    position: relative;
+    z-index: 3;
+    margin-top: auto;
+}
+
+.about-crawl-scene:not(.tail-visible) .about-tail-panel {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, 16px, 0);
+}
+
+.about-crawl-scene.tail-visible .about-tail-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition:
+        opacity 0.55s var(--ease),
+        transform 0.55s var(--ease);
+}
+
+html.about-sphere-active .about-tail-panel {
+    background: rgba(10, 10, 10, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(236, 232, 223, 0.14);
+    padding: calc(var(--unit) * 2);
+    margin: calc(var(--unit) * 2);
+    border-radius: 2px;
+}
+
+html.about-sphere-active #glitch-canvas {
+    z-index: 28;
+}
+
+html.about-sphere-active .floor-view--about {
+    background: transparent;
+}
+
+html.about-sphere-active .floor-view--about.is-open {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+html.about-sphere-active .floor-card--glass.is-open {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+html.about-sphere-active .floor-view--about .floor-card-inner {
+    background: transparent;
+}
+
+html.about-sphere-active .floor-view--about .card-title {
+    color: var(--bone);
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.85);
 }
 
 .about-crawl-scene {
