@@ -63,7 +63,7 @@ async function openAboutFloor(page) {
 
 async function captureMotionSet(page, label, width, height) {
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
-    await page.setViewport({ width, height, deviceScaleFactor: 2 });
+    await page.setViewport({ width, height, deviceScaleFactor: 1 });
     const loopSec = LOOP_SEC_SHORT;
     const frames = [];
 
@@ -102,7 +102,7 @@ async function captureMotionSet(page, label, width, height) {
 async function main() {
     fs.mkdirSync(outDir, { recursive: true });
     const puppeteer = await loadPuppeteer();
-    const browser = await puppeteer.launch(chromeLaunchOpts());
+    const browser = await puppeteer.launch({ ...chromeLaunchOpts(), protocolTimeout: 240000 });
     const page = await browser.newPage();
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
 
