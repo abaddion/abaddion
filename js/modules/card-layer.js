@@ -179,10 +179,7 @@ export class CardLayer {
                         byline: floor.byline,
                         ctaLinks: floor.ctaLinks,
                         closingLine: floor.closingLine,
-                        reducedMotion: this.reducedMotion,
-                        sphereCapable:
-                            !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl')
+                        reducedMotion: this.reducedMotion
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
