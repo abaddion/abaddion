@@ -85,6 +85,7 @@ class WebGLLayer {
             this.scheduleAtlasBuild();
             this.renderLoop?.ping();
             patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
+            this.cardLayer?.promoteAboutToSphereWhenReady?.();
         } catch (err) {
             console.error('[webgl] initAsync failed', err);
             document.documentElement.classList.add('no-webgl');
@@ -332,6 +333,7 @@ class WebGLLayer {
         }
         if (index === this.aboutFloorIndex) {
             const crawl = this.cardLayer.getAboutCrawl(this.aboutFloorIndex);
+            crawl?.tryPromoteToSphere?.();
             if (crawl?.sphereActive) {
                 void this.attachAboutSphere(crawl).then(() => this.setAboutSphereActive(true));
             }
@@ -706,6 +708,7 @@ export async function attachWebGL(shell) {
     Object.defineProperty(window.app, 'frame', { get: () => layer.frame });
     Object.defineProperty(window.app, 'frameRender', { value: () => layer.frameRender() });
     layer.bootComplete = true;
-    patchAppState({ webglPhase: 'attached', bootComplete: true });
+    patchAppState({ bootComplete: true });
+    layer.cardLayer?.promoteAboutToSphereWhenReady?.();
     return layer;
 }

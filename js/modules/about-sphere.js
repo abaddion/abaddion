@@ -8,7 +8,14 @@ import { createAboutBandMaterial } from '../shaders/about-sphere-band.js';
 import { rasterizeAboutCopy } from './about-text-texture.js';
 
 const R = 5;
-const LOOP_SEC = 78;
+const LOOP_SEC_DEFAULT = 78;
+const LOOP_SEC_SHORT = 14;
+
+/** @returns {number} Full crawl loop duration (seconds); `?loop=short` for preview QA */
+export function resolveAboutLoopSeconds(location = globalThis.location) {
+    const flag = (new URLSearchParams(location?.search ?? '').get('loop') ?? '').toLowerCase();
+    return flag === 'short' ? LOOP_SEC_SHORT : LOOP_SEC_DEFAULT;
+}
 const THETA_CENTER = Math.PI * 1.5;
 const H_BAND_DESK = (35 * Math.PI) / 180;
 const H_BAND_MOBILE = (26 * Math.PI) / 180;
@@ -32,6 +39,7 @@ export class AboutSphere {
         this.paused = false;
         this.resumeTimer = null;
         this.firstLoopDone = false;
+        this.loopSec = resolveAboutLoopSeconds();
         this.copy = { byline: '', paragraphs: [] };
         this.breakpointKey = '';
 
@@ -149,7 +157,8 @@ export class AboutSphere {
         if (this._breakpointKey() !== this.breakpointKey) this._rebuildTexture();
 
         if (!this.paused && this.autoScroll && !this.reducedMotion) {
-            this.scroll = (this.scroll + dt / LOOP_SEC) % 1;
+            this.loopSec = resolveAboutLoopSeconds();
+            this.scroll = (this.scroll + dt / this.loopSec) % 1;
             if (!this.firstLoopDone && this.scroll > 0.98) {
                 this.firstLoopDone = true;
                 this.onFirstLoopComplete();

@@ -1,10 +1,11 @@
 # Phase 1.7 — About inside-the-ball (default)
 
-Branch: `phase-1.7-sphere-default` → PR to `main`.
+Branch: `phase-1.7-sphere-when-ready` → PR to `main` (PR B after #9).
 
 ## Behavior
 
-- **Default:** WebGL inner-sphere crawl when WebGL + motion OK (desktop and mobile).
+- **Default:** WebGL inner-sphere crawl when `webglPhase === 'ready'` + motion OK (desktop and mobile). Flat until ready, then auto-promote unless user chose “read as text”.
+- **Preview QA:** `?loop=short` (~14s loop) for tail + dim proof on protected previews.
 - **Escape:** “read as text” → flat HTML crawl; “inside the ball” → sphere again.
 - **Debug:** `?about=flat` forces flat on load.
 - **Fallback:** `prefers-reduced-motion`, `no-webgl` → flat only.
