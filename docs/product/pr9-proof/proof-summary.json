@@ -1,0 +1,26 @@
+{
+  "previewHost": "https://glitch-portfolio-git-fix-about-never-6e2ed4-abaddions-projects.vercel.app",
+  "capturedAt": "2026-10-28T07:46:07.911Z",
+  "bypassUsed": true,
+  "threeModule": {
+    "url": "https://glitch-portfolio-git-fix-about-never-6e2ed4-abaddions-projects.vercel.app/vendor/three/build/three.module.min.js",
+    "status": 200,
+    "contentType": "application/javascript; charset=utf-8",
+    "cacheControl": "public, max-age=31536000, immutable"
+  },
+  "appState": {
+    "build": "6c39ee4561e1e65af0b5629eb86db10f9ef05a86",
+    "webglPhase": "attached",
+    "noWebgl": false,
+    "floorOpen": true,
+    "openId": "about",
+    "crawlClass": "about-crawl-scene is-flat tail-visible",
+    "flatCopyLen": 912,
+    "heroIntro": "code · math · canvas",
+    "heroVisible": {
+      "visibility": "hidden",
+      "opacity": "0"
+    }
+  },
+  "note": "Puppeteer uses SwiftShader WebGL when available (same as smoke-boot). Cursor embedded browser cannot access SSO previews without bypass."
+}

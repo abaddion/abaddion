@@ -59,30 +59,42 @@ class WebGLLayer {
         if (!detectWebGL()) {
             document.documentElement.classList.add('no-webgl');
             patchAppState({ webglPhase: 'unsupported' });
+            this.cardLayer?.fallbackAllAboutToFlat?.();
             return;
         }
 
-        await this.initRenderer();
-        await yieldToMain();
-        await this.initStack();
-        await yieldToMain();
-        await this.initLabels();
-        await yieldToMain();
-        await this.initSystems();
-        await yieldToMain();
+        try {
+            await this.initRenderer();
+            await yieldToMain();
+            await this.initStack();
+            await yieldToMain();
+            await this.initLabels();
+            await yieldToMain();
+            await this.initSystems();
+            await yieldToMain();
 
-        this.clock = new this.THREE.Clock();
+            this.clock = new this.THREE.Clock();
 
-        if (this.renderer.compileAsync) {
-            await this.renderer.compileAsync(this.scene, this.camera);
+            if (this.renderer.compileAsync) {
+                await this.renderer.compileAsync(this.scene, this.camera);
+            }
+            await yieldToMain();
+
+            this.setupEvents();
+            this.syncFromShellFocus();
+            this.scheduleAtlasBuild();
+            this.renderLoop?.ping();
+            patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
+        } catch (err) {
+            console.error('[webgl] initAsync failed', err);
+            document.documentElement.classList.add('no-webgl');
+            patchAppState({
+                webglPhase: 'failed',
+                webglInitError: err?.message || String(err)
+            });
+            this.renderer = null;
+            this.cardLayer?.fallbackAllAboutToFlat?.();
         }
-        await yieldToMain();
-
-        this.setupEvents();
-        this.syncFromShellFocus();
-        this.scheduleAtlasBuild();
-        this.renderLoop?.ping();
-        patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
     }
 
     scheduleAtlasBuild() {
@@ -481,6 +493,14 @@ class WebGLLayer {
     }
 
     openFloor(index, fromRoute = false) {
+        if (!this.renderer) {
+            this.cardLayer.ensureBuilt(index);
+            this.focusIndex = index;
+            this.shell.focusIndex = index;
+            this.rail.setActive(index);
+            this.cardLayer.showCard(index, null, { progress: 1, instant: true });
+            return;
+        }
         this.cardLayer.ensureBuilt(index);
         this.focusIndex = index;
         this.shell.focusIndex = index;
@@ -666,6 +686,7 @@ export async function attachWebGL(shell) {
     if (!layer.renderer) {
         document.documentElement.classList.add('no-webgl');
         patchAppState({ webglPhase: 'failed' });
+        shell.cardLayer?.fallbackAllAboutToFlat?.();
         return layer;
     }
     // Capture prototype method before defineProperty shadows instance goToFloor (rail uses shell.goToFloor).

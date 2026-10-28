@@ -2,6 +2,8 @@
  * About floor — sphere crawl (WebGL) or flat text; SEO copy always in DOM.
  */
 
+import { isWebGLReady } from './webgl-readiness.js';
+
 /** @returns {boolean} Force flat HTML crawl (?about=flat) */
 export function resolveAboutFlatFromUrl(location = globalThis.location) {
     const params = new URLSearchParams(location?.search ?? '');
@@ -28,8 +30,14 @@ export class AboutCrawl {
             !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
         this.sphereCapable = options.sphereCapable ?? webglOk;
         const forceFlat = resolveAboutFlatFromUrl();
-        this.flat = this.reducedMotion || !this.sphereCapable || forceFlat;
-        this.startInSphere = options.startInSphere ?? !this.flat;
+        const webglReady = isWebGLReady();
+        this.flat =
+            this.reducedMotion ||
+            forceFlat ||
+            !webglReady ||
+            options.startInSphere === false;
+        this.startInSphere =
+            options.startInSphere === true && this.sphereCapable && webglReady && !forceFlat;
 
         this.offset = 0;
         this.auto = true;
@@ -203,6 +211,19 @@ export class AboutCrawl {
 
     getCopyForSphere() {
         return { byline: this.byline, paragraphs: this.paragraphs };
+    }
+
+    /** Fail-safe: visible flat crawl when WebGL unavailable (PR A). */
+    forceFlatMode() {
+        window.app?.webgl?.setAboutSphereActive?.(false);
+        this.sphereActive = false;
+        if (this.flat) {
+            this.flatPanel?.classList.remove('hidden');
+            this.scene?.classList.add('tail-visible');
+            this.startAuto();
+            return;
+        }
+        this.setFlat(true);
     }
 
     destroy() {
