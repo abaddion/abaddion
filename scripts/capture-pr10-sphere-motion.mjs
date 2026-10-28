@@ -37,12 +37,27 @@ function previewUrl(pathname = '/about') {
     return `${base}${p}?${q}`;
 }
 
-async function waitSphereReady(page, timeoutMs = 60000) {
+async function openAboutFloor(page) {
     await page.waitForFunction(
         () =>
+            window.__APP_STATE?.bootComplete === true &&
             window.__APP_STATE?.webglPhase === 'ready' &&
-            window.app?.webgl?.aboutSphere?.group?.visible === true,
-        { timeout: timeoutMs }
+            typeof window.app?.openFloor === 'function',
+        { timeout: 90000 }
+    );
+    await page.evaluate(async () => {
+        const idx = window.app.content.floors.findIndex((f) => f.id === 'about');
+        window.app.openFloor(idx, true);
+    });
+    await page.waitForFunction(
+        () => window.app?.webgl?.interactionState?.state === 'open',
+        { timeout: 45000 }
+    );
+    await page.waitForFunction(
+        () =>
+            window.app?.webgl?.aboutSphere?.group?.visible === true ||
+            document.querySelector('.about-crawl-scene')?.classList.contains('is-sphere'),
+        { timeout: 45000 }
     );
 }
 
@@ -51,8 +66,8 @@ async function captureMotionSet(page, label, width, height) {
     const loopSec = LOOP_SEC_SHORT;
     const frames = [];
 
-    await page.goto(previewUrl('/about'), { waitUntil: 'networkidle2', timeout: 120000 });
-    await waitSphereReady(page);
+    await page.goto(previewUrl('/'), { waitUntil: 'networkidle2', timeout: 120000 });
+    await openAboutFloor(page);
     await new Promise((r) => setTimeout(r, 400));
 
     const times = [0, Math.round(loopSec * 0.45 * 1000), Math.round((loopSec + 1.5) * 1000)];

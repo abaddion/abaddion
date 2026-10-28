@@ -710,5 +710,9 @@ export async function attachWebGL(shell) {
     layer.bootComplete = true;
     patchAppState({ bootComplete: true });
     layer.cardLayer?.promoteAboutToSphereWhenReady?.();
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    if (path !== '/' && shell.focusIndex > 0) {
+        layer.openFloor(shell.focusIndex, true);
+    }
     return layer;
 }
