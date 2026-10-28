@@ -8,6 +8,7 @@ import { CardLayer } from './modules/card-layer.js';
 import { FloorRail } from './modules/rail.js';
 import { AppRouter } from './modules/router.js';
 import { disableCustomCursorIfNeeded } from './modules/cursor.js';
+import { patchAppState } from './modules/app-state.js';
 
 function initialCardIndex(content) {
     const path = location.pathname.replace(/\/+$/, '') || '/';
@@ -26,6 +27,7 @@ function scheduleWebGLBoot(callback) {
 export function failWebGL(reason) {
     console.warn('[webgl] falling back to HTML shell', reason);
     document.documentElement.classList.add('no-webgl');
+    patchAppState({ webglPhase: 'failed', webglBootError: String(reason ?? '') });
     try {
         window.app?.webgl?.renderLoop?.stop();
     } catch {
@@ -33,18 +35,29 @@ export function failWebGL(reason) {
     }
     const canvas = document.getElementById('glitch-canvas');
     if (canvas) canvas.setAttribute('aria-hidden', 'true');
+    window.app?.cardLayer?.fallbackAllAboutToFlat?.();
 }
 
 function installFailureHandlers() {
     window.addEventListener('error', (e) => {
         window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: e.message || 'error' };
-        if (window.app?.webgl) failWebGL(e.message || 'error');
+        const msg = e.message || 'error';
+        if (/three|webgl|import/i.test(msg) || window.app?.webgl) {
+            failWebGL(msg);
+        }
     });
     window.addEventListener('unhandledrejection', (e) => {
         const msg = e.reason?.message || 'unhandled rejection';
         window.__APP_STATE = { ...(window.__APP_STATE || {}), lastError: msg };
-        if (window.app?.webgl) failWebGL(msg);
+        if (/three|webgl|import/i.test(msg) || window.app?.webgl) {
+            failWebGL(msg);
+        }
     });
+}
+
+function applySiteHero(site) {
+    const intro = document.querySelector('.identity-intro');
+    if (intro && site?.intro) intro.textContent = site.intro;
 }
 
 function applyDebugHud() {
@@ -81,6 +94,7 @@ class ShellApp {
         try {
             const content = await loadContent();
             this.content = content;
+            applySiteHero(content.site);
             this.focusIndex = initialCardIndex(content);
 
             this.cardLayer = new CardLayer(document.getElementById('cards'));
@@ -137,11 +151,14 @@ class ShellApp {
         this.focusIndex = index;
         this.rail.setActive(index);
         this.cardLayer.ensureBuilt(index);
-        if (this.webgl) {
+        if (this.webgl?.renderer) {
             this.webgl.navigateToFloor(index, route ?? this.router.routeForIndex(index));
             if (index !== 0) {
                 this.webgl.openFloor(index, true);
             }
+        } else if (this.webgl) {
+            this.router.navigate(route ?? this.router.routeForIndex(index), true);
+            this.cardLayer.showCard(index, null, { progress: 1, instant: true });
         } else {
             this.router.navigate(route ?? this.router.routeForIndex(index), true);
         }

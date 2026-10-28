@@ -135,6 +135,12 @@ html.no-webgl .identity-hero {
     visibility: visible;
 }
 
+html.floor-open .identity-hero {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
 #floor-rail {
     position: fixed;
     left: max(16px, env(safe-area-inset-left, 0px));

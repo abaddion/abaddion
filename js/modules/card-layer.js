@@ -182,7 +182,8 @@ export class CardLayer {
                         reducedMotion: this.reducedMotion,
                         sphereCapable:
                             !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl')
+                            !document.documentElement.classList.contains('no-webgl'),
+                        startInSphere: false
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
@@ -199,6 +200,12 @@ export class CardLayer {
     /** @returns {import('./about-crawl.js').AboutCrawl | null} */
     getAboutCrawl(index) {
         return this.aboutCrawls.get(index) ?? null;
+    }
+
+    fallbackAllAboutToFlat() {
+        for (const crawl of this.aboutCrawls.values()) {
+            crawl.forceFlatMode?.();
+        }
     }
 
     isAboutFloorOpen() {
@@ -233,9 +240,11 @@ export class CardLayer {
         document.documentElement.classList.toggle('floor-open-canvas', progress > 0.5 && card.dataset.floorId === 'canvas');
 
         this.activeIndex = index;
-        if (progress >= 1 && !options.instant) {
-            this.lastFocus = document.activeElement;
-            card.querySelector('.floor-view-back')?.focus?.();
+        if (progress >= 1) {
+            if (!options.instant) {
+                this.lastFocus = document.activeElement;
+                card.querySelector('.floor-view-back')?.focus?.();
+            }
             if (card.dataset.floorId === 'about') {
                 this.getAboutCrawl(index)?.startAuto?.();
             }
