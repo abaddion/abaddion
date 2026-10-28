@@ -26,18 +26,13 @@ export class AboutCrawl {
         this.ctaLinks = options.ctaLinks ?? [];
         this.closingLine = options.closingLine ?? '';
         this.reducedMotion = options.reducedMotion ?? false;
-        const webglOk =
-            !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
-        this.sphereCapable = options.sphereCapable ?? webglOk;
+        this.allowSphere = options.startInSphere !== false;
         const forceFlat = resolveAboutFlatFromUrl();
         const webglReady = isWebGLReady();
-        this.flat =
-            this.reducedMotion ||
-            forceFlat ||
-            !webglReady ||
-            options.startInSphere === false;
-        this.startInSphere =
-            options.startInSphere === true && this.sphereCapable && webglReady && !forceFlat;
+        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
+        this.userChoseFlat = forceFlat;
+        this.startInSphere = this.wantsSphere && webglReady;
+        this.flat = !this.startInSphere;
 
         this.offset = 0;
         this.auto = true;
@@ -72,7 +67,7 @@ export class AboutCrawl {
         this.formSlot = this.root.querySelector('.about-crawl-form-slot');
         this.tail = this.root.querySelector('.about-crawl-tail');
 
-        this.toggle?.addEventListener('click', () => this.setFlat(!this.flat));
+        this.toggle?.addEventListener('click', () => this.setFlat(!this.flat, { user: true }));
         this.scene?.addEventListener('click', (e) => {
             if (e.target.closest('button, input, textarea, a, label')) return;
             if (this.sphereActive) {
@@ -87,7 +82,7 @@ export class AboutCrawl {
             this.formSlot?.classList.add('is-settled');
             this.scene?.classList.add('tail-visible');
             this.startAuto();
-        } else if (this.startInSphere && this.sphereCapable) {
+        } else if (this.startInSphere && this._sphereCapableNow()) {
             this.sphereActive = true;
             void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
                 if (window.app?.cardLayer?.isAboutFloorOpen?.()) {
@@ -135,7 +130,22 @@ export class AboutCrawl {
         window.app?.webgl?.aboutSphere?.setDim?.(0.42);
     }
 
-    setFlat(flat) {
+    _sphereCapableNow() {
+        return !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
+    }
+
+    tryPromoteToSphere() {
+        if (this.userChoseFlat || this.sphereActive) return;
+        if (!isWebGLReady()) return;
+        if (!this.flat) return;
+        const forceFlat = resolveAboutFlatFromUrl();
+        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
+        if (!this.wantsSphere) return;
+        this.setFlat(false);
+    }
+
+    setFlat(flat, opts = {}) {
+        if (opts.user) this.userChoseFlat = flat;
         this.flat = flat;
         this.scene?.classList.toggle('is-flat', flat);
         this.scene?.classList.toggle('is-sphere', !flat);
@@ -151,7 +161,7 @@ export class AboutCrawl {
             this.formSlot?.classList.add('is-settled');
             this.scene?.classList.add('tail-visible');
             this.startAuto();
-        } else if (this.sphereCapable) {
+        } else if (this._sphereCapableNow()) {
             this.formSlot?.classList.remove('is-settled');
             this.scene?.classList.toggle('tail-visible', this.tailRevealed);
             this.sphereActive = true;
