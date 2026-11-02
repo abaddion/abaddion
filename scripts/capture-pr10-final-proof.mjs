@@ -21,16 +21,17 @@ function loadBypass() {
     return m?.[1]?.trim() ?? '';
 }
 
-function previewUrl(query = '') {
+function previewUrl(pathname = '/', query = '') {
     const bypass = loadBypass();
     const base = previewHost.replace(/\/$/, '');
+    const p = pathname.startsWith('/') ? pathname : `/${pathname}`;
     const q = new URLSearchParams(query.replace(/^\?/, ''));
     if (bypass) {
         q.set('x-vercel-protection-bypass', bypass);
         q.set('x-vercel-set-bypass-cookie', 'true');
     }
     const qs = q.toString();
-    return qs ? `${base}/?${qs}` : `${base}/`;
+    return qs ? `${base}${p}?${qs}` : `${base}${p}`;
 }
 
 function sampleState() {
@@ -78,50 +79,62 @@ async function frames1s(page, prefix, width) {
     return rows;
 }
 
-async function runCase(page, { label, width, height, media, startQuery, afterOpen }) {
+async function runCase(browser, { label, width, height, media, pathname = '/', startQuery = '', afterOpen }) {
+    const page = await browser.newPage();
     await page.emulateMediaFeatures(media);
     await page.setViewport({ width, height, deviceScaleFactor: 1 });
-    await page.goto(previewUrl(startQuery), { waitUntil: 'networkidle2', timeout: 120000 });
+    await page.goto(previewUrl(pathname, startQuery), { waitUntil: 'networkidle2', timeout: 120000 });
     await waitReady(page);
     if (afterOpen) await afterOpen(page);
-    else await openAboutRail(page);
-    return frames1s(page, label, width);
+    else if (pathname.replace(/\/$/, '') !== '/about') await openAboutRail(page);
+    else {
+        await page.waitForFunction(
+            () => window.app?.webgl?.interactionState?.state === 'open',
+            { timeout: 45000 }
+        );
+        await new Promise((r) => setTimeout(r, 800));
+    }
+    const rows = await frames1s(page, label, width);
+    await page.close();
+    return rows;
 }
 
 async function main() {
     fs.mkdirSync(outDir, { recursive: true });
     const puppeteer = await loadPuppeteer();
     const browser = await puppeteer.launch({ ...chromeLaunchOpts(), protocolTimeout: 240000 });
-    const page = await browser.newPage();
-
     const report = { previewHost, capturedAt: new Date().toISOString(), cases: {} };
 
-    report.cases.sphere1440 = await runCase(page, {
+    report.cases.sphere1440 = await runCase(browser, {
         label: 'sphere-desktop',
         width: 1440,
         height: 900,
         media: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+        pathname: '/',
         startQuery: ''
     });
-    report.cases.sphere390 = await runCase(page, {
+    report.cases.sphere390 = await runCase(browser, {
         label: 'sphere-mobile',
         width: 390,
         height: 844,
         media: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+        pathname: '/',
         startQuery: ''
     });
-    report.cases.flat390 = await runCase(page, {
+    report.cases.flat390 = await runCase(browser, {
         label: 'flat-mobile',
         width: 390,
         height: 844,
         media: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+        pathname: '/about',
         startQuery: 'about=flat'
     });
-    report.cases.reduce390 = await runCase(page, {
+    report.cases.reduce390 = await runCase(browser, {
         label: 'reduce-mobile',
         width: 390,
         height: 844,
         media: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+        pathname: '/about',
         startQuery: ''
     });
 

@@ -1,0 +1,182 @@
+{
+  "previewHost": "https://glitch-portfolio-git-phase-17-sphere-b46373-abaddions-projects.vercel.app",
+  "capturedAt": "2026-11-02T08:18:07.293Z",
+  "cases": {
+    "sphere1440": [
+      {
+        "tSec": 0,
+        "file": "sphere-desktop-f1-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.0004539219354080625,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "sphere-desktop-f2-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.1382117471006383,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "sphere-desktop-f3-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.22316498316497851,
+          "flatTransform": "none"
+        }
+      }
+    ],
+    "sphere390": [
+      {
+        "tSec": 0,
+        "file": "sphere-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.00013966828781875875,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "sphere-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.08118468636987389,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "sphere-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.1299563536600597,
+          "flatTransform": "none"
+        }
+      }
+    ],
+    "flat390": [
+      {
+        "tSec": 0,
+        "file": "flat-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 59.091657313885136,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -53.5552, -24.9732, 1)"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "flat-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 103.98503554059661,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -94.2425, -43.946, 1)"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "flat-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 151.87130564908884,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -137.642, -64.1836, 1)"
+        }
+      }
+    ],
+    "reduce390": [
+      {
+        "tSec": 0,
+        "file": "reduce-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 66.00523756079872,
+          "sphereScroll": 0,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "reduce-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 128.85596707819477,
+          "sphereScroll": 0,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "reduce-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 191.7066965955908,
+          "sphereScroll": 0,
+          "flatTransform": "none"
+        }
+      }
+    ]
+  }
+}

@@ -29,7 +29,9 @@ export class AboutCrawl {
         this.byline = options.byline ?? '';
         this.ctaLinks = options.ctaLinks ?? [];
         this.closingLine = options.closingLine ?? '';
-        this.reducedMotion = options.reducedMotion ?? false;
+        this.reducedMotion =
+            options.reducedMotion ??
+            document.documentElement.classList.contains('reduce-motion');
         this.allowSphere = options.startInSphere !== false;
         const forceFlat = resolveAboutFlatFromUrl();
         const webglReady = isWebGLReady();
