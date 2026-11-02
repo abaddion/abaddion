@@ -179,11 +179,9 @@ export class CardLayer {
                         byline: floor.byline,
                         ctaLinks: floor.ctaLinks,
                         closingLine: floor.closingLine,
-                        reducedMotion: this.reducedMotion,
-                        sphereCapable:
-                            !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl'),
-                        startInSphere: false
+                        reducedMotion:
+                            this.reducedMotion ||
+                            document.documentElement.classList.contains('reduce-motion')
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
@@ -205,6 +203,12 @@ export class CardLayer {
     fallbackAllAboutToFlat() {
         for (const crawl of this.aboutCrawls.values()) {
             crawl.forceFlatMode?.();
+        }
+    }
+
+    promoteAboutToSphereWhenReady() {
+        for (const crawl of this.aboutCrawls.values()) {
+            crawl.tryPromoteToSphere?.();
         }
     }
 
@@ -246,7 +250,9 @@ export class CardLayer {
                 card.querySelector('.floor-view-back')?.focus?.();
             }
             if (card.dataset.floorId === 'about') {
-                this.getAboutCrawl(index)?.startAuto?.();
+                const crawl = this.getAboutCrawl(index);
+                crawl?.tryPromoteToSphere?.();
+                crawl?.startAuto?.();
             }
         }
     }

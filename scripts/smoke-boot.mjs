@@ -43,6 +43,7 @@ async function waitWebGLBoot(page) {
     await waitShellContent(page);
     await page.waitForFunction(
         () =>
+            window.__APP_STATE?.webglPhase === 'ready' &&
             window.__APP_STATE?.bootComplete === true &&
             typeof window.app?.openFloor === 'function' &&
             !document.documentElement.classList.contains('no-webgl'),

@@ -561,6 +561,7 @@ html.about-sphere-active .floor-view--about .card-title {
     overflow: hidden;
 }
 
+.about-crawl-scene.is-flat .about-crawl-perspective,
 .about-crawl-scene:not(.is-flat) .about-crawl-perspective {
     perspective: 520px;
     perspective-origin: 50% 100%;
@@ -579,8 +580,8 @@ html.about-sphere-active .floor-view--about .card-title {
 }
 
 .about-crawl-scene.is-flat .about-crawl-block {
-    transform: none;
-    rotate: none;
+    transform: rotateX(25deg);
+    transform-origin: 50% 100%;
 }
 
 .about-crawl-copy p,

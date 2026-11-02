@@ -1,0 +1,87 @@
+{
+  "previewHost": "https://glitch-portfolio-git-phase-17-sphere-b46373-abaddions-projects.vercel.app",
+  "capturedAt": "2026-10-28T09:24:22.569Z",
+  "bypassUsed": true,
+  "loopShortSec": 14,
+  "desktopFrames": [
+    {
+      "file": "desktop-frame1-t0ms-1440.png",
+      "tMs": 0,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.31666428571420574,
+        "tailVisible": false,
+        "isSphere": true,
+        "dim": 1
+      }
+    },
+    {
+      "file": "desktop-frame2-t6300ms-1440.png",
+      "tMs": 6300,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.4703357142856609,
+        "tailVisible": false,
+        "isSphere": true,
+        "dim": 1
+      }
+    },
+    {
+      "file": "desktop-frame3-t15500ms-1440.png",
+      "tMs": 15500,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.9190214285713486,
+        "tailVisible": true,
+        "isSphere": true,
+        "dim": 0.42
+      }
+    },
+    {
+      "file": "desktop-wheel-scrub-1440.png",
+      "note": "after wheel scrub",
+      "scrollAfterWheel": 0.34708571428566104
+    }
+  ],
+  "mobileFrames": [
+    {
+      "file": "mobile-frame1-t0ms-390.png",
+      "tMs": 0,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.14849285714288377,
+        "tailVisible": false,
+        "isSphere": true,
+        "dim": 1
+      }
+    },
+    {
+      "file": "mobile-frame2-t6300ms-390.png",
+      "tMs": 6300,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.9550785714285449,
+        "tailVisible": false,
+        "isSphere": true,
+        "dim": 1
+      }
+    },
+    {
+      "file": "mobile-frame3-t15500ms-390.png",
+      "tMs": 15500,
+      "state": {
+        "webglPhase": "ready",
+        "scroll": 0.8152357142857676,
+        "tailVisible": true,
+        "isSphere": true,
+        "dim": 0.42
+      }
+    },
+    {
+      "file": "mobile-wheel-scrub-390.png",
+      "note": "after wheel scrub",
+      "scrollAfterWheel": 0.34691428571433897
+    }
+  ],
+  "note": "Three frames over time per viewport; ?loop=short on preview. Puppeteer/SwiftShader — owner verifies GPU motion."
+}

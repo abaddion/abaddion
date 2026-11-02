@@ -3,6 +3,10 @@
  */
 
 import { isWebGLReady } from './webgl-readiness.js';
+import {
+    aboutCrawlLoopSeconds,
+    aboutFlatPixelsPerSecond
+} from './about-crawl-speed.js';
 
 /** @returns {boolean} Force flat HTML crawl (?about=flat) */
 export function resolveAboutFlatFromUrl(location = globalThis.location) {
@@ -25,19 +29,16 @@ export class AboutCrawl {
         this.byline = options.byline ?? '';
         this.ctaLinks = options.ctaLinks ?? [];
         this.closingLine = options.closingLine ?? '';
-        this.reducedMotion = options.reducedMotion ?? false;
-        const webglOk =
-            !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
-        this.sphereCapable = options.sphereCapable ?? webglOk;
+        this.reducedMotion =
+            options.reducedMotion ??
+            document.documentElement.classList.contains('reduce-motion');
+        this.allowSphere = options.startInSphere !== false;
         const forceFlat = resolveAboutFlatFromUrl();
         const webglReady = isWebGLReady();
-        this.flat =
-            this.reducedMotion ||
-            forceFlat ||
-            !webglReady ||
-            options.startInSphere === false;
-        this.startInSphere =
-            options.startInSphere === true && this.sphereCapable && webglReady && !forceFlat;
+        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
+        this.userChoseFlat = forceFlat;
+        this.startInSphere = this.wantsSphere && webglReady;
+        this.flat = !this.startInSphere;
 
         this.offset = 0;
         this.auto = true;
@@ -46,6 +47,8 @@ export class AboutCrawl {
         this.raf = null;
         this.sphereActive = false;
         this.tailRevealed = false;
+        this.flatPxPerSec = 32;
+        this._autoLastTs = 0;
         this.onWheel = this.onWheel.bind(this);
     }
 
@@ -72,22 +75,27 @@ export class AboutCrawl {
         this.formSlot = this.root.querySelector('.about-crawl-form-slot');
         this.tail = this.root.querySelector('.about-crawl-tail');
 
-        this.toggle?.addEventListener('click', () => this.setFlat(!this.flat));
+        this.toggle?.addEventListener('click', () => this.setFlat(!this.flat, { user: true }));
         this.scene?.addEventListener('click', (e) => {
             if (e.target.closest('button, input, textarea, a, label')) return;
             if (this.sphereActive) {
                 window.app?.webgl?.aboutSphere?.onTapTogglePause?.();
                 this.paused = !this.paused;
-            } else if (!this.flat) {
+            } else if (!this.sphereActive && !this.reducedMotion) {
                 this.paused = !this.paused;
             }
         });
 
         if (this.flat) {
-            this.formSlot?.classList.add('is-settled');
-            this.scene?.classList.add('tail-visible');
-            this.startAuto();
-        } else if (this.startInSphere && this.sphereCapable) {
+            this._refreshFlatSpeed();
+            if (this.reducedMotion) {
+                this.formSlot?.classList.add('is-settled');
+                this.scene?.classList.add('tail-visible');
+            } else {
+                this.formSlot?.classList.remove('is-settled');
+                this.startAuto();
+            }
+        } else if (this.startInSphere && this._sphereCapableNow()) {
             this.sphereActive = true;
             void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
                 if (window.app?.cardLayer?.isAboutFloorOpen?.()) {
@@ -135,7 +143,22 @@ export class AboutCrawl {
         window.app?.webgl?.aboutSphere?.setDim?.(0.42);
     }
 
-    setFlat(flat) {
+    _sphereCapableNow() {
+        return !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
+    }
+
+    tryPromoteToSphere() {
+        if (this.userChoseFlat || this.sphereActive) return;
+        if (!isWebGLReady()) return;
+        if (!this.flat) return;
+        const forceFlat = resolveAboutFlatFromUrl();
+        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
+        if (!this.wantsSphere) return;
+        this.setFlat(false);
+    }
+
+    setFlat(flat, opts = {}) {
+        if (opts.user) this.userChoseFlat = flat;
         this.flat = flat;
         this.scene?.classList.toggle('is-flat', flat);
         this.scene?.classList.toggle('is-sphere', !flat);
@@ -148,10 +171,16 @@ export class AboutCrawl {
         if (flat) {
             window.app?.webgl?.setAboutSphereActive?.(false);
             this.sphereActive = false;
-            this.formSlot?.classList.add('is-settled');
+            this.stopAuto();
+            this._refreshFlatSpeed();
             this.scene?.classList.add('tail-visible');
-            this.startAuto();
-        } else if (this.sphereCapable) {
+            if (this.reducedMotion) {
+                this.formSlot?.classList.add('is-settled');
+            } else {
+                this.formSlot?.classList.remove('is-settled');
+                this.startAuto();
+            }
+        } else if (this._sphereCapableNow()) {
             this.formSlot?.classList.remove('is-settled');
             this.scene?.classList.toggle('tail-visible', this.tailRevealed);
             this.sphereActive = true;
@@ -169,7 +198,7 @@ export class AboutCrawl {
         if (this.sphereActive) {
             return window.app?.webgl?.aboutSphere?.onWheel?.(deltaY) ?? false;
         }
-        if (this.flat) return false;
+        if (this.reducedMotion) return false;
         this.auto = false;
         this.paused = false;
         clearTimeout(this.resumeTimer);
@@ -181,12 +210,23 @@ export class AboutCrawl {
         return true;
     }
 
+    _refreshFlatSpeed() {
+        const block = this.flatPanel?.querySelector('.about-crawl-block');
+        const copy = this.getCopyForSphere();
+        const loopSec = aboutCrawlLoopSeconds(copy);
+        const max = Math.max(2400, block?.scrollHeight ? block.scrollHeight * 0.85 : 2400);
+        this.flatPxPerSec = aboutFlatPixelsPerSecond(max, loopSec);
+    }
+
     startAuto() {
         this.stopAuto();
-        if (this.flat || this.sphereActive) return;
-        const tick = () => {
+        if (this.sphereActive || this.reducedMotion) return;
+        this._autoLastTs = performance.now();
+        const tick = (ts) => {
+            const dt = Math.min(0.05, (ts - this._autoLastTs) / 1000);
+            this._autoLastTs = ts;
             if (!this.paused && this.auto) {
-                this.offset += 0.35;
+                this.offset += this.flatPxPerSec * dt;
                 this._applyOffset();
             }
             this.raf = requestAnimationFrame(tick);
@@ -200,13 +240,17 @@ export class AboutCrawl {
     }
 
     _applyOffset() {
+        if (this.reducedMotion) return;
         const block = this.flatPanel?.querySelector('.about-crawl-block');
-        if (!block || this.flat) return;
+        if (!block) return;
         const max = Math.max(2400, block.scrollHeight * 0.85);
         this.offset = Math.max(-200, Math.min(max, this.offset));
-        block.style.transform = `translate3d(0, ${-this.offset}px, 0)`;
+        const tilt = this.flat ? 'rotateX(25deg) ' : '';
+        block.style.transform = `${tilt}translate3d(0, ${-this.offset}px, 0)`;
         const atEnd = this.offset > max * 0.85;
-        this.formSlot?.classList.toggle('is-settled', atEnd);
+        if (!this.reducedMotion) {
+            this.formSlot?.classList.toggle('is-settled', atEnd);
+        }
     }
 
     getCopyForSphere() {
