@@ -1,6 +1,6 @@
 {
   "previewHost": "https://glitch-portfolio-git-phase-17-sphere-b46373-abaddions-projects.vercel.app",
-  "capturedAt": "2026-11-02T08:18:07.293Z",
+  "capturedAt": "2026-11-02T08:20:35.419Z",
   "cases": {
     "sphere1440": [
       {
@@ -8,12 +8,12 @@
         "file": "sphere-desktop-f1-1440.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.0004539219354080625,
+          "sphereScroll": 0,
           "flatTransform": "none"
         }
       },
@@ -22,12 +22,12 @@
         "file": "sphere-desktop-f2-1440.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.1382117471006383,
+          "sphereScroll": 0.18500062351913277,
           "flatTransform": "none"
         }
       },
@@ -36,12 +36,12 @@
         "file": "sphere-desktop-f3-1440.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.22316498316497851,
+          "sphereScroll": 0.2807133058984841,
           "flatTransform": "none"
         }
       }
@@ -52,12 +52,12 @@
         "file": "sphere-mobile-f1-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.00013966828781875875,
+          "sphereScroll": 0.020017458535979377,
           "flatTransform": "none"
         }
       },
@@ -66,12 +66,12 @@
         "file": "sphere-mobile-f2-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.08118468636987389,
+          "sphereScroll": 0.07032547699213672,
           "flatTransform": "none"
         }
       },
@@ -80,12 +80,12 @@
         "file": "sphere-mobile-f3-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-sphere",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
           "crawlOffset": 0,
-          "sphereScroll": 0.1299563536600597,
+          "sphereScroll": 0.12081306896121717,
           "flatTransform": "none"
         }
       }
@@ -96,13 +96,13 @@
         "file": "flat-mobile-f1-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-flat",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
-          "crawlOffset": 59.091657313885136,
+          "crawlOffset": 59.57650579873919,
           "sphereScroll": null,
-          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -53.5552, -24.9732, 1)"
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -53.9947, -25.1781, 1)"
         }
       },
       {
@@ -110,13 +110,13 @@
         "file": "flat-mobile-f2-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-flat",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
-          "crawlOffset": 103.98503554059661,
+          "crawlOffset": 95.49120838010839,
           "sphereScroll": null,
-          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -94.2425, -43.946, 1)"
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -86.5444, -40.3563, 1)"
         }
       },
       {
@@ -124,13 +124,13 @@
         "file": "flat-mobile-f3-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
           "sceneClass": "about-crawl-scene is-flat",
           "reducedMotionMatch": false,
           "reduceMotionHtml": false,
-          "crawlOffset": 151.87130564908884,
+          "crawlOffset": 140.38458660681985,
           "sphereScroll": null,
-          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -137.642, -64.1836, 1)"
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -127.232, -59.3291, 1)"
         }
       }
     ],
@@ -140,13 +140,13 @@
         "file": "reduce-mobile-f1-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
-          "sceneClass": "about-crawl-scene is-sphere",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
           "reducedMotionMatch": true,
           "reduceMotionHtml": true,
-          "crawlOffset": 66.00523756079872,
-          "sphereScroll": 0,
-          "flatTransform": "none"
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
         }
       },
       {
@@ -154,13 +154,13 @@
         "file": "reduce-mobile-f2-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
-          "sceneClass": "about-crawl-scene is-sphere",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
           "reducedMotionMatch": true,
           "reduceMotionHtml": true,
-          "crawlOffset": 128.85596707819477,
-          "sphereScroll": 0,
-          "flatTransform": "none"
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
         }
       },
       {
@@ -168,13 +168,13 @@
         "file": "reduce-mobile-f3-390.png",
         "state": {
           "webglPhase": "ready",
-          "build": "a38e2ddc5ea6d8f1fe11011e96b32da92c1f5b18",
-          "sceneClass": "about-crawl-scene is-sphere",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
           "reducedMotionMatch": true,
           "reduceMotionHtml": true,
-          "crawlOffset": 191.7066965955908,
-          "sphereScroll": 0,
-          "flatTransform": "none"
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
         }
       }
     ]
