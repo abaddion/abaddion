@@ -49,6 +49,7 @@ class WebGLLayer {
         this.aboutSphere = null;
         this.aboutCrawlRef = null;
         this._savedCameraFov = null;
+        this._readyMarked = false;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
@@ -84,8 +85,7 @@ class WebGLLayer {
             this.syncFromShellFocus();
             this.scheduleAtlasBuild();
             this.renderLoop?.ping();
-            patchAppState({ webglPhase: 'ready', canvasSystems: 'lazy' });
-            this.cardLayer?.promoteAboutToSphereWhenReady?.();
+            patchAppState({ webglPhase: 'attached', canvasSystems: 'lazy' });
         } catch (err) {
             console.error('[webgl] initAsync failed', err);
             document.documentElement.classList.add('no-webgl');
@@ -607,6 +607,14 @@ class WebGLLayer {
         this.cameraRig.setParallax(this.parallax.x, this.parallax.y);
     }
 
+    _markWebGLReadyOnce() {
+        if (this._readyMarked || !this.renderer) return;
+        if (!this.renderLoop?.isRunning?.()) return;
+        this._readyMarked = true;
+        patchAppState({ webglPhase: 'ready' });
+        this.cardLayer?.promoteAboutToSphereWhenReady?.();
+    }
+
     revealCanvas() {
         if (this.canvasRevealed) return;
         this.canvasRevealed = true;
@@ -655,6 +663,7 @@ class WebGLLayer {
         this.renderer.info.reset();
         this.postProcessing.render();
 
+        this._markWebGLReadyOnce();
         this.revealCanvas();
 
         this.quality.recordFrame(performance.now() - frameStart);
@@ -709,7 +718,6 @@ export async function attachWebGL(shell) {
     Object.defineProperty(window.app, 'frameRender', { value: () => layer.frameRender() });
     layer.bootComplete = true;
     patchAppState({ bootComplete: true });
-    layer.cardLayer?.promoteAboutToSphereWhenReady?.();
     const path = location.pathname.replace(/\/+$/, '') || '/';
     if (path !== '/' && shell.focusIndex > 0) {
         layer.openFloor(shell.focusIndex, true);
