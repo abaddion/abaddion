@@ -172,6 +172,11 @@ try {
         try {
             await openDetailViaCorridorCenter(page, slug);
             console.log('OK open', slug);
+            if (slug === 'placeholder-02') {
+                const shot = path.join(shotsDir, 'corridor-debug-headed-1440.png');
+                await page.screenshot({ path: shot, fullPage: false });
+                console.log('artifact', shot);
+            }
             await page.evaluate(() => document.querySelector('.canvas-detail .detail-back')?.click());
             await page.waitForFunction(
                 () => !window.app?.webgl?.canvasDetail || window.app.webgl.canvasDetail.el?.hidden !== false,

@@ -452,6 +452,23 @@ html.floor-open-canvas #glitch-canvas {
     padding-bottom: calc(var(--unit) * 6);
 }
 
+.floor-view--about .card-title,
+.floor-view--about .card-body,
+.floor-view--about .about-crawl-copy,
+.floor-view--about .about-crawl-tail,
+.floor-view--about .about-read-toggle,
+.floor-view--about .contact-form label,
+.floor-view--about .contact-form button {
+    font-weight: 300;
+}
+
+.floor-view--about .about-crawl-copy p,
+.floor-view--about .about-crawl-tail p,
+.floor-view--about .about-crawl-byline {
+    font-family: var(--font-sans);
+    font-weight: 300;
+}
+
 .about-crawl-scene {
     position: relative;
     min-height: 55dvh;

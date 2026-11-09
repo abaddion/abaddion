@@ -13,7 +13,6 @@ export function createSlabMaterial(reducedMotion = false) {
             uTime: { value: 0 },
             uCameraPos: { value: new THREE.Vector3() },
             uParallax: { value: new THREE.Vector2() },
-            uSignal: { value: new THREE.Color(0xc6ff00) },
             uInk: { value: new THREE.Color(0x0a0a0a) },
             uReduced: { value: reducedMotion ? 1 : 0 },
             uBackdropDim: { value: 1 },
@@ -46,7 +45,6 @@ export function createSlabMaterial(reducedMotion = false) {
             uniform float uTime;
             uniform vec3 uCameraPos;
             uniform vec2 uParallax;
-            uniform vec3 uSignal;
             uniform vec3 uInk;
             uniform float uReduced;
             uniform float uBackdropDim;
@@ -86,7 +84,7 @@ export function createSlabMaterial(reducedMotion = false) {
                     step(inset, cellUv.y) * step(cellUv.y, 1.0 - inset);
                 inBezel = 1.0 - inBezel;
 
-                vec3 bezelCol = uInk * (0.35 + 0.15 * hash(cellId));
+                vec3 bezelCol = uInk * (0.55 + 0.12 * hash(cellId));
                 vec3 screenCol = bezelCol;
 
                 if (inBezel < 0.5 && uAtlasReady > 0.5) {
@@ -103,12 +101,10 @@ export function createSlabMaterial(reducedMotion = false) {
                     }
                     float bright = mix(0.45, 1.05, focus);
                     screenCol *= bright;
-                } else if (inBezel > 0.5 && focus > 0.35) {
-                    bezelCol += uSignal.rgb * 0.12;
                 }
 
                 vec3 base = mix(screenCol, bezelCol, inBezel);
-                base += vec3(fresnel * (0.08 + focus * 0.12));
+                base += vec3(fresnel * (0.06 + focus * 0.08));
                 float atlasMix = focus * uContentCollapse;
                 base = mix(uInk * 0.5, base, atlasMix);
 
