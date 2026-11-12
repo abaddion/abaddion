@@ -39,6 +39,7 @@
     { "source": "/canvas/:slug", "destination": "/index.html" },
     { "source": "/code", "destination": "/index.html" },
     { "source": "/code/:slug", "destination": "/index.html" },
+    { "source": "/games", "destination": "/index.html" },
     { "source": "/career-pages", "destination": "/index.html" },
     { "source": "/career-pages/:slug", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },

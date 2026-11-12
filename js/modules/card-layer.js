@@ -76,6 +76,35 @@ function renderCode(floor) {
     `;
 }
 
+function renderGames(floor) {
+    const items = getItems('games');
+    const list = items
+        .map((item) => {
+            const href = escapeHtml(item.url);
+            const isInternal = String(item.url).startsWith('/');
+            const linkAttrs = isInternal
+                ? ''
+                : ' target="_blank" rel="noopener noreferrer"';
+            return `
+        <article class="card-item card-item--game">
+            ${
+                item.thumb
+                    ? `<img class="code-shot" src="${escapeHtml(item.thumb)}" alt="" loading="lazy" />`
+                    : ''
+            }
+            <h3>${escapeHtml(item.title)}</h3>
+            <p class="card-body">${escapeHtml(item.summary)}</p>
+            <a class="game-play-link" href="${href}"${linkAttrs}>Play ${escapeHtml(item.title)} →</a>
+        </article>`;
+        })
+        .join('');
+    return `
+        <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
+        <p class="card-body">${escapeHtml(floor.body)}</p>
+        <div class="card-list card-list--games">${list}</div>
+    `;
+}
+
 function renderCareer(floor) {
     return `
         <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
@@ -99,6 +128,8 @@ function renderFloorInner(floor, site) {
             return renderCanvas(floor);
         case 'code':
             return renderCode(floor);
+        case 'games':
+            return renderGames(floor);
         case 'career-pages':
             return renderCareer(floor);
         case 'about':
@@ -179,11 +210,9 @@ export class CardLayer {
                         byline: floor.byline,
                         ctaLinks: floor.ctaLinks,
                         closingLine: floor.closingLine,
-                        reducedMotion: this.reducedMotion,
-                        sphereCapable:
-                            !this.reducedMotion &&
-                            !document.documentElement.classList.contains('no-webgl'),
-                        startInSphere: false
+                        reducedMotion:
+                            this.reducedMotion ||
+                            document.documentElement.classList.contains('reduce-motion')
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
@@ -205,6 +234,12 @@ export class CardLayer {
     fallbackAllAboutToFlat() {
         for (const crawl of this.aboutCrawls.values()) {
             crawl.forceFlatMode?.();
+        }
+    }
+
+    promoteAboutToSphereWhenReady() {
+        for (const crawl of this.aboutCrawls.values()) {
+            crawl.tryPromoteToSphere?.();
         }
     }
 
@@ -246,7 +281,9 @@ export class CardLayer {
                 card.querySelector('.floor-view-back')?.focus?.();
             }
             if (card.dataset.floorId === 'about') {
-                this.getAboutCrawl(index)?.startAuto?.();
+                const crawl = this.getAboutCrawl(index);
+                crawl?.tryPromoteToSphere?.();
+                crawl?.startAuto?.();
             }
         }
     }

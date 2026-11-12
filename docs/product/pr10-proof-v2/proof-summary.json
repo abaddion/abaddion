@@ -1,0 +1,182 @@
+{
+  "previewHost": "https://glitch-portfolio-git-phase-17-sphere-b46373-abaddions-projects.vercel.app",
+  "capturedAt": "2026-11-02T08:20:35.419Z",
+  "cases": {
+    "sphere1440": [
+      {
+        "tSec": 0,
+        "file": "sphere-desktop-f1-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "sphere-desktop-f2-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.18500062351913277,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "sphere-desktop-f3-1440.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.2807133058984841,
+          "flatTransform": "none"
+        }
+      }
+    ],
+    "sphere390": [
+      {
+        "tSec": 0,
+        "file": "sphere-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.020017458535979377,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "sphere-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.07032547699213672,
+          "flatTransform": "none"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "sphere-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-sphere",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 0,
+          "sphereScroll": 0.12081306896121717,
+          "flatTransform": "none"
+        }
+      }
+    ],
+    "flat390": [
+      {
+        "tSec": 0,
+        "file": "flat-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 59.57650579873919,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -53.9947, -25.1781, 1)"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "flat-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 95.49120838010839,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -86.5444, -40.3563, 1)"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "flat-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat",
+          "reducedMotionMatch": false,
+          "reduceMotionHtml": false,
+          "crawlOffset": 140.38458660681985,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, -127.232, -59.3291, 1)"
+        }
+      }
+    ],
+    "reduce390": [
+      {
+        "tSec": 0,
+        "file": "reduce-mobile-f1-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
+        }
+      },
+      {
+        "tSec": 1,
+        "file": "reduce-mobile-f2-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
+        }
+      },
+      {
+        "tSec": 2,
+        "file": "reduce-mobile-f3-390.png",
+        "state": {
+          "webglPhase": "ready",
+          "build": "4f10f7f9bd96d11cd791313cbedf1b40aab851f3",
+          "sceneClass": "about-crawl-scene is-flat tail-visible",
+          "reducedMotionMatch": true,
+          "reduceMotionHtml": true,
+          "crawlOffset": 0,
+          "sphereScroll": null,
+          "flatTransform": "matrix3d(1, 0, 0, 0, 0, 0.906308, 0.422618, 0, 0, -0.422618, 0.906308, 0, 0, 0, 0, 1)"
+        }
+      }
+    ]
+  }
+}
