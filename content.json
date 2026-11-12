@@ -350,6 +350,15 @@
           "stack": ["WebGL"],
           "approved": true,
           "placeholder": false
+        },
+        {
+          "slug": "interactive-sand",
+          "title": "Interactive Sand",
+          "url": "/games/interactive-sand/",
+          "summary": "Chat with the seabed — replies rise as sand grains (Gemini on the server).",
+          "stack": ["WebGL2", "Gemini"],
+          "approved": true,
+          "placeholder": false
         }
       ]
     },

@@ -32,6 +32,8 @@ node_modules/
 .vercel
 .env.local
 .env*.local
+games/**/.env
+games/**/.env.local
 three-0.160.0.tgz
 
 # Smoke screenshots (CI artifacts only)
