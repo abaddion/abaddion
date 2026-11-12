@@ -5,17 +5,25 @@
 
 ## Gemini (cheap / free)
 
-| Variable | Required | Default |
-|----------|----------|---------|
+| Variable | Required | Overrides |
+|----------|----------|-----------|
 | `GEMINI_API_KEY` | Yes (Vercel prod) | — |
-| `GEMINI_MODEL` | No | `gemini-2.0-flash-lite` |
+| `GEMINI_MODEL` | No | `model` in `api/sand-chat.config.json` |
+| `GEMINI_MAX_OUTPUT_TOKENS` | No | `maxOutputTokens` in config |
+| `GEMINI_TEMPERATURE` | No | `temperature` in config |
 
-`maxOutputTokens` is capped at **80** (replies ≤ ~25 words). History is capped at 10 turns.
+**Defaults live in `api/sand-chat.config.json`** (change model there in a PR, or set env on Vercel without touching the handler). History is capped at 10 turns.
 
 ## Local dev
 
 - **`npx serve`** — chat uses **scripted fallbacks** (no API).
 - **`vercel dev`** — set `GEMINI_API_KEY` in env; call real Gemini.
+
+## Production checklist
+
+1. **`GEMINI_API_KEY`** on Vercel (Production + Preview) — without it, `/api/sand-chat` returns 500 and the UI shows a “could not reach the surface” line (not scripted chat).
+2. Redeploy after env changes.
+3. The API handler must use **ESM** `export default` (repo `package.json` has `"type": "module"`).
 
 ## Security
 

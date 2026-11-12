@@ -124,10 +124,14 @@
       if (!response.ok) throw new Error('chat request failed: ' + response.status);
       return response.json();
     }).then(function (data) {
-      return data.reply || scriptedReply(message);
+      if (!data || typeof data.reply !== 'string' || !data.reply.trim()) {
+        throw new Error('empty reply');
+      }
+      return data.reply;
     }).catch(function (err) {
-      console.warn('Using a scripted reply instead:', err.message);
-      return scriptedReply(message);
+      console.warn('Sand chat API failed:', err.message);
+      if (location.protocol === 'file:') return scriptedReply(message);
+      return 'The tide is quiet. I could not reach the surface — try again in a moment.';
     }).finally(function () {
       clearTimeout(timeout);
     });

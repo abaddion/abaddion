@@ -4,7 +4,7 @@
 
 1. Create a project at [clarity.microsoft.com](https://clarity.microsoft.com/) for **www.abaddion.com**.
 2. In **Vercel** → glitch-portfolio project → **Environment Variables**, add:
-   - `CLARITY_PROJECT_ID` = your project ID (alphanumeric string from Clarity overview).
+   - `CLARITY_PROJECT_ID` = your project ID (optional; build defaults to **`zcn4aq0rzr`** if unset).
 3. Redeploy. The build script injects the Clarity tag into `index.html` and `games/interactive-ink/index.html`.
 
 Local `npm run check:static` / `./start.sh` do **not** run the inject step unless you run:
