@@ -2,9 +2,10 @@
  * Vercel serverless: POST /api/sand-chat
  * Gemini key stays server-side (set GEMINI_API_KEY in Vercel env).
  *
- * Default model: gemini-2.0-flash-lite — free-tier friendly, lowest cost.
+ * Model and generation settings: api/sand-chat.config.json
+ * Override without redeploying config: GEMINI_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_TEMPERATURE.
  */
-const DEFAULT_MODEL = 'gemini-2.0-flash-lite';
+import sandConfig from './sand-chat.config.json' with { type: 'json' };
 
 const PERSONA = [
     'You are a voice written in sand on the seabed. Each reply you give is formed from grains of sand',
@@ -14,7 +15,21 @@ const PERSONA = [
     '(no markdown, no emoji, no lists, no line breaks). Reply in the language the person writes in.'
 ].join(' ');
 
-module.exports = async function handler(req, res) {
+function envNumber(name, fallback) {
+    const raw = process.env[name]?.trim();
+    if (raw === undefined || raw === '') return fallback;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function resolveModel() {
+    const fromEnv = process.env.GEMINI_MODEL?.trim();
+    if (fromEnv) return fromEnv;
+    const fromConfig = typeof sandConfig.model === 'string' ? sandConfig.model.trim() : '';
+    return fromConfig || null;
+}
+
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
         return res.status(405).json({ error: 'Use POST' });
@@ -22,6 +37,13 @@ module.exports = async function handler(req, res) {
 
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY is not set' });
+
+    const model = resolveModel();
+    if (!model) {
+        return res.status(500).json({
+            error: 'No Gemini model configured. Set GEMINI_MODEL or model in api/sand-chat.config.json'
+        });
+    }
 
     let body = req.body || {};
     if (typeof body === 'string') {
@@ -44,7 +66,12 @@ module.exports = async function handler(req, res) {
         }));
     while (past.length && past[0].role !== 'user') past.shift();
 
-    const model = (process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+    const temperature = envNumber('GEMINI_TEMPERATURE', sandConfig.temperature ?? 0.9);
+    const maxOutputTokens = envNumber(
+        'GEMINI_MAX_OUTPUT_TOKENS',
+        sandConfig.maxOutputTokens ?? 80
+    );
+
     const url =
         'https://generativelanguage.googleapis.com/v1beta/models/' +
         encodeURIComponent(model) +
@@ -57,13 +84,13 @@ module.exports = async function handler(req, res) {
             body: JSON.stringify({
                 system_instruction: { parts: [{ text: PERSONA }] },
                 contents: past.concat([{ role: 'user', parts: [{ text: message }] }]),
-                generationConfig: { temperature: 0.9, maxOutputTokens: 80 }
+                generationConfig: { temperature, maxOutputTokens }
             })
         });
 
         const data = await response.json();
         if (!response.ok) {
-            console.error('Gemini error', response.status, JSON.stringify(data).slice(0, 500));
+            console.error('Gemini error', response.status, model, JSON.stringify(data).slice(0, 500));
             return res.status(502).json({ error: 'Gemini request failed' });
         }
 
@@ -80,4 +107,4 @@ module.exports = async function handler(req, res) {
         console.error(err);
         return res.status(502).json({ error: 'Could not reach Gemini' });
     }
-};
+}

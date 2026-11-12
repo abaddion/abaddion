@@ -27,7 +27,8 @@ function claritySnippet(projectId) {
 }
 
 function injectClarity(html) {
-    const id = process.env.CLARITY_PROJECT_ID?.trim() || '';
+    // Public client ID (override with CLARITY_PROJECT_ID on Vercel if needed).
+    const id = process.env.CLARITY_PROJECT_ID?.trim() || 'zcn4aq0rzr';
     if (!html.includes('__CLARITY_SNIPPET__')) {
         console.warn('inject-build-meta: __CLARITY_SNIPPET__ placeholder missing');
         return html;
