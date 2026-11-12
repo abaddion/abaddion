@@ -40,6 +40,7 @@ Production deploys via **merge to `main`** (Vercel Git integration). Do not use 
 | `/` | identity |
 | `/canvas` | canvas (+ `/canvas/:slug` detail) |
 | `/code` | code |
+| `/games` | games (`/games/interactive-ink/` — static play page) |
 | `/career-pages` | career pages |
 | `/about` | about (+ contact form markup) |
 

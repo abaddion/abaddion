@@ -83,6 +83,8 @@ export async function buildFloorAtlas() {
             await drawMonitorGrid(ctx, getItems('canvas'), x0, y0, w, h);
         } else if (floor.id === 'code') {
             await drawMonitorGrid(ctx, getItems('code'), x0, y0, w, h);
+        } else if (floor.id === 'games') {
+            await drawMonitorGrid(ctx, getItems('games'), x0, y0, w, h);
         } else {
             const label = floor.id === 'identity' ? site.name : floor.title;
             const cells = Array.from({ length: ATLAS_GRID_COLS * ATLAS_GRID_ROWS }, (_, i) => ({

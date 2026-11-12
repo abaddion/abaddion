@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Ink in Water</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="canvas" aria-label="Interactive ink in water simulation"></canvas>
+
+  <p id="hint">Move your mouse or finger to stir the ink</p>
+  <p id="error" hidden>Your browser does not support the WebGL features this demo needs.</p>
+
+  <div id="toolbar" role="toolbar" aria-label="Ink controls">
+    <div id="swatches" role="group" aria-label="Ink colour">
+      <button class="swatch active" data-color="#14161f" aria-label="Black ink" style="--c:#14161f"></button>
+      <button class="swatch" data-color="#2b3a8f" aria-label="Indigo ink" style="--c:#2b3a8f"></button>
+      <button class="swatch" data-color="#c2283a" aria-label="Crimson ink" style="--c:#c2283a"></button>
+      <button class="swatch" data-color="#0f8f85" aria-label="Teal ink" style="--c:#0f8f85"></button>
+      <button class="swatch" data-color="#e09a1f" aria-label="Amber ink" style="--c:#e09a1f"></button>
+      <button class="swatch" data-color="#7a3fb0" aria-label="Violet ink" style="--c:#7a3fb0"></button>
+    </div>
+    <label class="custom" title="Custom colour">
+      <input type="color" id="custom" value="#1f6fd1" aria-label="Custom ink colour">
+    </label>
+    <label class="flow">
+      <span>Flow</span>
+      <input type="range" id="flow" min="0.1" max="1.5" step="0.05" value="0.45" aria-label="Flow speed">
+    </label>
+    <button id="clear" type="button">Clear</button>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

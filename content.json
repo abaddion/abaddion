@@ -2,7 +2,7 @@
   "site": {
     "name": "abaddion",
     "headline": "creative technologist",
-    "intro": "code · math · canvas"
+    "intro": "code · math · canvas · games"
   },
   "floors": [
     {
@@ -335,8 +335,27 @@
       ]
     },
     {
-      "id": "career-pages",
+      "id": "games",
       "index": "04",
+      "label": "play / games",
+      "route": "/games",
+      "title": "games",
+      "body": "Small interactive experiments — play in the browser.",
+      "items": [
+        {
+          "slug": "interactive-ink",
+          "title": "Interactive Ink",
+          "url": "/games/interactive-ink/",
+          "summary": "Stir ink in water. Move your mouse or finger to paint flow in WebGL.",
+          "stack": ["WebGL"],
+          "approved": true,
+          "placeholder": false
+        }
+      ]
+    },
+    {
+      "id": "career-pages",
+      "index": "05",
       "label": "employer branding / career pages",
       "route": "/career-pages",
       "title": "career pages",
@@ -348,7 +367,7 @@
     },
     {
       "id": "about",
-      "index": "05",
+      "index": "06",
       "label": "about abaddion / contact",
       "route": "/about",
       "title": "about",

@@ -929,6 +929,31 @@ html.no-glass-blur .floor-card--glass.is-open {
     color: var(--signal);
 }
 
+.game-play-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: calc(var(--unit) * 0.75) calc(var(--unit) * 1.5);
+    margin-top: calc(var(--unit) * 0.5);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+    color: var(--bone);
+    background: color-mix(in srgb, var(--signal) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--signal) 55%, transparent);
+    border-radius: 2px;
+    text-decoration: none;
+}
+
+.game-play-link:hover,
+.game-play-link:focus-visible {
+    background: color-mix(in srgb, var(--signal) 35%, transparent);
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+}
+
 .contact-form {
     display: flex;
     flex-direction: column;
