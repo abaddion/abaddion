@@ -468,6 +468,15 @@
   flow.addEventListener('input', function () { CONFIG.SPEED = parseFloat(flow.value); });
 
   // ---------- Pointer input (mouse, touch, pen) ----------
+  var clarityEngaged = false;
+  function trackInkEngagement() {
+    if (clarityEngaged) return;
+    clarityEngaged = true;
+    if (typeof window.clarity === 'function') {
+      window.clarity('event', 'interactive-ink-engaged');
+    }
+  }
+
   var pointers = {};
   var queue = [];
 
@@ -482,6 +491,7 @@
   function hideHint() { hint.classList.add('hidden'); }
 
   canvas.addEventListener('pointerdown', function (e) {
+    trackInkEngagement();
     var p = position(e);
     pointers[e.pointerId] = p;
     // A tap or click releases a drop of ink that blooms outward a little.

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Sand Chat</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- __CLARITY_SNIPPET__ -->
+</head>
+<body>
+  <canvas id="canvas" aria-hidden="true"></canvas>
+
+  <!-- Screen readers get the reply as plain text, since the canvas is only visual -->
+  <p id="reply-text" class="sr-only" aria-live="polite"></p>
+
+  <p id="error" hidden>This demo needs WebGL2, which this browser or device does not provide.</p>
+
+  <p id="you" aria-hidden="true"></p>
+
+  <form id="chat" autocomplete="off">
+    <input id="message" type="text" maxlength="200" placeholder="Write something to the sand…" aria-label="Your message">
+    <button type="submit" aria-label="Send">Send</button>
+  </form>
+
+  <script src="main.js"></script>
+</body>
+</html>
