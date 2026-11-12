@@ -9,6 +9,7 @@ import { FloorRail } from './modules/rail.js';
 import { AppRouter } from './modules/router.js';
 import { disableCustomCursorIfNeeded } from './modules/cursor.js';
 import { patchAppState } from './modules/app-state.js';
+import { clarityEvent, clarityVirtualPage } from './modules/clarity.js';
 
 function initialCardIndex(content) {
     const path = location.pathname.replace(/\/+$/, '') || '/';
@@ -130,6 +131,10 @@ class ShellApp {
     handleRoute(payload) {
         this.focusIndex = payload.index;
         this.rail.setActive(payload.index);
+        clarityVirtualPage(payload.path ?? location.pathname);
+        if (payload.floor?.id === 'games') {
+            clarityEvent('games-floor');
+        }
         this.cardLayer.ensureBuilt(payload.index);
         if (this.webgl) {
             this.webgl.handleRoute(payload);

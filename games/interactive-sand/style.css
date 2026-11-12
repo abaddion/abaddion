@@ -1,0 +1,128 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #062a3f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #f4ead6;
+}
+
+#canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+#error {
+  position: fixed;
+  top: 45%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: max-content;
+  max-width: 90vw;
+  text-align: center;
+  font-size: 16px;
+}
+
+/* The user's last message, shown briefly above the input */
+#you {
+  position: fixed;
+  left: 50%;
+  bottom: calc(max(22px, env(safe-area-inset-bottom)) + 62px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  max-width: min(560px, calc(100vw - 32px));
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(244, 234, 214, 0.9);
+  background: rgba(6, 34, 52, 0.55);
+  border-radius: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+#you.visible {
+  opacity: 1;
+}
+
+#chat {
+  position: fixed;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  width: min(560px, calc(100vw - 24px));
+  padding: 6px;
+  background: rgba(6, 34, 52, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(244, 234, 214, 0.22);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+}
+
+#message {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 16px;
+  color: #f4ead6;
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+#message::placeholder {
+  color: rgba(244, 234, 214, 0.5);
+}
+
+#chat:focus-within {
+  border-color: rgba(244, 234, 214, 0.55);
+}
+
+#chat button {
+  flex: none;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a2a12;
+  background: #e2c58c;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#chat button:hover {
+  background: #efd7a6;
+}
+
+#chat button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

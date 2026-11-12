@@ -40,7 +40,7 @@ Production deploys via **merge to `main`** (Vercel Git integration). Do not use 
 | `/` | identity |
 | `/canvas` | canvas (+ `/canvas/:slug` detail) |
 | `/code` | code |
-| `/games` | games (`/games/interactive-ink/` — static play page) |
+| `/games` | games (`/games/interactive-ink/`, `/games/interactive-sand/`; sand uses `/api/sand-chat`) |
 | `/career-pages` | career pages |
 | `/about` | about (+ contact form markup) |
 
@@ -52,3 +52,7 @@ Production deploys via **merge to `main`** (Vercel Git integration). Do not use 
 ## Content
 
 Edit `content.json`. Items with `"approved": false` are hidden on production hostnames; visible on localhost and private LAN.
+
+## Analytics
+
+Optional **Microsoft Clarity** via `CLARITY_PROJECT_ID` on Vercel (build inject). See `docs/CLARITY.md`.
