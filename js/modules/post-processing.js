@@ -17,6 +17,7 @@ export class PostProcessing {
         this.passes = {};
         this.previousFrameTarget = null;
         this.composerScale = 0.5;
+        this._composerScaleBeforeNova = null;
         this.readyPromise = null;
 
         this.intensity = 0;
@@ -111,6 +112,10 @@ export class PostProcessing {
 
         if (this.passes.nova?.enabled) {
             this.passes.nova.uniforms.uProgress.value = this.novaProgress;
+            this.passes.nova.uniforms.uResolution.value = [
+                window.innerWidth,
+                window.innerHeight
+            ];
         }
 
         if (this.decayUntil > 0 && performance.now() > this.decayUntil) {
@@ -172,18 +177,33 @@ export class PostProcessing {
             this.passes.nova.enabled = false;
             this.passes.nova.uniforms.uProgress.value = 0;
         }
+        if (this._composerScaleBeforeNova != null) {
+            this.composerScale = this._composerScaleBeforeNova;
+            this._composerScaleBeforeNova = null;
+            this.setComposerSize(window.innerWidth, window.innerHeight);
+        }
     }
 
     fireNova(progress = 0.5, center = [0.5, 0.5]) {
         if (this.reducedMotion) return;
         this.novaProgress = progress;
-        this.novaUntil = performance.now() + 220;
+        this.novaUntil = performance.now() + 200;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const radius = 0.25;
         this.ensureComposer().then(() => {
+            if (this._composerScaleBeforeNova == null) {
+                this._composerScaleBeforeNova = this.composerScale;
+            }
+            this.composerScale = 1;
+            this.setComposerSize(w, h);
             this.enableComposer();
             if (this.passes.nova) {
                 this.passes.nova.enabled = true;
                 this.passes.nova.uniforms.uProgress.value = progress;
                 this.passes.nova.uniforms.uCenter.value = center;
+                this.passes.nova.uniforms.uRadius.value = radius;
+                this.passes.nova.uniforms.uResolution.value = [w, h];
             }
         });
     }
@@ -227,6 +247,9 @@ export class PostProcessing {
     resize(width, height) {
         this.renderer.setSize(width, height);
         this.setComposerSize(width, height);
+        if (this.passes?.nova) {
+            this.passes.nova.uniforms.uResolution.value = [width, height];
+        }
     }
 
     getPassCount() {
