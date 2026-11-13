@@ -143,20 +143,22 @@ function renderCareer(floor) {
 }
 
 function renderAbout(floor) {
-    return `
-        <h2 id="card-title-${floor.id}" class="card-title floor-heading-reveal">${escapeHtml(floor.title)}</h2>
-        <div class="about-crawl-root"></div>
-    `;
+    return `<div class="about-crawl-root"></div>`;
 }
 
 function buildFloorShell(floor, site, innerHtml) {
     const immersive = isImmersiveFloor(floor.id);
     const idx = escapeHtml(floor.index ?? '01');
     const label = escapeHtml(floorLabelText(floor, site));
+    const aboutTitle =
+        floor.id === 'about'
+            ? `<h2 id="card-title-${floor.id}" class="card-title about-floor-title floor-heading-reveal">${escapeHtml(floor.title)}</h2>`
+            : '';
     return `
             <header class="floor-view-topbar">
                 <button type="button" class="floor-view-back">← stack</button>
             </header>
+            ${aboutTitle}
             <div class="floor-view-scroll">
                 <div class="floor-view-shell floor-view-shell--${escapeHtml(floor.id)}">
                     <svg class="floor-view-frame" aria-hidden="true"></svg>
@@ -278,11 +280,6 @@ export class CardLayer {
                     });
                     crawl.mount();
                     this.aboutCrawls.set(index, crawl);
-                    if (this.activeIndex === index && crawl.sphereActive) {
-                        void window.app?.webgl?.attachAboutSphere?.(crawl)?.then?.(() =>
-                            window.app?.webgl?.setAboutSphereActive?.(true)
-                        );
-                    }
                 });
             }
         }
@@ -346,7 +343,6 @@ export class CardLayer {
             }
             if (card.dataset.floorId === 'about') {
                 const crawl = this.getAboutCrawl(index);
-                crawl?.tryPromoteToSphere?.();
                 crawl?.startAuto?.();
             }
         }
