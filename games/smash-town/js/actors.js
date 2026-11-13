@@ -25,40 +25,12 @@
 
   // ================================================================== CAR
   // A small toy city car. Its front points along +z of the group.
-  Smash.createCar = function (scene, town) {
+  Smash.createCar = function (scene, town, world) {
     var C = Smash.CONFIG;
-    var group = new THREE.Group();
-    var paint = new THREE.MeshStandardMaterial({ color: C.CAR_COLOURS[0], roughness: 0.3, metalness: 0.15 });
-    var glass = new THREE.MeshStandardMaterial({ color: 0x1d2733, roughness: 0.15, metalness: 0.4 });
-    var dark = new THREE.MeshStandardMaterial({ color: 0x22252b, roughness: 0.8 });
-    var white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-
-    function part(geo, mat, x, y, z) {
-      var m = new THREE.Mesh(geo, mat);
-      m.position.set(x, y, z);
-      m.castShadow = true;
-      group.add(m);
-      return m;
-    }
-
-    part(slab(2.0, 3.9, 0.6, 0.55), paint, 0, 0.35, 0);                // body
-    part(slab(1.72, 2.1, 0.5, 0.5), glass, 0, 0.98, -0.25);            // windows
-    part(slab(1.66, 1.9, 0.5, 0.1), paint, 0, 1.56, -0.25);            // roof
-    part(new THREE.BoxGeometry(0.5, 0.03, 3.5), white, 0, 1.0, 0);      // racing stripe: bonnet and boot
-    part(new THREE.BoxGeometry(0.5, 0.03, 1.7), white, 0, 1.76, -0.25); // racing stripe: roof
-    part(new THREE.BoxGeometry(1.9, 0.25, 0.2), dark, 0, 0.42, 1.98);   // bumpers
-    part(new THREE.BoxGeometry(1.9, 0.25, 0.2), dark, 0, 0.42, -1.98);
-    var lamp = new THREE.MeshStandardMaterial({ color: 0xfff6c8, emissive: 0xffe9a0, emissiveIntensity: 0.9 });
-    var tail = new THREE.MeshStandardMaterial({ color: 0xff2a2a, emissive: 0xaa0000, emissiveIntensity: 0.8 });
-    [-0.62, 0.62].forEach(function (x) {
-      part(new THREE.BoxGeometry(0.42, 0.2, 0.12), lamp, x, 0.78, 1.93);
-      part(new THREE.BoxGeometry(0.42, 0.18, 0.12), tail, x, 0.78, -1.93);
-    });
-    var wheelGeo = new THREE.CylinderGeometry(0.44, 0.44, 0.34, 18);
-    wheelGeo.rotateZ(Math.PI / 2);
-    [[-1.0, 1.25], [1.0, 1.25], [-1.0, -1.25], [1.0, -1.25]].forEach(function (w) {
-      part(wheelGeo, dark, w[0], 0.44, w[1]);
-    });
+    var saved = Smash.Vehicles.loadSaved();
+    var built = Smash.Vehicles.buildGroup(saved, C.CAR_COLOURS[0]);
+    var group = built.group;
+    var paint = built.paint;
     scene.add(group);
 
     var car = {
@@ -73,13 +45,66 @@
       paintTime: 0, paintColour: '#fff',
       swallowedAt: new THREE.Vector3(),
       hop: 0,
-      target: null,                 // where the finger wants it to go: { x, z }
-      eaten: false                  // true while it is inside the monster
+      target: null,
+      eaten: false,
+      stuckT: 0,
+      pitch: 0,
+      roll: 0,
+      inWater: false,
+      lastSplash: 0,
+      typeId: saved,
+      stats: built.def,
+      sprayT: 0,
+      dumpCargo: 0,
+      paintHex: C.CAR_COLOURS[0]
     };
     car.x = town.roads[Math.floor(town.roads.length / 2)];
     car.z = car.x;
 
-    car.setColour = function (hex) { paint.color.set(hex); car.hop = 1; };
+    car.setColour = function (hex) {
+      car.paintHex = hex;
+      paint.color.set(hex);
+      car.hop = 1;
+    };
+
+    car.swapTo = function (typeId, puff) {
+      if (typeId === car.typeId) return;
+      scene.remove(group);
+      var next = Smash.Vehicles.buildGroup(typeId, car.paintHex);
+      group = next.group;
+      paint = next.paint;
+      scene.add(group);
+      car.typeId = typeId;
+      car.stats = next.def;
+      Smash.Vehicles.save(typeId);
+      car.hop = 1.1;
+      car.spin = (Math.random() < 0.5 ? -1 : 1) * 5;
+      if (puff) puff(car.x, car.z);
+      Smash.Sound.swapPuff();
+      Smash.Sound.enginePitch(car.stats.engine);
+      Smash.Sound.hornFor(typeId);
+      if (car._onSwap) car._onSwap(typeId);
+    };
+
+    car.smashRadius = function () {
+      return car.stats.smash;
+    };
+
+    car.triggerAction = function () {
+      if (car.stats.action === 'spray') {
+        car.sprayT = 2.2;
+        Smash.Sound.siren(true);
+      } else if (car.stats.action === 'tip') {
+        if (car.dumpCargo > 0.2) {
+          car._tipDump?.();
+          car.dumpCargo = 0;
+        } else {
+          car.dumpCargo = Math.min(1, car.dumpCargo + 0.35);
+        }
+      }
+    };
+
+    Smash.Sound.enginePitch(car.stats.engine);
 
     car.spinOut = function () { car.spin = (Math.random() < 0.5 ? -1 : 1) * 15; car.speed = 0; car.drift = 0.8; };
 
@@ -111,16 +136,26 @@
         return;
       }
       var want = 0;
+      var fingerDown = !!car.target || car._pointerDown;
       if (car.target) {
         var dx = car.target.x - car.x, dz = car.target.z - car.z, dist = Math.hypot(dx, dz);
         if (dist < 1.6) {
-          car.target = null;                             // arrived
+          car.target = null;
         } else {
           var diff = wrap(Math.atan2(dx, dz) - car.heading);
           var maxTurn = C.CAR_TURN * (0.45 + Math.min(1, Math.abs(car.speed) / 6)) * dt;
           car.heading += Math.max(-maxTurn, Math.min(maxTurn, diff));
-          want = C.CAR_SPEED * Math.max(0.35, Math.min(1, dist / 8));
-          if (Math.abs(diff) > 1.6) want *= 0.45;        // slow down for a U-turn
+          want = C.CAR_SPEED * car.stats.speed * Math.max(0.35, Math.min(1, dist / 8));
+          if (Math.abs(diff) > 1.6) want *= 0.45;
+        }
+      }
+      if (world) {
+        var steer = world.softEdgeSteer(car.x, car.z, car.vx, car.vz);
+        if (steer.fx || steer.fz) {
+          var edgeA = Math.atan2(steer.fx, steer.fz);
+          var edgeD = wrap(edgeA - car.heading);
+          car.heading += edgeD * Math.min(1, dt * 2.5);
+          want = Math.max(want, C.CAR_SPEED * 0.45);
         }
       }
       car.speed += (want - car.speed) * Math.min(1, dt * 2.6);
@@ -129,6 +164,8 @@
       car.spin *= Math.exp(-2.4 * dt);
       car.drift = Math.max(0, car.drift - dt);
       car.paintTime = Math.max(0, car.paintTime - dt);
+      car.sprayT = Math.max(0, car.sprayT - dt);
+      if (car.sprayT <= 0 && car.stats.action === 'spray') Smash.Sound.siren(false);
 
       // Normally the tyres grip and the car goes where it points.
       // On paint the grip nearly disappears, so it keeps sliding the old way.
@@ -136,16 +173,47 @@
       var fx = Math.sin(car.heading) * car.speed, fz = Math.cos(car.heading) * car.speed;
       car.vx += (fx - car.vx) * Math.min(1, grip * dt);
       car.vz += (fz - car.vz) * Math.min(1, grip * dt);
-      car.x = Math.max(-town.edge, Math.min(town.edge, car.x + car.vx * dt));
-      car.z = Math.max(-town.edge, Math.min(town.edge, car.z + car.vz * dt));
+      var sx = car.vx;
+      var sz = car.vz;
+      car.inWater = world && world.inWater(car.x, car.z);
+      if (car.inWater) {
+        sx *= C.WATER_SLOW;
+        sz *= C.WATER_SLOW;
+        if (performance.now() - car.lastSplash > 280) {
+          car.lastSplash = performance.now();
+          car._splash?.();
+        }
+      }
+      car.x = Math.max(-town.edge, Math.min(town.edge, car.x + sx * dt));
+      car.z = Math.max(-town.edge, Math.min(town.edge, car.z + sz * dt));
 
-      var moving = Math.hypot(car.vx, car.vz);
+      var moving = Math.hypot(sx, sz);
+      if (fingerDown && moving < 0.35 && want > 1) car.stuckT += dt;
+      else car.stuckT = 0;
+      if (car.stuckT > C.UNSTICK_TIME) {
+        car.speed = C.UNSTICK_PUSH;
+        car.vx += Math.sin(car.heading) * 4;
+        car.vz += Math.cos(car.heading) * 4;
+        car.stuckT = 0;
+        car.spin += (Math.random() < 0.5 ? -1 : 1) * 4;
+      }
+
+      if (world) {
+        var h0 = world.heightAt(car.x, car.z);
+        var hx = world.heightAt(car.x + 0.6, car.z);
+        var hz = world.heightAt(car.x, car.z + 0.6);
+        car.pitch += ((-Math.atan2(hx - h0, 0.6) - car.pitch) * Math.min(1, dt * 4));
+        car.roll += ((Math.atan2(hz - h0, 0.6) - car.roll) * Math.min(1, dt * 4));
+        car.pitch *= 0.985;
+        car.roll *= 0.985;
+      }
       if (moving > 0.5) { car.dirX = car.vx / moving; car.dirZ = car.vz / moving; }
       car.moving = moving;
 
       car.hop = Math.max(0, car.hop - dt * 2.5);
-      group.position.set(car.x, Math.sin(car.hop * Math.PI) * 0.9, car.z);
-      group.rotation.y = car.heading;
+      var baseY = world ? world.heightAt(car.x, car.z) + 0.35 : Math.sin(car.hop * Math.PI) * 0.9;
+      group.position.set(car.x, baseY + Math.sin(car.hop * Math.PI) * 0.4, car.z);
+      group.rotation.set(car.pitch * 0.35, car.heading, car.roll * 0.35);
     };
 
     car.update(0);
@@ -326,8 +394,9 @@
       var ahead = rand(10, 22), side = rand(-6, 6);
       var x = car.x + car.dirX * ahead - car.dirZ * side, z = car.z + car.dirZ * ahead + car.dirX * side;
       if (Math.random() < 0.5) x = nearestRoad(x); else z = nearestRoad(z);
-      x = Math.max(-town.half, Math.min(town.half, x));
-      z = Math.max(-town.half, Math.min(town.half, z));
+      var lim = Smash.CONFIG.WORLD_HALF - 8;
+      x = Math.max(-lim, Math.min(lim, x));
+      z = Math.max(-lim, Math.min(lim, z));
       var hex = C.PAINT_COLOURS[Math.floor(Math.random() * C.PAINT_COLOURS.length)];
       var ball = new THREE.Mesh(ballGeo, new THREE.MeshStandardMaterial({ color: hex, roughness: 0.25 }));
       ball.position.set(x, 34, z);
