@@ -368,6 +368,15 @@
           "stack": ["Three.js"],
           "approved": true,
           "placeholder": false
+        },
+        {
+          "slug": "smash-town",
+          "title": "Smash Town",
+          "url": "/games/smash-town/",
+          "summary": "Steer a toy car through a blocky town — knock things over, dodge the monster, change colour.",
+          "stack": ["Three.js"],
+          "approved": true,
+          "placeholder": false
         }
       ]
     },

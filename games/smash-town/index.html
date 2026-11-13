@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Smash Town</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- __CLARITY_SNIPPET__ -->
+</head>
+<body>
+  <canvas id="stage"></canvas>
+
+  <!-- Shown until the first touch: "put your finger where the car should go" -->
+  <div id="hint" aria-hidden="true">👆</div>
+
+  <div id="top">
+    <button id="monster" class="on" aria-label="Monster on or off" aria-pressed="true"><span class="eyes">👀</span><span class="sleep">💤</span></button>
+    <button id="sound" aria-label="Sound on or off" aria-pressed="true">🔊</button>
+  </div>
+
+  <!-- Car colours: filled in by main.js from CONFIG.CAR_COLOURS -->
+  <div id="colours" role="group" aria-label="Car colour"></div>
+
+  <script src="vendor/three.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/town.js"></script>
+  <script src="js/actors.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #7cc47f;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+button:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 3px;
+}
+
+/* ---------- Car colour dots ---------- */
+#colours {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: clamp(8px, 2vmin, 16px);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+#colours button {
+  width: clamp(44px, 9vmin, 64px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--c);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+#colours button.active {
+  transform: scale(1.22);
+  box-shadow: 0 0 0 4px #333, 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- Monster and sound switches ---------- */
+#top {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#monster {
+  width: clamp(64px, 12vmin, 84px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-size: clamp(30px, 6vmin, 42px);
+  background: radial-gradient(circle at 35% 30%, #c79bff, #8e4de0 70%);
+  border: 4px solid #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+#monster .sleep { display: none; }
+#monster:not(.on) { background: #9aa3ad; }
+#monster:not(.on) .eyes { display: none; }
+#monster:not(.on) .sleep { display: inline; }
+
+#sound {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- First-touch hint ---------- */
+#hint {
+  position: fixed;
+  left: 62%;
+  top: 34%;
+  font-size: clamp(60px, 14vmin, 110px);
+  pointer-events: none;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+  animation: tap 1.3s ease-in-out infinite;
+  transition: opacity 0.5s ease;
+}
+
+#hint.gone {
+  opacity: 0;
+}
+
+@keyframes tap {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(18px) scale(0.9); }
+}
