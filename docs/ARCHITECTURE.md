@@ -340,7 +340,7 @@ Measure on a Vercel preview with the protection-bypass header, or locally with `
 
 | Metric | Budget |
 | --- | --- |
-| Draw calls, stack at rest | at most 3 (plus 2 for background and stars) |
+| Draw calls, stack at rest | **2** stack (slabs + under-glow instanced) + **2** background/stars (**≤4** total at focus); stack cap **3** |
 | Draw calls, corridor | at most 30 |
 | Draw calls, about ball | at most 3 |
 | Frame rate during transitions | 60 fps desktop; at least 45 fps mid-range phone; at least 50 fps at 4x CPU throttle |
