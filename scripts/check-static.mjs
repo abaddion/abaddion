@@ -202,6 +202,16 @@ if (!buildMeta) {
     fail('index.html: build meta must be __BUILD_SHA__ in git (injected at deploy)');
 }
 
+console.log('check-static: vercel.json games rewrites');
+const vercel = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+for (const rw of vercel.rewrites || []) {
+    if (!rw.source?.includes('games')) continue;
+    if (rw.source !== '/games') {
+        fail(`vercel.json: only exact /games may rewrite to SPA, not "${rw.source}"`);
+    }
+}
+console.log('OK vercel.json games rewrite is /games only');
+
 console.log('check-static: content.json');
 validateContentJson();
 
