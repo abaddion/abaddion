@@ -1,9 +1,9 @@
 /**
- * Glass chess slabs — one InstancedMesh + under-glow (≤2 stack draw calls).
+ * Five glass chess slabs — one InstancedMesh + merged edge lines.
  */
 
 import * as THREE from 'three';
-import { createSlabMaterial, createSlabGlowMaterial, resolveSlabVariantFromUrl } from '../shaders/slab-material.js';
+import { createSlabMaterial, resolveSlabVariantFromUrl } from '../shaders/slab-material.js';
 
 const SLAB_W = 4;
 const SLAB_H = 0.14;
@@ -30,10 +30,6 @@ export class BoardStack {
         const geometry = new THREE.BoxGeometry(SLAB_W, SLAB_H, SLAB_D);
         this.focusAttr = new THREE.InstancedBufferAttribute(this.focusValues, 1);
         geometry.setAttribute('aFocus', this.focusAttr);
-        const floorIdx = new Float32Array(floorCount);
-        for (let f = 0; f < floorCount; f++) floorIdx[f] = f;
-        this.floorIdxAttr = new THREE.InstancedBufferAttribute(floorIdx, 1);
-        geometry.setAttribute('aFloorIdx', this.floorIdxAttr);
 
         this.atlasRects = new Float32Array(floorCount * 4);
         for (let f = 0; f < floorCount; f++) {
@@ -51,13 +47,11 @@ export class BoardStack {
         this.slabs = new THREE.InstancedMesh(geometry, this.material, floorCount);
         this.slabs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-        const glowGeo = new THREE.PlaneGeometry(SLAB_W * 1.08, SLAB_D * 1.08);
-        glowGeo.rotateX(-Math.PI / 2);
-        glowGeo.setAttribute('aFocus', new THREE.InstancedBufferAttribute(this.focusValues, 1));
-        this.glowMaterial = createSlabGlowMaterial();
-        this.glowMesh = new THREE.InstancedMesh(glowGeo, this.glowMaterial, floorCount);
-        this.glowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-        this.glowMesh.renderOrder = -2;
+        const edgePositions = [];
+        const edgeColors = [];
+        const bone = new THREE.Color(0xece8df);
+        const dim = new THREE.Color(0xece8df).multiplyScalar(0.35);
+        const bright = new THREE.Color(0xece8df);
 
         const dummy = new THREE.Object3D();
         for (let f = 0; f < floorCount; f++) {
@@ -68,35 +62,37 @@ export class BoardStack {
             dummy.rotation.set(0, this.yRotations[f], 0);
             dummy.updateMatrix();
             this.slabs.setMatrixAt(f, dummy.matrix);
-            dummy.position.y = y - SLAB_H * 0.52;
-            dummy.updateMatrix();
-            this.glowMesh.setMatrixAt(f, dummy.matrix);
+
+            const hw = SLAB_W / 2;
+            const hd = SLAB_D / 2;
+            const corners = [
+                [-hw, y, -hd],
+                [hw, y, -hd],
+                [hw, y, hd],
+                [-hw, y, hd],
+                [-hw, y, -hd]
+            ];
+            for (let i = 0; i < 4; i++) {
+                edgePositions.push(...corners[i], ...corners[i + 1]);
+                const c = f === 0 ? bright : dim;
+                edgeColors.push(c.r, c.g, c.b, c.r, c.g, c.b);
+            }
         }
         this.slabs.instanceMatrix.needsUpdate = true;
-        this.glowMesh.instanceMatrix.needsUpdate = true;
 
-        this.root.add(this.glowMesh, this.slabs);
+        const edgeGeo = new THREE.BufferGeometry();
+        edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+        edgeGeo.setAttribute('color', new THREE.Float32BufferAttribute(edgeColors, 3));
+        this.edges = new THREE.LineSegments(
+            edgeGeo,
+            new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55 })
+        );
+
+        this.root.add(this.slabs, this.edges);
         this.dummy = new THREE.Object3D();
         this.projectionBox = new THREE.Box3();
         this.setFocusedFloor(0, true);
         this.applyViewportLayout();
-    }
-
-    bindNebula(nebula) {
-        const tex = nebula?.getNebulaTexture?.() ?? null;
-        if (tex) {
-            this.material.uniforms.uNebula.value = tex;
-            this.material.uniforms.uNebulaReady.value = 1;
-        }
-    }
-
-    setGlitchState({ strength = 0, tear = 0, rgb = 0, drop = 0, slab = -1 } = {}) {
-        const u = this.material.uniforms;
-        u.uGlitchStrength.value = strength;
-        u.uGlitchTear.value = tear;
-        u.uGlitchRgb.value = rgb;
-        u.uGlitchDrop.value = drop;
-        u.uGlitchSlab.value = slab;
     }
 
     getFloorGap() {
@@ -123,7 +119,28 @@ export class BoardStack {
             this.focusTargets[i] = i === index ? 1 : 0;
             if (instant) this.focusValues[i] = this.focusTargets[i];
         }
+        this.updateEdgeColors();
         this.focusAnimStart = instant ? null : performance.now();
+    }
+
+    updateEdgeColors(index = this.focusIndex) {
+        const colors = this.edges.geometry.attributes.color.array;
+        const bone = new THREE.Color(0xece8df);
+        const dim = new THREE.Color(0xece8df).multiplyScalar(0.35);
+        const bright = new THREE.Color(0xece8df).multiplyScalar(1.15);
+        for (let f = 0; f < this.floorCount; f++) {
+            const c = f === index ? bright : dim;
+            for (let seg = 0; seg < 4; seg++) {
+                const o = (f * 4 + seg) * 6;
+                colors[o] = c.r;
+                colors[o + 1] = c.g;
+                colors[o + 2] = c.b;
+                colors[o + 3] = c.r;
+                colors[o + 4] = c.g;
+                colors[o + 5] = c.b;
+            }
+        }
+        this.edges.geometry.attributes.color.needsUpdate = true;
     }
 
     update(time, dt, camera, parallax) {
@@ -139,20 +156,14 @@ export class BoardStack {
         this.material.uniforms.uTime.value = time;
         this.material.uniforms.uCameraPos.value.copy(camera.position);
         this.material.uniforms.uParallax.value.set(parallax?.x ?? 0, parallax?.y ?? 0);
-        const ld = this.material.uniforms.uLightDir.value;
-        ld.set(0.2 + (parallax?.x ?? 0) * 0.45, 1, 0.3 + (parallax?.y ?? 0) * 0.4).normalize();
 
         for (let i = 0; i < this.floorCount; i++) {
             this.dummy.position.set(0, this.floorYs[i], 0);
             this.dummy.rotation.set(this.openRotations[i], this.yRotations[i], 0);
             this.dummy.updateMatrix();
             this.slabs.setMatrixAt(i, this.dummy.matrix);
-            this.dummy.position.y = this.floorYs[i] - SLAB_H * 0.52;
-            this.dummy.updateMatrix();
-            this.glowMesh.setMatrixAt(i, this.dummy.matrix);
         }
         this.slabs.instanceMatrix.needsUpdate = true;
-        this.glowMesh.instanceMatrix.needsUpdate = true;
     }
 
     getFloorY(index) {
@@ -163,7 +174,6 @@ export class BoardStack {
         this.dummy.position.set(0, this.floorYs[index], 0);
         this.dummy.rotation.set(this.openRotations[index], this.yRotations[index], 0);
         this.dummy.updateMatrix();
-        this.dummy.updateMatrixWorld(true);
         return this.dummy;
     }
 
@@ -178,7 +188,6 @@ export class BoardStack {
     resetFloorVisuals() {
         this.openRotations.fill(0);
         this.setFloorBackdropDim(-1, 1);
-        this.setGlitchState({ strength: 0, tear: 0, slab: -1 });
     }
 
     setFloorBackdropDim(_index, dim) {
@@ -209,17 +218,13 @@ export class BoardStack {
         }
     }
 
-    stackDrawCallCount() {
-        return 2;
-    }
-
     dispose() {
-        this.root.remove(this.slabs, this.glowMesh);
+        this.root.remove(this.slabs, this.edges);
         this.scene.remove(this.root);
         this.slabs.geometry.dispose();
         this.material.dispose();
-        this.glowMesh.geometry.dispose();
-        this.glowMaterial.dispose();
+        this.edges.geometry.dispose();
+        this.edges.material.dispose();
     }
 }
 

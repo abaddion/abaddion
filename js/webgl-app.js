@@ -72,7 +72,6 @@ class WebGLLayer {
             await this.initUniverse();
             await yieldToMain();
             await this.initStack();
-            this.stack?.bindNebula?.(this.nebula);
             await yieldToMain();
             await this.initLabels();
             await yieldToMain();
@@ -194,18 +193,6 @@ class WebGLLayer {
             hintEl: document.getElementById('open-hint')
         });
         this.labels.setFocusIndex(this.shell.focusIndex);
-        const { StackTechDraw } = await import('./modules/stack-techdraw.js');
-        const { StackGlitch } = await import('./modules/stack-glitch.js');
-        this.techDraw = new StackTechDraw(
-            document.getElementById('floor-labels'),
-            this.stack,
-            this.content
-        );
-        this.techDraw.setFocusIndex(this.shell.focusIndex);
-        this.stackGlitch = new StackGlitch(this.stack, {
-            labels: this.labels,
-            reducedMotion: this.reducedMotion
-        });
     }
 
     async initSystems() {
@@ -511,7 +498,6 @@ class WebGLLayer {
         this.focusIndex = idx;
         this.stack?.setFocusedFloor(idx);
         this.labels?.setFocusIndex(idx);
-        this.techDraw?.setFocusIndex(idx);
         this.cameraRig?.setFocus(idx);
     }
 
@@ -521,8 +507,6 @@ class WebGLLayer {
         this.shell.focusIndex = index;
         this.stack?.setFocusedFloor(index);
         this.labels?.setFocusIndex(index);
-        this.techDraw?.setFocusIndex(index);
-        this.stackGlitch?.onFocusChange(index);
         this.cameraRig?.setFocus(index);
         this.rail.setActive(index);
         if (!skipHistory) {
@@ -710,13 +694,8 @@ class WebGLLayer {
         } else if (!this.isCorridorActive()) {
             this.cameraRig.update(dt);
             this.stack.update(time, dt, this.camera, this.parallax);
-            this.stackGlitch?.tick(performance.now(), {
-                frozen: this.renderLoop?.isFrozen?.(),
-                reducedMotion: this.reducedMotion
-            });
             this.labels.update(this.camera);
             this.labels.setFocusIndex(this.focusIndex);
-            if (this.camera) this.techDraw?.update(this.camera);
         }
         this.transition.update(this.camera, performance.now());
         this.detailFly?.update();
@@ -724,13 +703,6 @@ class WebGLLayer {
         this.postProcessing.update(time, dt);
         this.renderer.info.reset();
         this.postProcessing.render(this.nebula);
-
-        if (!this.isCorridorActive() && !aboutSphereLive) {
-            patchAppState({
-                stackDrawCalls: this.stack?.stackDrawCallCount?.() ?? 0,
-                renderCalls: this.renderer.info.render.calls
-            });
-        }
 
         this._markWebGLReadyOnce();
         this.revealCanvas();
