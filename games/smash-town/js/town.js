@@ -28,11 +28,11 @@
   Smash.createTown = function (scene) {
     var C = Smash.CONFIG;
     var PITCH = C.LOT + C.ROAD;
-    var HALF = C.LOTS * PITCH / 2;          // distance from the centre to the outer road
-    var EDGE = HALF + C.ROAD / 2 + 4;       // how far the car may go
+    var HALF = C.LOTS * PITCH / 2;
+    var EDGE = C.WORLD_HALF;
 
-    // ------------------------------------------------------------ ground
-    var SIZE = 2 * (HALF + 24);
+    // ------------------------------------------------------------ ground (roads overlay on world terrain)
+    var SIZE = 2 * (C.WORLD_HALF + 24);
     var canvas = document.createElement('canvas');
     canvas.width = canvas.height = 2048;
     var g = canvas.getContext('2d');
@@ -56,12 +56,23 @@
       g.beginPath(); g.moveTo(px(-HALF), px(c)); g.lineTo(px(HALF), px(c)); g.stroke();
     });
     g.setLineDash([]);
+  // spokes: forest (+x), river (+z), mountains (-x)
+    var mid = roads[Math.floor(roads.length / 2)];
+    g.fillStyle = '#4b505c';
+    g.fillRect(px(mid - C.ROAD / 2), px(HALF), C.ROAD * k, (C.WORLD_HALF - HALF + 8) * k);
+    g.fillRect(px(mid - C.ROAD / 2), px(-C.WORLD_HALF - 4), C.ROAD * k, (HALF + C.WORLD_HALF + 4) * k);
+    g.fillRect(px(HALF), px(mid - C.ROAD / 2), (C.WORLD_HALF - HALF + 8) * k, C.ROAD * k);
+    g.fillRect(px(-C.WORLD_HALF - 4), px(mid - C.ROAD / 2), (HALF + C.WORLD_HALF + 4) * k, C.ROAD * k);
 
     var groundTex = new THREE.CanvasTexture(canvas);
     groundTex.encoding = THREE.sRGBEncoding;
     groundTex.anisotropy = 8;
-    var ground = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.95 }));
+    var ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(SIZE, SIZE),
+      new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.95, transparent: true, opacity: 0.94 })
+    );
     ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0.07;
     ground.receiveShadow = true;
     scene.add(ground);
 
@@ -324,11 +335,58 @@
       if (dirty) { mesh.instanceMatrix.needsUpdate = true; dirty = false; }
     }
 
+    function buildBridge(bridgeZ) {
+      for (var i = -14; i <= 14; i++) {
+        var s = structure();
+        addBlock(s, i * 1.4, 0.25, bridgeZ, 1.2, 0.35, 2.8, '#c9a66b', i + 20, 0);
+      }
+      mesh.count = blocks.length;
+      mesh.instanceColor.needsUpdate = true;
+      structures.forEach(function (st) {
+        st.minX = st.minZ = Infinity;
+        st.maxX = st.maxZ = -Infinity;
+        st.blocks.forEach(function (b) {
+          st.minX = Math.min(st.minX, b.hx - b.sx / 2);
+          st.maxX = Math.max(st.maxX, b.hx + b.sx / 2);
+          st.minZ = Math.min(st.minZ, b.hz - b.sz / 2);
+          st.maxZ = Math.max(st.maxZ, b.hz + b.sz / 2);
+        });
+        st.cx = (st.minX + st.maxX) / 2;
+        st.cz = (st.minZ + st.maxZ) / 2;
+      });
+    }
+
+    function snowman(x, z, gy) {
+      var s = structure();
+      addBlock(s, x, gy + 0.5, z, 1.1, 1.1, 1.1, '#f4f4f4', 0, 0);
+      addBlock(s, x, gy + 1.55, z, 0.85, 0.85, 0.85, '#f8f8f8', 0, 1);
+      addBlock(s, x, gy + 2.35, z, 0.6, 0.6, 0.6, '#ffffff', 0, 2);
+      mesh.count = blocks.length;
+      structures.push(s);
+      s.minX = x - 1;
+      s.maxX = x + 1;
+      s.minZ = z - 1;
+      s.maxZ = z + 1;
+      s.cx = x;
+      s.cz = z;
+    }
+
     return {
-      smash: smash, update: update,
-      edge: EDGE, half: HALF, pitch: PITCH, roads: roads,
-      count: function () { return blocks.length; },
-      loose: function () { return active.length; }
+      smash: smash,
+      update: update,
+      buildBridge: buildBridge,
+      snowman: snowman,
+      edge: EDGE,
+      half: HALF,
+      pitch: PITCH,
+      roads: roads,
+      count: function () {
+        return blocks.length;
+      },
+      loose: function () {
+        return active.length;
+      }
     };
   };
 })();
+
