@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#101a33">
   <title>Calm Corner</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="../kiosk.css">
   <link rel="stylesheet" href="style.css">
   <!-- __CLARITY_SNIPPET__ -->
 </head>
@@ -23,6 +28,7 @@
   <!-- Press and HOLD to go back, so little fingers don't leave by accident -->
   <button id="back" hidden aria-label="Back to the menu (press and hold)"><span>🏠</span></button>
 
+  <script src="../kiosk.js" defer></script>
   <script src="vendor/three.min.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/bubbles.js"></script>

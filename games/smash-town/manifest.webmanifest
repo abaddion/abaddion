@@ -1,0 +1,10 @@
+{
+  "name": "Smash Town",
+  "short_name": "Smash",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "/games/smash-town/",
+  "scope": "/games/smash-town/",
+  "background_color": "#7cc47f",
+  "theme_color": "#7cc47f"
+}

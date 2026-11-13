@@ -16,3 +16,5 @@ Static Three.js mini-scenes (bubbles, rain, sky, pond, breathing balloon). No se
 | `games/calm-corner/vendor/three.min.js` | Bundled Three (r149) |
 
 Clarity: build injects into `index.html` via `<!-- __CLARITY_SNIPPET__ -->`; event `calm-corner-play` on first scene start.
+
+Kid play on phones: shared **`../kiosk.js`** + **Add to Home Screen** (`manifest.webmanifest`). See `docs/GAMES-KIOSK.md`.

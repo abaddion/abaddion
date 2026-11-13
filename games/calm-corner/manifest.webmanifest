@@ -1,0 +1,10 @@
+{
+  "name": "Calm Corner",
+  "short_name": "Calm",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "/games/calm-corner/",
+  "scope": "/games/calm-corner/",
+  "background_color": "#101a33",
+  "theme_color": "#101a33"
+}

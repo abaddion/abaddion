@@ -17,3 +17,5 @@ Touch or keyboard steering through a low-poly town: smash props, optional monste
 | `games/smash-town/vendor/three.min.js` | Bundled Three (r149) |
 
 Clarity: build inject via `<!-- __CLARITY_SNIPPET__ -->`; event `smash-town-play` on first steer input.
+
+Kid play on phones: **`../kiosk.js`** + home-screen install — `docs/GAMES-KIOSK.md`.
