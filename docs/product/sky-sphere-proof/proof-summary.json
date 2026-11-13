@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-11-13T19:37:46.625Z",
+  "previewHost": "http://127.0.0.1:59101",
+  "floors": [
+    0,
+    2,
+    5
+  ],
+  "shots": {
+    "0": "sky-floor-1-390.png",
+    "2": "sky-floor-3-390.png",
+    "5": "sky-floor-6-390.png"
+  }
+}
