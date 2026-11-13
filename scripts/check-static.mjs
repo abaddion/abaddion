@@ -8,6 +8,11 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import {
+    loadGameSlugsFromContent,
+    collectGameAssetPaths,
+    sharedGamePaths
+} from './lib/games-inventory.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -197,8 +202,34 @@ if (!buildMeta) {
     fail('index.html: build meta must be __BUILD_SHA__ in git (injected at deploy)');
 }
 
+console.log('check-static: vercel.json games rewrites');
+const vercel = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+for (const rw of vercel.rewrites || []) {
+    if (!rw.source?.includes('games')) continue;
+    if (rw.source !== '/games') {
+        fail(`vercel.json: only exact /games may rewrite to SPA, not "${rw.source}"`);
+    }
+}
+console.log('OK vercel.json games rewrite is /games only');
+
 console.log('check-static: content.json');
 validateContentJson();
+
+console.log('check-static: games');
+const gameSlugs = loadGameSlugsFromContent();
+for (const g of gameSlugs) {
+    if (g.slug !== g.dirSlug) {
+        fail(`games: slug "${g.slug}" does not match url directory "${g.dirSlug}"`);
+    }
+    const assets = collectGameAssetPaths(g.dirSlug);
+    for (const p of assets) {
+        assertTracked(p);
+        if (p.endsWith('.js')) syntaxCheckJs(p);
+    }
+}
+for (const p of sharedGamePaths()) assertTracked(p);
+syntaxCheckJs('games/kiosk.js');
+console.log('OK games', gameSlugs.length, 'entries', sharedGamePaths().length, 'shared files');
 
 if (errors.length) {
     console.error('CHECK-STATIC FAILED\n' + errors.join('\n'));

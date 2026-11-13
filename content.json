@@ -359,6 +359,24 @@
           "stack": ["WebGL2", "Gemini"],
           "approved": true,
           "placeholder": false
+        },
+        {
+          "slug": "calm-corner",
+          "title": "Calm Corner",
+          "url": "/games/calm-corner/",
+          "summary": "Picture menu of quiet mini worlds — bubbles, rain, sky, pond, and a breathing balloon.",
+          "stack": ["Three.js"],
+          "approved": true,
+          "placeholder": false
+        },
+        {
+          "slug": "smash-town",
+          "title": "Smash Town",
+          "url": "/games/smash-town/",
+          "summary": "Steer a toy car through a blocky town — knock things over, dodge the monster, change colour.",
+          "stack": ["Three.js"],
+          "approved": true,
+          "placeholder": false
         }
       ]
     },

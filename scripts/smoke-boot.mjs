@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createStaticServer } from './lib/static-server.mjs';
 import { chromeLaunchOpts, loadPuppeteer } from './lib/puppeteer-launch.mjs';
+import { GAME_SMOKE } from './lib/games-inventory.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BOOT_TIMEOUT_MS = 45000;
@@ -19,7 +20,9 @@ function isBenignConsole(text) {
     return (
         /favicon/i.test(text) ||
         (/Failed to load resource/i.test(text) && /404/i.test(text)) ||
-        /WebGL.*(deprecated|warning)/i.test(text)
+        /WebGL.*(deprecated|warning)/i.test(text) ||
+        /Sand chat API failed/i.test(text) ||
+        (/sand-chat/i.test(text) && /502|500|failed/i.test(text))
     );
 }
 
@@ -88,6 +91,31 @@ async function runWebGLCase(baseUrl) {
     console.log('OK smoke-boot WebGL');
 }
 
+async function runGamesCase(baseUrl) {
+    const puppeteer = await loadPuppeteer();
+    const browser = await puppeteer.launch(chromeLaunchOpts());
+
+    for (const game of GAME_SMOKE) {
+        const page = await browser.newPage();
+        await page.setViewport({ width: 390, height: 844 });
+        const consoleErrors = [];
+        attachConsoleCollectors(page, consoleErrors);
+
+        const url = `${baseUrl.replace(/\/$/, '')}${game.path}`;
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: BOOT_TIMEOUT_MS });
+        await page.waitForFunction(game.ready, { timeout: BOOT_TIMEOUT_MS });
+        await game.interact(page);
+
+        if (consoleErrors.length) {
+            await browser.close();
+            throw new Error(`${game.slug}: ${consoleErrors.slice(0, 3).join(' | ')}`);
+        }
+        await page.close();
+        console.log('OK smoke-boot game', game.slug);
+    }
+    await browser.close();
+}
+
 async function runNoWebGLCase(baseUrl) {
     const puppeteer = await loadPuppeteer();
     const browser = await puppeteer.launch(chromeLaunchOpts());
@@ -142,6 +170,12 @@ try {
     await runNoWebGLCase(baseUrl);
 } catch (e) {
     errors.push(`no-webgl: ${e.message}`);
+}
+
+try {
+    await runGamesCase(baseUrl);
+} catch (e) {
+    errors.push(`games: ${e.message}`);
 }
 
 if (ownedServer) ownedServer.close();

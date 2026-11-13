@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#101a33">
+  <title>Calm Corner</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="../kiosk.css">
+  <link rel="stylesheet" href="style.css">
+  <!-- __CLARITY_SNIPPET__ -->
+</head>
+<body>
+  <canvas id="stage"></canvas>
+
+  <!-- Picture menu: no reading needed -->
+  <nav id="home" aria-label="Choose a game">
+    <button data-game="bubbles" aria-label="Bubbles" style="--c:#8fd3ff"><span>🫧</span></button>
+    <button data-game="rain" aria-label="Rain on the window" style="--c:#7f9cc9"><span>🌧️</span></button>
+    <button data-game="sky" aria-label="Night sky" style="--c:#4b4f9e"><span>⭐</span></button>
+    <button data-game="pond" aria-label="Pond" style="--c:#63c2a4"><span>🐟</span></button>
+    <button data-game="balloon" aria-label="Breathing balloon" style="--c:#ff9fb2"><span>🎈</span></button>
+  </nav>
+
+  <!-- Press and HOLD to go back, so little fingers don't leave by accident -->
+  <button id="back" hidden aria-label="Back to the menu (press and hold)"><span>🏠</span></button>
+
+  <script src="../kiosk.js" defer></script>
+  <script src="vendor/three.min.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/bubbles.js"></script>
+  <script src="js/rain.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/pond.js"></script>
+  <script src="js/balloon.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -24,8 +24,15 @@ export function createStaticServer(root) {
         if (SPA_PREFIXES.some((p) => clean === p || clean.startsWith(`${p}/`))) {
             return path.join(root, 'index.html');
         }
-        const file = path.join(root, clean.replace(/^\//, ''));
-        if (file.startsWith(root) && fs.existsSync(file) && fs.statSync(file).isFile()) return file;
+        let rel = clean.replace(/^\//, '');
+        if (rel.endsWith('/')) rel = rel.slice(0, -1);
+        let file = path.join(root, rel);
+        if (!file.startsWith(root)) return null;
+        if (fs.existsSync(file) && fs.statSync(file).isDirectory()) {
+            const indexHtml = path.join(file, 'index.html');
+            if (fs.existsSync(indexHtml)) return indexHtml;
+        }
+        if (fs.existsSync(file) && fs.statSync(file).isFile()) return file;
         return null;
     }
 

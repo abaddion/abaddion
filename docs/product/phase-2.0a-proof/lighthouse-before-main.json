@@ -1,0 +1,18 @@
+{
+  "label": "before (production main post-#17)",
+  "url": "https://www.abaddion.com",
+  "baselineCommit": "3d5ba688214988f14e98c905678e32be386be1f8",
+  "capturedAt": "2026-11-13",
+  "median": {
+    "perf": 99,
+    "lcp": 1895.06,
+    "tbt": 18,
+    "cls": 0.003944964463283657,
+    "jsTransfer": 238311
+  },
+  "runs": [
+    { "perf": 97, "lcp": 1948.597, "tbt": 18, "cls": 0.006322722202646153, "jsTransfer": 238350 },
+    { "perf": 99, "lcp": 1813.649, "tbt": 5.5, "cls": 0.003944964463283657, "jsTransfer": 238288 },
+    { "perf": 99, "lcp": 1895.06, "tbt": 47, "cls": 0.0031047208605096714, "jsTransfer": 238311 }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "previewHost": "https://glitch-portfolio-git-phase-20a-univer-382e13-abaddions-projects.vercel.app",
+  "capturedAt": "2026-11-13T17:19:54.287Z",
+  "cases": {
+    "v1440": {
+      "a-home-stack-1440": "a-home-stack-1440.png",
+      "drawCallsAtRest": 3,
+      "g_motion": [
+        {
+          "i": 0,
+          "file": "g-twinkle-f1-1440.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        },
+        {
+          "i": 1,
+          "file": "g-twinkle-f2-1440.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        },
+        {
+          "i": 2,
+          "file": "g-twinkle-f3-1440.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        }
+      ],
+      "b-nova-mid-1440": "b-nova-mid-1440.png",
+      "b-floor-open-canvas-1440": "b-floor-open-canvas-1440.png",
+      "c-corridor-1440": "c-corridor-1440.png",
+      "c-corridor-scrolled-1440": "c-corridor-scrolled-1440.png",
+      "detailProved": true,
+      "e-about-1440": "e-about-1440.png",
+      "h-freeze-1440": "h-freeze-1440.png",
+      "frozenState": {
+        "webglPhase": "ready",
+        "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+        "interaction": "focus",
+        "floor": 0,
+        "frozen": true,
+        "calls": 3
+      },
+      "d-detail-1440": "d-detail-1440.png"
+    },
+    "v390": {
+      "a-home-stack-390": "a-home-stack-390.png",
+      "drawCallsAtRest": 3,
+      "g_motion": [
+        {
+          "i": 0,
+          "file": "g-twinkle-f1-390.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        },
+        {
+          "i": 1,
+          "file": "g-twinkle-f2-390.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        },
+        {
+          "i": 2,
+          "file": "g-twinkle-f3-390.png",
+          "state": {
+            "webglPhase": "ready",
+            "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+            "interaction": "focus",
+            "floor": 0,
+            "frozen": false,
+            "calls": 3
+          }
+        }
+      ],
+      "b-nova-mid-390": "b-nova-mid-390.png",
+      "b-floor-open-canvas-390": "b-floor-open-canvas-390.png",
+      "c-corridor-390": "c-corridor-390.png",
+      "c-corridor-scrolled-390": "c-corridor-scrolled-390.png",
+      "d-detail-390": "d-detail-390.png",
+      "detailProved": true,
+      "e-about-390": "e-about-390.png",
+      "h-freeze-390": "h-freeze-390.png",
+      "frozenState": {
+        "webglPhase": "ready",
+        "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+        "interaction": "focus",
+        "floor": 0,
+        "frozen": true,
+        "calls": 3
+      }
+    },
+    "reduced": {
+      "file": "g-reduced-motion-390.png",
+      "state": {
+        "webglPhase": "ready",
+        "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+        "interaction": "focus",
+        "floor": 0,
+        "frozen": false,
+        "calls": 3
+      }
+    },
+    "games390": {
+      "interactive-ink": "f-game-interactive-ink-390.png",
+      "interactive-sand": "f-game-interactive-sand-390.png",
+      "calm-corner": "f-game-calm-corner-390.png",
+      "smash-town": "f-game-smash-town-390.png"
+    }
+  },
+  "metrics": {
+    "initJs": {
+      "spaceTransferBytes": 4877,
+      "domInteractive": 63.29999999701977,
+      "loadEventEnd": 86.89999999850988,
+      "jsTransferDocument": 220496,
+      "longestTaskMs": 0,
+      "longtaskCount": 0,
+      "webglPhase": "ready",
+      "longtasks": [],
+      "spaceSourceBytes": 12160,
+      "readyElapsedMs": 1899
+    },
+    "webglPhase": {
+      "webglPhase": "ready",
+      "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+      "interaction": "focus",
+      "floor": 0,
+      "frozen": false,
+      "calls": 3
+    }
+  }
+}

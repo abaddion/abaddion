@@ -1,0 +1,10 @@
+{
+  "name": "Interactive Ink",
+  "short_name": "Ink",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "/games/interactive-ink/",
+  "scope": "/games/interactive-ink/",
+  "background_color": "#0d0f14",
+  "theme_color": "#0d0f14"
+}
