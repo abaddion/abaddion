@@ -77,28 +77,6 @@ export class FloorLabels {
         this.focusIndex = index;
     }
 
-    triggerFocusGlitch(index) {
-        if (document.documentElement.classList.contains('reduce-motion')) return;
-        const row = this.groups.find((g) => g.index === index);
-        if (!row?.text) return;
-        row.text.classList.remove('label-glitch-slice');
-        void row.text.offsetWidth;
-        row.text.classList.add('label-glitch-slice');
-        setTimeout(() => row.text.classList.remove('label-glitch-slice'), 160);
-
-        if (Math.random() < 0.35) {
-            const orig = row.text.textContent;
-            const chars = '█▓░/\\-_';
-            row.text.textContent = orig
-                .split('')
-                .map((c) => (c === ' ' ? c : chars[(Math.random() * chars.length) | 0]))
-                .join('');
-            requestAnimationFrame(() => {
-                row.text.textContent = orig;
-            });
-        }
-    }
-
     isMobileLayout() {
         return window.innerWidth < 768;
     }
