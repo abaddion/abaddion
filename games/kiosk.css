@@ -1,0 +1,60 @@
+/**
+ * Shared “kiosk” helpers for /games/* — fewer accidental browser gestures on touch devices.
+ * Pair with kiosk.js (optional fullscreen control for parents).
+ */
+
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior: none;
+  /* iOS: pinch / rubber-band less likely when combined with touch-action on canvas */
+}
+
+body.kiosk-locked {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Parent control — 48px+ touch target; stays above game UI */
+#kiosk-fs {
+  position: fixed;
+  z-index: 100000;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  min-width: 48px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  font: 600 14px/1.2 system-ui, sans-serif;
+  color: #111;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#kiosk-fs[aria-pressed="true"] {
+  background: rgba(200, 230, 255, 0.95);
+}
+
+#kiosk-fs:focus-visible {
+  outline: 3px solid #0066cc;
+  outline-offset: 2px;
+}
+
+@media (pointer: fine) and (min-width: 900px) {
+  #kiosk-fs {
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
+  #kiosk-fs:hover,
+  #kiosk-fs:focus-visible {
+    opacity: 1;
+  }
+}

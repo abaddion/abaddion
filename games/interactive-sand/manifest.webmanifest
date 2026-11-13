@@ -1,0 +1,10 @@
+{
+  "name": "Interactive Sand",
+  "short_name": "Sand",
+  "display": "standalone",
+  "orientation": "any",
+  "start_url": "/games/interactive-sand/",
+  "scope": "/games/interactive-sand/",
+  "background_color": "#071a24",
+  "theme_color": "#071a24"
+}
