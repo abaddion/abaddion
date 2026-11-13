@@ -1,0 +1,72 @@
+{
+  "capturedAt": "2026-11-13T23:00:57.504Z",
+  "shots": {
+    "town-390": "town-390.png",
+    "forest-390": "forest-390.png",
+    "river-390": "river-390.png",
+    "mountains-390": "mountains-390.png",
+    "town-1024": "town-1024.png",
+    "forest-1024": "forest-1024.png",
+    "river-1024": "river-1024.png",
+    "mountains-1024": "mountains-1024.png",
+    "drive-seg1-390": "drive-seg1-390.png",
+    "drive-seg2-390": "drive-seg2-390.png",
+    "drive-seg3-390": "drive-seg3-390.png",
+    "drive-seg4-390": "drive-seg4-390.png",
+    "vehicle-city": "vehicle-city-390.png",
+    "vehicle-monster": "vehicle-monster-390.png",
+    "vehicle-bulldozer": "vehicle-bulldozer-390.png",
+    "vehicle-fire": "vehicle-fire-390.png",
+    "vehicle-dump": "vehicle-dump-390.png",
+    "vehicle-race": "vehicle-race-390.png",
+    "picker-open": "picker-open-390.png",
+    "action-fire-spray-390": "action-fire-spray-390.png",
+    "action-dump-tip-390": "action-dump-tip-390.png"
+  },
+  "stats": {
+    "town-390": {
+      "fps": 0,
+      "draws": 23,
+      "zone": "town"
+    },
+    "forest-390": {
+      "fps": 27,
+      "draws": 19,
+      "zone": "forest"
+    },
+    "river-390": {
+      "fps": 25,
+      "draws": 25,
+      "zone": "river"
+    },
+    "mountains-390": {
+      "fps": 24,
+      "draws": 10,
+      "zone": "mountains"
+    },
+    "town-1024": {
+      "fps": 27,
+      "draws": 36,
+      "zone": "town"
+    },
+    "forest-1024": {
+      "fps": 25,
+      "draws": 30,
+      "zone": "forest"
+    },
+    "river-1024": {
+      "fps": 25,
+      "draws": 26,
+      "zone": "river"
+    },
+    "mountains-1024": {
+      "fps": 24,
+      "draws": 36,
+      "zone": "mountains"
+    }
+  },
+  "notes": [
+    "FPS/draws from Puppeteer+SwiftShader; not verified on physical iPhone/Android.",
+    "20s drive approximated as 4×5s waypoint segments (town→forest→river→mountains)."
+  ]
+}

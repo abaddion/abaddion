@@ -12,7 +12,7 @@
 | `GEMINI_MAX_OUTPUT_TOKENS` | No | `maxOutputTokens` in config |
 | `GEMINI_TEMPERATURE` | No | `temperature` in config |
 
-**Defaults live in `api/sand-chat.config.json`** (change model there in a PR, or set env on Vercel without touching the handler). History is capped at 10 turns.
+**Defaults live in `api/sand-chat.config.json`** (change model there in a PR, or set env on Vercel without touching the handler). If the configured model was retired, the handler lists models and retries with the cheapest flash/lite. History is capped at 10 turns.
 
 ## Local dev
 

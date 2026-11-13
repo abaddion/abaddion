@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var ac = null, master = null, noise = null, engine = null;
+  var ac = null, master = null, noise = null, engine = null, sirenOsc = null, sirenGain = null;
   var muted = false, lastCrash = 0;
 
   function ready() {
@@ -103,10 +103,75 @@
       tone('triangle', 494, 494, 0.22, 0.2, 0.14);
     },
 
-    engine: function (speed) {           // speed from 0 to 1
+    engine: function (speed) {
       if (!engine) return;
-      engine.osc.frequency.setTargetAtTime(45 + speed * 75, ac.currentTime, 0.1);
+      var base = engine._pitch || 1;
+      engine.osc.frequency.setTargetAtTime((45 + speed * 75) * base, ac.currentTime, 0.1);
       engine.gain.gain.setTargetAtTime(0.02 + speed * 0.05, ac.currentTime, 0.1);
+    },
+
+    enginePitch: function (mult) {
+      if (engine) engine._pitch = mult || 1;
+    },
+
+    swapPuff: function () {
+      if (!ready()) return;
+      burst('lowpass', 400, 120, 0.14, 0.22);
+    },
+
+    siren: function (on) {
+      if (!ready()) return;
+      if (on) {
+        if (!sirenOsc) {
+          sirenOsc = ac.createOscillator();
+          sirenGain = ac.createGain();
+          sirenOsc.type = 'triangle';
+          sirenOsc.connect(sirenGain);
+          sirenGain.connect(master);
+          sirenGain.gain.value = 0;
+          sirenOsc.start();
+        }
+        sirenGain.gain.setTargetAtTime(0.14, ac.currentTime, 0.05);
+        var t = ac.currentTime;
+        sirenOsc.frequency.setValueAtTime(520, t);
+        sirenOsc.frequency.linearRampToValueAtTime(760, t + 0.35);
+        sirenOsc.frequency.linearRampToValueAtTime(520, t + 0.7);
+      } else if (sirenGain) {
+        sirenGain.gain.setTargetAtTime(0, ac.currentTime, 0.08);
+      }
+    },
+
+    hornFor: function (typeId) {
+      if (!ready()) return;
+      if (typeId === 'monster') tone('square', 120, 80, 0.25, 0.28);
+      else if (typeId === 'race') tone('triangle', 520, 620, 0.12, 0.22);
+      else if (typeId === 'bulldozer') tone('sawtooth', 95, 70, 0.3, 0.2);
+      else if (typeId === 'fire') tone('triangle', 440, 520, 0.2, 0.22);
+      else if (typeId === 'dump') tone('sine', 180, 120, 0.28, 0.22);
+      else this.beep();
+    },
+
+    splash: function () {
+      if (!ready()) return;
+      burst('bandpass', 420, 180, 0.18, 0.28);
+      tone('sine', 220, 90, 0.2, 0.22);
+    },
+
+    treeCrack: function () {
+      if (!ready()) return;
+      burst('highpass', 800, 220, 0.15, 0.32);
+      tone('triangle', 160, 55, 0.2, 0.2);
+    },
+
+    rockTumble: function () {
+      if (!ready()) return;
+      burst('lowpass', 600, 140, 0.22, 0.25);
+    },
+
+    setZoneAmbience: function (zone) {
+      if (!engine) return;
+      var base = zone === 'forest' ? 38 : zone === 'mountains' ? 42 : zone === 'river' ? 40 : 45;
+      engine.osc.frequency.setTargetAtTime(base, ac.currentTime, 0.35);
     }
   };
 })();

@@ -20,9 +20,13 @@
   <div id="hint" aria-hidden="true">👆</div>
 
   <div id="top">
+    <button id="car-pick-toggle" type="button" aria-label="Pick a car" aria-expanded="false">🚗</button>
+    <button id="car-action" type="button" hidden aria-label="Vehicle action">💦</button>
     <button id="monster" class="on" aria-label="Monster on or off" aria-pressed="true"><span class="eyes">👀</span><span class="sleep">💤</span></button>
     <button id="sound" aria-label="Sound on or off" aria-pressed="true">🔊</button>
   </div>
+
+  <div id="car-picker" hidden role="listbox" aria-label="Cars"></div>
 
   <!-- Car colours: filled in by main.js from CONFIG.CAR_COLOURS -->
   <div id="colours" role="group" aria-label="Car colour"></div>
@@ -31,7 +35,10 @@
   <script src="vendor/three.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/sound.js"></script>
+  <script src="js/vehicles.js"></script>
+  <script src="js/world.js"></script>
   <script src="js/town.js"></script>
+  <script src="js/props.js"></script>
   <script src="js/actors.js"></script>
   <script src="js/main.js"></script>
 </body>
