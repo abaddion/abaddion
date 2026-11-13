@@ -55,8 +55,8 @@ void main() {
     float n = fbm(p + vec2(0.04, 0.07));
     float band = fbm(p * 0.6 + 3.1);
     vec3 col = uInk / 255.0;
-    col += uBone / 255.0 * (0.045 * n + 0.02 * band);
-    col += uAccent / 255.0 * (0.06 * smoothstep(0.55, 0.9, n) * smoothstep(0.2, 0.8, uv.x));
+    col += uBone / 255.0 * (0.075 * n + 0.035 * band);
+    col += uAccent / 255.0 * (0.11 * smoothstep(0.45, 0.88, n) * smoothstep(0.15, 0.85, uv.x));
     gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -80,8 +80,8 @@ void main() {
     vec2 sampleUv = uv + uParallax * vec2(0.012, 0.008);
     sampleUv = clamp(sampleUv, 0.001, 0.999);
     vec3 col = texture2D(uNebula, sampleUv).rgb;
-    float vig = smoothstep(1.05, 0.35, length(uv - 0.5) * 1.15);
-    col *= mix(0.82, 1.0, vig);
+    float vig = smoothstep(1.15, 0.42, length(uv - 0.5) * 1.1);
+    col *= mix(0.9, 1.0, vig);
     col *= uGain;
     float n = texture2D(uBlueNoise, fract(uv * uResolution / 64.0)).r;
     col += (n - 0.5) * (1.0 / 255.0);
