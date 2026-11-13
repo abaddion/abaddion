@@ -30,6 +30,14 @@ export class BoardStack {
         const geometry = new THREE.BoxGeometry(SLAB_W, SLAB_H, SLAB_D);
         this.focusAttr = new THREE.InstancedBufferAttribute(this.focusValues, 1);
         geometry.setAttribute('aFocus', this.focusAttr);
+        this.vibrateValues = new Float32Array(floorCount);
+        this.vibrateAttr = new THREE.InstancedBufferAttribute(this.vibrateValues, 1);
+        geometry.setAttribute('aVibrate', this.vibrateAttr);
+        this._vibePhase = 0;
+        this._vibeFloor = -1;
+        this._vibeUntil = 0;
+        this._vibeDuration = 0.2;
+        this._nextRandomVibeAt = performance.now() + 4000 + Math.random() * 4000;
 
         this.atlasRects = new Float32Array(floorCount * 4);
         for (let f = 0; f < floorCount; f++) {
@@ -121,6 +129,17 @@ export class BoardStack {
         }
         this.updateEdgeColors();
         this.focusAnimStart = instant ? null : performance.now();
+        if (!instant && !this.reducedMotion) this._triggerVibe(index, 0.18);
+    }
+
+    _triggerVibe(floorIndex, duration = 0.2) {
+        this._vibeFloor = floorIndex;
+        this._vibePhase = 0;
+        this._vibeDuration = duration;
+        this._vibeUntil = performance.now() + duration * 1000;
+        this.vibrateValues.fill(0);
+        this.vibrateValues[floorIndex] = 1;
+        this.vibrateAttr.needsUpdate = true;
     }
 
     updateEdgeColors(index = this.focusIndex) {
@@ -143,7 +162,30 @@ export class BoardStack {
         this.edges.geometry.attributes.color.needsUpdate = true;
     }
 
-    update(time, dt, camera, parallax) {
+    update(time, dt, camera, parallax, { frozen = false } = {}) {
+        if (!this.reducedMotion && !frozen) {
+            const now = performance.now();
+            if (this._vibeUntil > 0) {
+                const left = Math.max(0, this._vibeUntil - now);
+                this._vibePhase = 1 - left / (this._vibeDuration * 1000);
+                if (left <= 0) {
+                    this._vibePhase = 0;
+                    this._vibeUntil = 0;
+                    this.vibrateValues.fill(0);
+                    this.vibrateAttr.needsUpdate = true;
+                }
+            } else if (now >= this._nextRandomVibeAt) {
+                const idx = Math.floor(Math.random() * this.floorCount);
+                this._triggerVibe(idx, 0.15 + Math.random() * 0.1);
+                this._nextRandomVibeAt = now + 4000 + Math.random() * 4000;
+            }
+        } else if (frozen || this.reducedMotion) {
+            this._vibePhase = 0;
+            this._vibeUntil = 0;
+        }
+        if (this.material.uniforms.uVibrateT) {
+            this.material.uniforms.uVibrateT.value = this._vibePhase;
+        }
         if (this.focusAnimStart != null) {
             const t = Math.min(1, (performance.now() - this.focusAnimStart) / FOCUS_LERP_MS);
             for (let i = 0; i < this.floorCount; i++) {
