@@ -1,0 +1,18 @@
+{
+  "label": "preview-after",
+  "url": "https://glitch-portfolio-git-phase-22-floor-views-abaddions-projects.vercel.app",
+  "capturedAt": "2026-03-23",
+  "method": "Lighthouse mobile ×3 median",
+  "median": {
+    "perf": 97,
+    "lcp": 1820.492,
+    "tbt": 14,
+    "cls": 0.0034456409282222445,
+    "jsTransfer": 254294
+  },
+  "runs": [
+    { "perf": 89, "lcp": 2553.396, "tbt": 59, "cls": 0.0034456409282222445, "jsTransfer": 254322 },
+    { "perf": 98, "lcp": 917.721, "tbt": 3, "cls": 0.0034456409282222445, "jsTransfer": 254276 },
+    { "perf": 97, "lcp": 1820.492, "tbt": 14, "cls": 0.0033710045283954953, "jsTransfer": 254294 }
+  ]
+}
