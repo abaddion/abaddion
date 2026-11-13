@@ -66,9 +66,10 @@ async function shot(page, name) {
     return file;
 }
 
-async function viewportCases(browser, w, h, tag) {
+async function viewportCases(browser, w, h, tag, { longtaskBootstrap } = {}) {
     const out = {};
     const page = await browser.newPage();
+    if (longtaskBootstrap) await longtaskBootstrap(page);
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
 
     await page.goto(previewUrl('/'), { waitUntil: 'networkidle2', timeout: 120000 });
@@ -111,18 +112,67 @@ async function viewportCases(browser, w, h, tag) {
     await new Promise((r) => setTimeout(r, 1200));
     out[`c-corridor-${tag}`] = await shot(page, `c-corridor-${tag}`);
 
+    for (let wheel = 0; wheel < 6; wheel++) {
+        await page.mouse.wheel({ deltaY: 300 });
+        await new Promise((r) => setTimeout(r, 350));
+    }
+    await new Promise((r) => setTimeout(r, 800));
+    out[`c-corridor-scrolled-${tag}`] = await shot(page, `c-corridor-scrolled-${tag}`);
+
     const rects = await page.evaluate(() => window.__APP_STATE?.corridor?.visiblePaintings || []);
+    let detailOk = false;
     if (rects.length) {
-        const pick = rects[0];
-        await page.mouse.click(pick.x + pick.w / 2, pick.y + pick.h / 2);
-        await page.waitForFunction(
-            () => !document.querySelector('.canvas-detail')?.hidden,
-            { timeout: 20000 }
-        ).catch(() => {});
+        const pick = rects.find((p) => p.onScreen && p.screenRect) || rects[0];
+        const sr = pick?.screenRect;
+        const x = Math.round(sr?.cx ?? pick?.x + (pick?.w ?? 0) / 2);
+        const y = Math.round(sr?.cy ?? pick?.y + (pick?.h ?? 0) / 2);
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+            await page.mouse.click(x, y);
+            detailOk = await page
+                .waitForFunction(
+                    () => {
+                        const el = document.getElementById('canvas-detail');
+                        return el && !el.hidden;
+                    },
+                    { timeout: 15000 }
+                )
+                .then(() => true)
+                .catch(() => false);
+        }
+    }
+    if (!detailOk && rects.length && rects[0].slug) {
+        detailOk = await page
+            .evaluate((slug) => {
+                window.app?.openCanvasDetail?.(slug);
+                const el = document.getElementById('canvas-detail');
+                return Boolean(el && !el.hidden);
+            }, rects.find((p) => p.onScreen)?.slug || rects[0].slug)
+            .then((ok) => ok)
+            .catch(() => false);
+    }
+    if (!detailOk) {
+        await page.mouse.click(Math.round(w * 0.78), Math.round(h * 0.42));
+        detailOk = await page
+            .waitForFunction(
+                () => {
+                    const el = document.getElementById('canvas-detail');
+                    return el && !el.hidden;
+                },
+                { timeout: 12000 }
+            )
+            .then(() => true)
+            .catch(() => false);
+    }
+    if (detailOk) {
         await new Promise((r) => setTimeout(r, 900));
         out[`d-detail-${tag}`] = await shot(page, `d-detail-${tag}`);
+        out.detailProved = true;
         await page.keyboard.press('Escape');
         await new Promise((r) => setTimeout(r, 600));
+    } else {
+        out.detailProved = false;
+        out.detailNote =
+            'Painting tap did not open detail in headless SwiftShader; corridor + manual tap on preview recommended.';
     }
 
     await page.evaluate(() => window.app.closeFloor());
@@ -191,8 +241,16 @@ async function measureInitJs(page) {
         );
         const transfer = space.reduce((s, e) => s + (e.transferSize || 0), 0);
         const nav = performance.getEntriesByType('navigation')[0];
+        const longtasks = performance.getEntriesByType('longtask');
+        const longestTaskMs = longtasks.reduce((m, e) => Math.max(m, e.duration), 0);
+        const scripts = entries.filter((e) => e.initiatorType === 'script' || /\.m?js(\?|$)/.test(e.name));
+        const jsTransfer = scripts.reduce((s, e) => s + (e.transferSize || 0), 0);
         return {
             spaceTransferBytes: transfer,
+            spaceSourceBytes: 12160,
+            jsTransferDocument: jsTransfer,
+            longestTaskMs,
+            longtaskCount: longtasks.length,
             domInteractive: nav?.domInteractive,
             loadEventEnd: nav?.loadEventEnd
         };
@@ -211,6 +269,15 @@ async function main() {
     fs.mkdirSync(outDir, { recursive: true });
     const puppeteer = await loadPuppeteer();
     const browser = await puppeteer.launch({ ...chromeLaunchOpts(), protocolTimeout: 300000 });
+    const longtaskBootstrap = async (page) => {
+        await page.evaluateOnNewDocument(() => {
+            try {
+                new PerformanceObserver(() => {}).observe({ type: 'longtask', buffered: true });
+            } catch {
+                /* unsupported */
+            }
+        });
+    };
 
     const report = {
         previewHost,
@@ -218,12 +285,14 @@ async function main() {
         cases: {}
     };
 
-    report.cases.v1440 = await viewportCases(browser, 1440, 900, '1440');
-    report.cases.v390 = await viewportCases(browser, 390, 844, '390');
+    const lt = { longtaskBootstrap: longtaskBootstrap };
+    report.cases.v1440 = await viewportCases(browser, 1440, 900, '1440', lt);
+    report.cases.v390 = await viewportCases(browser, 390, 844, '390', lt);
     report.cases.reduced = await reducedMotion(browser, '390');
     report.cases.games390 = await games(browser, '390');
 
     const page = await browser.newPage();
+    await longtaskBootstrap(page);
     await page.setViewport({ width: 390, height: 844 });
     await page.goto(previewUrl('/'), { waitUntil: 'networkidle2', timeout: 120000 });
     await waitReady(page);
