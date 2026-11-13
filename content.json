@@ -359,6 +359,15 @@
           "stack": ["WebGL2", "Gemini"],
           "approved": true,
           "placeholder": false
+        },
+        {
+          "slug": "calm-corner",
+          "title": "Calm Corner",
+          "url": "/games/calm-corner/",
+          "summary": "Picture menu of quiet mini worlds — bubbles, rain, sky, pond, and a breathing balloon.",
+          "stack": ["Three.js"],
+          "approved": true,
+          "placeholder": false
         }
       ]
     },
