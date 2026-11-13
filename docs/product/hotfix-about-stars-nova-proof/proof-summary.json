@@ -1,6 +1,6 @@
 {
-  "previewHost": "http://127.0.0.1:55854",
-  "capturedAt": "2026-11-13T18:42:33.792Z",
+  "previewHost": "https://glitch-portfolio-git-fix-about-stars-nova-abaddions-projects.vercel.app",
+  "capturedAt": "2026-11-13T18:46:03.408Z",
   "v390": {
     "sphere": [
       "about-sphere-f1-390.png",
@@ -15,7 +15,7 @@
     "copy": {
       "flatLen": 912,
       "titleOk": true,
-      "sphereScroll": 0.1326998378852461
+      "sphereScroll": 0.09517146776402317
     }
   },
   "v1440": {
@@ -32,7 +32,7 @@
     "copy": {
       "flatLen": 912,
       "titleOk": true,
-      "sphereScroll": 0.12220725776296204
+      "sphereScroll": 0.10042399301658561
     }
   },
   "home": {
