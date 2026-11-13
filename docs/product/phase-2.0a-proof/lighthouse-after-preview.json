@@ -1,0 +1,19 @@
+{
+  "label": "after (PR #18 preview)",
+  "url": "https://glitch-portfolio-git-phase-20a-univer-382e13-abaddions-projects.vercel.app",
+  "build": "e0011610acb202a83e12363fd056f5fe6d40df53",
+  "capturedAt": "2026-11-13",
+  "median": {
+    "perf": 98,
+    "lcp": 1825.4755,
+    "tbt": 8,
+    "cls": 0.006154801053429643,
+    "jsTransfer": 243732
+  },
+  "runs": [
+    { "perf": 96, "lcp": 2418.852, "tbt": 18.5, "cls": 0.006244018570545381, "jsTransfer": 243736 },
+    { "perf": 98, "lcp": 1825.4755, "tbt": 1, "cls": 0.006154801053429643, "jsTransfer": 243714 },
+    { "perf": 98, "lcp": 1824.2925, "tbt": 8, "cls": 0.006064368741828537, "jsTransfer": 243732 }
+  ],
+  "jsTransferDeltaVsBeforeMedian": 5421
+}

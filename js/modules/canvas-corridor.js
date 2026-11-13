@@ -67,7 +67,12 @@ export class CanvasCorridor {
             const pw = w * scale;
             const ph = h * scale;
             const geo = new THREE.PlaneGeometry(pw, ph);
-            const mat = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.FrontSide });
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x222222,
+                side: THREE.FrontSide,
+                toneMapped: false,
+                fog: false
+            });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(WALL_X, EYE_Y, z);
             mesh.rotation.y = -Math.PI / 2;
@@ -207,6 +212,7 @@ export class CanvasCorridor {
         if (!item?.thumb || this.loaded.has(index)) return;
         this.loader.load(item.thumb, (tex) => {
             tex.colorSpace = THREE.SRGBColorSpace;
+            tex.toneMapped = false;
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
             this.meshes[index].material.map = tex;

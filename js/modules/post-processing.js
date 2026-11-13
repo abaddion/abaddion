@@ -47,6 +47,8 @@ export class PostProcessing {
 
         this.composer = new EffectComposer(this.renderer);
         this.passes.render = new RenderPass(this.scene, this.camera);
+        this.passes.render.clear = false;
+        this.passes.render.clearDepth = true;
         this.composer.addPass(this.passes.render);
 
         this.passes.uberGlitch = new ShaderPass(UberGlitchShader);
@@ -132,17 +134,25 @@ export class PostProcessing {
         }
     }
 
-    render() {
+    render(universe) {
         const novaOn = this.passes?.nova?.enabled && this.novaProgress > 0;
-        if (!this.composerActive || !this.composer || (this.intensity <= 0 && !novaOn)) {
+        const drawScene = () => {
+            this.renderer.clearDepth();
             this.renderer.render(this.scene, this.camera);
+        };
+        if (!this.composerActive || !this.composer || (this.intensity <= 0 && !novaOn)) {
+            if (universe) universe.render(this.renderer);
+            drawScene();
             return;
         }
 
+        if (universe) universe.render(this.renderer);
         if (this.passes.datamosh.enabled) {
             this.renderer.setRenderTarget(this.previousFrameTarget);
-            this.renderer.render(this.scene, this.camera);
+            drawScene();
             this.renderer.setRenderTarget(null);
+        } else {
+            drawScene();
         }
         this.composer.render();
     }

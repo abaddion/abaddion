@@ -50,6 +50,8 @@ class WebGLLayer {
         this.aboutCrawlRef = null;
         this._savedCameraFov = null;
         this._readyMarked = false;
+        this.nebula = null;
+        this.stars = null;
 
         this.fpsDisplay = document.getElementById('fps-counter');
         this.passCountDisplay = document.getElementById('pass-count');
@@ -67,6 +69,8 @@ class WebGLLayer {
         try {
             await this.initRenderer();
             await yieldToMain();
+            await this.initUniverse();
+            await yieldToMain();
             await this.initStack();
             await yieldToMain();
             await this.initLabels();
@@ -77,7 +81,12 @@ class WebGLLayer {
             this.clock = new this.THREE.Clock();
 
             if (this.renderer.compileAsync) {
-                await this.renderer.compileAsync(this.scene, this.camera);
+                const compileScene = this.renderer.compileAsync(this.scene, this.camera);
+                const compileBg = this.nebula?.compileAsync(this.renderer);
+                await Promise.race([
+                    Promise.all([compileScene, compileBg].filter(Boolean)),
+                    new Promise((resolve) => setTimeout(resolve, 1500))
+                ]);
             }
             await yieldToMain();
 
@@ -116,7 +125,7 @@ class WebGLLayer {
         const THREE = this.THREE;
 
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0a0a0a);
+        this.scene.background = null;
         this.scene.fog = new THREE.Fog(0x0a0a0a, 12, 40);
 
         const aspect = window.innerWidth / window.innerHeight;
@@ -141,6 +150,24 @@ class WebGLLayer {
         if (!this.quality.glassBlurAllowed) {
             document.documentElement.classList.add('no-glass-blur');
         }
+    }
+
+    async initUniverse() {
+        const { NebulaBackground } = await import('./modules/space/nebula-bake.js');
+        const { StarField, resolveStarCount } = await import('./modules/space/stars.js');
+        const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+        this.nebula = new NebulaBackground(this.THREE, this.renderer);
+        await this.nebula.bake(aspect);
+        await yieldToMain();
+        const count = resolveStarCount({
+            isMobile: this.isMobile,
+            dpr: this.quality?.dpr ?? 1
+        });
+        this.stars = new StarField(this.THREE, this.scene, {
+            count,
+            reducedMotion: this.reducedMotion
+        });
+        this.stars.setPixelRatio(this.renderer.getPixelRatio());
     }
 
     async initStack() {
@@ -541,6 +568,13 @@ class WebGLLayer {
     setupEvents() {
         const ping = () => this.renderLoop?.ping();
         window.addEventListener('resize', () => this.onResize());
+        this.canvas.addEventListener('webglcontextrestored', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const aspect = w / Math.max(1, h);
+            this.nebula?.onContextRestored(aspect)?.catch((err) => console.warn('[nebula]', err));
+            this.renderLoop?.ping();
+        });
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
         window.addEventListener('wheel', ping, { passive: true });
@@ -556,6 +590,7 @@ class WebGLLayer {
             this.shell.reducedMotion = e.matches;
             document.documentElement.classList.toggle('reduce-motion', this.reducedMotion);
             this.postProcessing?.applyReducedMotion(this.reducedMotion);
+            this.stars?.setReducedMotion(this.reducedMotion);
         });
 
         const enableGyro = () => this.gyroscope.requestFromUserGesture();
@@ -594,6 +629,7 @@ class WebGLLayer {
         this.camera.updateProjectionMatrix();
         this.stack?.applyViewportLayout();
         this.postProcessing?.resize(w, h);
+        this.nebula?.resize(w, h)?.catch((err) => console.warn('[nebula]', err));
         this.renderLoop?.ping();
     }
 
@@ -637,6 +673,11 @@ class WebGLLayer {
         const time = this.clock.getElapsedTime();
 
         this.updateParallax();
+        const corridorLive = this.isCorridorActive();
+        this.nebula?.setGain(corridorLive ? 0.35 : 1);
+        this.stars?.setCorridorMode(corridorLive);
+        const loopAwake = !this.renderLoop?.isFrozen();
+        this.stars?.update(time, this.parallax, { twinkleAllowed: loopAwake });
         const aboutSphereLive = this.aboutSphere?.group?.visible;
         if (aboutSphereLive) {
             this.aboutSphere.update(dt, time, this.camera, this.parallax);
@@ -661,7 +702,7 @@ class WebGLLayer {
 
         this.postProcessing.update(time, dt);
         this.renderer.info.reset();
-        this.postProcessing.render();
+        this.postProcessing.render(this.nebula);
 
         this._markWebGLReadyOnce();
         this.revealCanvas();

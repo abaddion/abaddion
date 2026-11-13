@@ -4,7 +4,7 @@ Nov 11, 2026 · @Barush Jensik
 
 ## 1. How to use this document
 
-This is the single source of truth for building abaddion.com. Paste it (or the relevant sections) at the start of any new chat with the architect model. **Canonical paths:** `docs/ARCHITECTURE.md` (Cursor) and this file `docs/ARCHITECTURE` (same content; keep in sync when editing).
+This is the single source of truth for building abaddion.com. Paste it (or the relevant sections) at the start of any new chat with the architect model. **Canonical path:** `docs/ARCHITECTURE.md`.
 
 ### Three roles
 
