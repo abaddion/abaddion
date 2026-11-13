@@ -1,0 +1,54 @@
+{
+  "previewHost": "http://127.0.0.1:55854",
+  "capturedAt": "2026-11-13T18:42:33.792Z",
+  "v390": {
+    "sphere": [
+      "about-sphere-f1-390.png",
+      "about-sphere-f2-390.png",
+      "about-sphere-f3-390.png"
+    ],
+    "flat": [
+      "about-flat-f1-390.png",
+      "about-flat-f2-390.png",
+      "about-flat-f3-390.png"
+    ],
+    "copy": {
+      "flatLen": 912,
+      "titleOk": true,
+      "sphereScroll": 0.1326998378852461
+    }
+  },
+  "v1440": {
+    "sphere": [
+      "about-sphere-f1-1440.png",
+      "about-sphere-f2-1440.png",
+      "about-sphere-f3-1440.png"
+    ],
+    "flat": [
+      "about-flat-f1-1440.png",
+      "about-flat-f2-1440.png",
+      "about-flat-f3-1440.png"
+    ],
+    "copy": {
+      "flatLen": 912,
+      "titleOk": true,
+      "sphereScroll": 0.12220725776296204
+    }
+  },
+  "home": {
+    "390": "home-stars-390.png",
+    "1440": "home-stars-1440.png"
+  },
+  "nova": {
+    "390": [
+      "nova-f1-390.png",
+      "nova-f2-390.png",
+      "nova-f3-390.png"
+    ],
+    "1440": [
+      "nova-f1-1440.png",
+      "nova-f2-1440.png",
+      "nova-f3-1440.png"
+    ]
+  }
+}

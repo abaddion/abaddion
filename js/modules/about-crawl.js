@@ -172,13 +172,21 @@ export class AboutCrawl {
             window.app?.webgl?.setAboutSphereActive?.(false);
             this.sphereActive = false;
             this.stopAuto();
+            this.offset = 0;
+            this.tailRevealed = false;
+            this.scene?.classList.remove('tail-visible');
             this._refreshFlatSpeed();
-            this.scene?.classList.add('tail-visible');
+            this._applyOffset();
             if (this.reducedMotion) {
                 this.formSlot?.classList.add('is-settled');
+                this.scene?.classList.add('tail-visible');
             } else {
                 this.formSlot?.classList.remove('is-settled');
-                this.startAuto();
+                requestAnimationFrame(() => {
+                    this._refreshFlatSpeed();
+                    this._applyOffset();
+                    this.startAuto();
+                });
             }
         } else if (this._sphereCapableNow()) {
             this.formSlot?.classList.remove('is-settled');
@@ -250,6 +258,10 @@ export class AboutCrawl {
         const atEnd = this.offset > max * 0.85;
         if (!this.reducedMotion) {
             this.formSlot?.classList.toggle('is-settled', atEnd);
+            if (this.flat && atEnd) {
+                this.tailRevealed = true;
+                this.scene?.classList.add('tail-visible');
+            }
         }
     }
 

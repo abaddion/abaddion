@@ -54,14 +54,11 @@ export function createAboutBandMaterial(textTexture, reducedMotion = false) {
                 vec3 nPos = normalize(vLocalPos);
                 float phiNorm = acos(clamp(nPos.y, -1.0, 1.0)) / 3.14159265;
 
-                float overhead = 1.0 - smoothstep(0.02, 0.2, phiNorm);
-                float frontLower = smoothstep(0.38, 0.58, phiNorm) * (1.0 - smoothstep(0.78, 0.96, phiNorm));
-                float midArc = smoothstep(0.22, 0.42, phiNorm) * (1.0 - smoothstep(0.55, 0.72, phiNorm));
-                float legibility = max(frontLower, midArc * 0.75);
-                legibility = max(legibility, 0.08);
+                float overhead = smoothstep(0.0, 0.12, phiNorm);
+                float midArc = smoothstep(0.18, 0.38, phiNorm) * (1.0 - smoothstep(0.62, 0.88, phiNorm));
+                float legibility = max(midArc, 0.35);
 
-                float opacity = mix(0.1, 1.0, legibility);
-                opacity = mix(opacity, opacity * 0.1, overhead);
+                float opacity = (0.25 + 0.75 * legibility) * (1.0 - overhead * 0.35);
                 opacity *= glyph * uDim;
 
                 vec3 col = tex.rgb;

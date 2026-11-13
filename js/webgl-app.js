@@ -129,7 +129,7 @@ class WebGLLayer {
         this.scene.fog = new THREE.Fog(0x0a0a0a, 12, 40);
 
         const aspect = window.innerWidth / window.innerHeight;
-        this.camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 100);
+        this.camera = new THREE.PerspectiveCamera(52, aspect, 0.1, 250);
         this.camera.position.set(6, 8, 10);
 
         this.renderer = new THREE.WebGLRenderer({
@@ -674,7 +674,8 @@ class WebGLLayer {
 
         this.updateParallax();
         const corridorLive = this.isCorridorActive();
-        this.nebula?.setGain(corridorLive ? 0.35 : 1);
+        const baseGain = this.isMobile ? 1.75 : 1.35;
+        this.nebula?.setGain(corridorLive ? 0.5 : baseGain);
         this.stars?.setCorridorMode(corridorLive);
         const loopAwake = !this.renderLoop?.isFrozen();
         this.stars?.update(time, this.parallax, { twinkleAllowed: loopAwake });

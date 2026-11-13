@@ -49,9 +49,9 @@ void main() {
     vAlpha = bright * tw;
 
     float dist = max(0.001, -mv.z);
-    float px = mix(1.0, 4.5, hero);
-    float size = px * uPixelRatio * (280.0 / dist);
-    size = clamp(size, 1.0, 64.0);
+    float px = mix(1.2, 4.0, hero);
+    float size = px * uPixelRatio * (320.0 / dist);
+    size = clamp(size, 1.0, 5.0 * uPixelRatio);
     gl_PointSize = size;
 }
 `;
@@ -65,7 +65,8 @@ void main() {
     vec2 c = gl_PointCoord - 0.5;
     float d = length(c);
     if (d > 0.5) discard;
-    float soft = smoothstep(0.5, 0.12, d);
+    float core = 1.0 - smoothstep(0.12, 0.22, d);
+    float soft = smoothstep(0.5, 0.18, d) * mix(0.55, 1.0, core);
     gl_FragColor = vec4(vColor, vAlpha * soft);
 }
 `;
@@ -95,12 +96,14 @@ export class StarField {
             seeds[i] = seed;
             const shell = i % 3;
             shells[i] = shell;
-            const r = 55 + shell * 18 + seed * 22;
-            const theta = seed * Math.PI * 2 * 997.0;
-            const phi = Math.acos(2 * hash01(seed + 1.7) - 1) * 0.55 + 0.35;
+            const r = 48 + shell * 16 + seed * 28;
+            const u = hash01(seed);
+            const v = hash01(seed + 1.7);
+            const theta = 2 * Math.PI * u;
+            const phi = Math.acos(2 * v - 1);
             bases[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-            bases[i * 3 + 1] = r * Math.cos(phi) * 0.35 + 4;
-            bases[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+            bases[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            bases[i * 3 + 2] = r * Math.cos(phi);
         }
 
         const geo = new THREE.BufferGeometry();

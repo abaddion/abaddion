@@ -72,9 +72,11 @@ export class AboutSphere {
         if (this.texture) this.texture.dispose();
         this.texture = new THREE.CanvasTexture(canvas);
         this.texture.colorSpace = THREE.SRGBColorSpace;
-        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+        // Canvas → mip chain is unreliable on iOS WebGL; flat linear avoids blank band.
+        this.texture.generateMipmaps = false;
+        this.texture.minFilter = THREE.LinearFilter;
         this.texture.magFilter = THREE.LinearFilter;
-        this.texture.generateMipmaps = true;
+        this.texture.premultiplyAlpha = false;
         this.texture.needsUpdate = true;
 
         if (this.bandMaterial) this.bandMaterial.dispose();

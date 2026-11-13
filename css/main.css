@@ -369,6 +369,29 @@ html.debug-hud #hud {
     pointer-events: auto;
 }
 
+.floor-view-topbar--about {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: calc(var(--unit) * 1.5);
+    padding-bottom: calc(var(--unit) * 2);
+}
+
+.floor-view-topbar--about .floor-view-floor-title {
+    margin: 0;
+    width: 100%;
+    line-height: 1.15;
+}
+
+.floor-view-scroll--about {
+    padding-top: calc(var(--unit) * 2);
+    max-width: none;
+}
+
+html.about-sphere-active .floor-view-topbar--about .floor-view-floor-title {
+    color: var(--bone);
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.85);
+}
+
 .floor-view-back {
     position: relative;
     top: auto;
@@ -550,10 +573,6 @@ html.about-sphere-active .floor-view--about .floor-card-inner {
     background: transparent;
 }
 
-html.about-sphere-active .floor-view--about .card-title {
-    color: var(--bone);
-    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.85);
-}
 
 .about-crawl-scene {
     position: relative;
@@ -694,10 +713,12 @@ html:not(.nova-transition) .nova-fallback {
 
 .nova-flash {
     position: absolute;
-    width: 80vmax;
-    height: 80vmax;
+    width: min(50vw, 50vh);
+    height: min(50vw, 50vh);
+    max-width: 25vmin;
+    max-height: 25vmin;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 248, 235, 0.45) 0%, rgba(198, 255, 0, 0.08) 40%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 248, 235, 0.38) 0%, rgba(198, 255, 0, 0.07) 42%, transparent 68%);
     opacity: 0;
 }
 

@@ -55,8 +55,8 @@ void main() {
     float n = fbm(p + vec2(0.04, 0.07));
     float band = fbm(p * 0.6 + 3.1);
     vec3 col = uInk / 255.0;
-    col += uBone / 255.0 * (0.045 * n + 0.02 * band);
-    col += uAccent / 255.0 * (0.06 * smoothstep(0.55, 0.9, n) * smoothstep(0.2, 0.8, uv.x));
+    col += uBone / 255.0 * (0.11 * n + 0.05 * band);
+    col += uAccent / 255.0 * (0.09 * smoothstep(0.45, 0.88, n) * smoothstep(0.15, 0.85, uv.x));
     gl_FragColor = vec4(col, 1.0);
 }
 `;

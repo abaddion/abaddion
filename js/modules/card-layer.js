@@ -113,11 +113,8 @@ function renderCareer(floor) {
     `;
 }
 
-function renderAbout(floor) {
-    return `
-        <h2 id="card-title-${floor.id}" class="card-title">${escapeHtml(floor.title)}</h2>
-        <div class="about-crawl-root"></div>
-    `;
+function renderAbout() {
+    return `<div class="about-crawl-root"></div>`;
 }
 
 function renderFloorInner(floor, site) {
@@ -177,7 +174,15 @@ export class CardLayer {
         section.setAttribute('role', 'region');
         section.setAttribute('aria-labelledby', `card-title-${floor.id}`);
         section.hidden = true;
-        section.innerHTML = `
+        const aboutLayout = floor.id === 'about';
+        section.innerHTML = aboutLayout
+            ? `
+            <header class="floor-view-topbar floor-view-topbar--about">
+                <button type="button" class="floor-view-back">← stack</button>
+                <h2 id="card-title-${floor.id}" class="card-title floor-view-floor-title">${escapeHtml(floor.title)}</h2>
+            </header>
+            <div class="floor-card-inner floor-view-scroll floor-view-scroll--about">${inner}</div>`
+            : `
             <header class="floor-view-topbar">
                 <button type="button" class="floor-view-back">← stack</button>
             </header>
