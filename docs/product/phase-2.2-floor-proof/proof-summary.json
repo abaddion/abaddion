@@ -1,0 +1,76 @@
+{
+  "previewHost": "http://127.0.0.1:57704",
+  "capturedAt": "2026-11-13T19:11:43.594Z",
+  "v390": {
+    "floors": {
+      "0": "floor-identity-390.png",
+      "2": "floor-code-390.png",
+      "3": "floor-games-390.png",
+      "4": "floor-career-pages-390.png"
+    },
+    "openSequence": [
+      "floor-code-open-f1-390.png",
+      "floor-code-open-f2-390.png",
+      "floor-code-open-f3-390.png"
+    ],
+    "reduced": "floor-games-reduced-390.png",
+    "gameLinks": {
+      "count": 4,
+      "links": [
+        {
+          "href": "/games/interactive-ink/",
+          "ok": true
+        },
+        {
+          "href": "/games/interactive-sand/",
+          "ok": true
+        },
+        {
+          "href": "/games/calm-corner/",
+          "ok": true
+        },
+        {
+          "href": "/games/smash-town/",
+          "ok": true
+        }
+      ],
+      "allOk": true
+    }
+  },
+  "v1440": {
+    "floors": {
+      "0": "floor-identity-1440.png",
+      "2": "floor-code-1440.png",
+      "3": "floor-games-1440.png",
+      "4": "floor-career-pages-1440.png"
+    },
+    "openSequence": [
+      "floor-code-open-f1-1440.png",
+      "floor-code-open-f2-1440.png",
+      "floor-code-open-f3-1440.png"
+    ],
+    "reduced": "floor-games-reduced-1440.png",
+    "gameLinks": {
+      "count": 4,
+      "links": [
+        {
+          "href": "/games/interactive-ink/",
+          "ok": true
+        },
+        {
+          "href": "/games/interactive-sand/",
+          "ok": true
+        },
+        {
+          "href": "/games/calm-corner/",
+          "ok": true
+        },
+        {
+          "href": "/games/smash-town/",
+          "ok": true
+        }
+      ],
+      "allOk": true
+    }
+  }
+}

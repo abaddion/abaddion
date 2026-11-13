@@ -1,0 +1,18 @@
+{
+  "label": "production-baseline",
+  "url": "https://www.abaddion.com",
+  "capturedAt": "2026-03-23",
+  "method": "Lighthouse mobile ×3 median (Phase 2.2 baseline — skipped in PR #20)",
+  "median": {
+    "perf": 98,
+    "lcp": 1813.793,
+    "tbt": 15,
+    "cls": 0.003364855303212918,
+    "jsTransfer": 249481
+  },
+  "runs": [
+    { "perf": 96, "lcp": 1687.591, "tbt": 103, "cls": 0.0033648553032129182, "jsTransfer": 249455 },
+    { "perf": 98, "lcp": 1813.793, "tbt": 1, "cls": 0.0033710045283954953, "jsTransfer": 249491 },
+    { "perf": 98, "lcp": 1814.127, "tbt": 15, "cls": 0.0021932774004206445, "jsTransfer": 249481 }
+  ]
+}
