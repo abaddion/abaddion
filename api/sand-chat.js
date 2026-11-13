@@ -6,6 +6,11 @@
  * Override without redeploying config: GEMINI_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_TEMPERATURE.
  */
 import sandConfig from './sand-chat.config.json' with { type: 'json' };
+import {
+    preferredModel,
+    pickCheapestFlashLite,
+    isModelUnavailable
+} from './gemini-model.mjs';
 
 const PERSONA = [
     'You are a voice written in sand on the seabed. Each reply you give is formed from grains of sand',
@@ -22,11 +27,25 @@ function envNumber(name, fallback) {
     return Number.isFinite(n) ? n : fallback;
 }
 
-function resolveModel() {
-    const fromEnv = process.env.GEMINI_MODEL?.trim();
-    if (fromEnv) return fromEnv;
-    const fromConfig = typeof sandConfig.model === 'string' ? sandConfig.model.trim() : '';
-    return fromConfig || null;
+async function resolveModelId(apiKey) {
+    let model = preferredModel(sandConfig);
+    if (!model) model = await pickCheapestFlashLite(apiKey);
+    return model || null;
+}
+
+async function callGemini(apiKey, model, payload) {
+    const url =
+        'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) +
+        ':generateContent';
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    return { response, data, model };
 }
 
 export default async function handler(req, res) {
@@ -38,7 +57,7 @@ export default async function handler(req, res) {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY is not set' });
 
-    const model = resolveModel();
+    let model = await resolveModelId(key);
     if (!model) {
         return res.status(500).json({
             error: 'No Gemini model configured. Set GEMINI_MODEL or model in api/sand-chat.config.json'
@@ -72,23 +91,24 @@ export default async function handler(req, res) {
         sandConfig.maxOutputTokens ?? 80
     );
 
-    const url =
-        'https://generativelanguage.googleapis.com/v1beta/models/' +
-        encodeURIComponent(model) +
-        ':generateContent';
+    const payload = {
+        system_instruction: { parts: [{ text: PERSONA }] },
+        contents: past.concat([{ role: 'user', parts: [{ text: message }] }]),
+        generationConfig: { temperature, maxOutputTokens }
+    };
 
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-            body: JSON.stringify({
-                system_instruction: { parts: [{ text: PERSONA }] },
-                contents: past.concat([{ role: 'user', parts: [{ text: message }] }]),
-                generationConfig: { temperature, maxOutputTokens }
-            })
-        });
+        let { response, data } = await callGemini(key, model, payload);
 
-        const data = await response.json();
+        if (!response.ok && isModelUnavailable(response.status, data)) {
+            const fallback = await pickCheapestFlashLite(key);
+            if (fallback && fallback !== model) {
+                console.warn('Gemini model unavailable, retrying with', fallback, 'was', model);
+                model = fallback;
+                ({ response, data } = await callGemini(key, model, payload));
+            }
+        }
+
         if (!response.ok) {
             console.error('Gemini error', response.status, model, JSON.stringify(data).slice(0, 500));
             return res.status(502).json({ error: 'Gemini request failed' });
