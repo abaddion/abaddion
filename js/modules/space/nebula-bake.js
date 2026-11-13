@@ -195,11 +195,6 @@ export class NebulaBackground {
         this._screenMesh.material.uniforms.uNebula.value = this._nebulaTexture;
     }
 
-    /** Baked RGBA nebula — sampled by stack glass refraction. */
-    getNebulaTexture() {
-        return this._nebulaTexture ?? null;
-    }
-
     setGain(value) {
         this.gain = value;
         this._screenMesh.material.uniforms.uGain.value = value;
