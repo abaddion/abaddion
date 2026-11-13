@@ -137,8 +137,10 @@ export class PostProcessing {
     render(universe) {
         const novaOn = this.passes?.nova?.enabled && this.novaProgress > 0;
         const drawScene = () => {
+            this.renderer.autoClear = false;
             this.renderer.clearDepth();
             this.renderer.render(this.scene, this.camera);
+            this.renderer.autoClear = true;
         };
         if (!this.composerActive || !this.composer || (this.intensity <= 0 && !novaOn)) {
             if (universe) universe.render(this.renderer);
