@@ -1,0 +1,30 @@
+{
+  "v390": [
+    {
+      "file": "stack-vibe-f1-390.png",
+      "vibeT": 0.4611559355140099
+    },
+    {
+      "file": "stack-vibe-f2-390.png",
+      "vibeT": 0.9246176507055872
+    },
+    {
+      "file": "stack-vibe-f3-390.png",
+      "vibeT": 0
+    }
+  ],
+  "v1440": [
+    {
+      "file": "stack-vibe-f1-1440.png",
+      "vibeT": 0.49341994481036344
+    },
+    {
+      "file": "stack-vibe-f2-1440.png",
+      "vibeT": 0
+    },
+    {
+      "file": "stack-vibe-f3-1440.png",
+      "vibeT": 0
+    }
+  ]
+}
