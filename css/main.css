@@ -322,7 +322,7 @@ html.debug-hud #hud {
     pointer-events: none;
 }
 
-html.floor-open:not(.floor-open-canvas):not(.about-sphere-active) #glitch-canvas {
+html.floor-open:not(.floor-open-canvas):not(.about-sphere-active):not(.about-ring-active) #glitch-canvas {
     opacity: 0.5;
 }
 
@@ -473,11 +473,31 @@ html.floor-open-canvas #glitch-canvas {
     border: 0;
 }
 
+html.about-ring-active .floor-view--about .floor-view-scroll,
 html.about-sphere-active .floor-view--about .floor-view-scroll {
     background: transparent;
     pointer-events: none;
 }
 
+.about-floor-title {
+    position: relative;
+    z-index: 5;
+    margin: calc(env(safe-area-inset-top, 0px) + 52px) calc(var(--unit) * 2) 0;
+    padding: 0;
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    color: var(--bone);
+    text-shadow: 0 1px 20px rgba(0, 0, 0, 0.85);
+    pointer-events: none;
+}
+
+html.about-ring-active .about-floor-title,
+html.about-sphere-active .about-floor-title {
+    pointer-events: auto;
+}
+
+html.about-ring-active .floor-view--about .about-tail-dock,
+html.about-ring-active .floor-view--about .about-read-toggle,
+html.about-ring-active .floor-view--about .floor-view-topbar,
 html.about-sphere-active .floor-view--about .about-tail-dock,
 html.about-sphere-active .floor-view--about .about-read-toggle,
 html.about-sphere-active .floor-view--about .floor-view-topbar {
@@ -534,8 +554,83 @@ html.about-sphere-active .about-tail-panel {
     border-radius: 2px;
 }
 
+html.about-ring-active #glitch-canvas,
 html.about-sphere-active #glitch-canvas {
     z-index: 28;
+}
+
+html.about-ring-active .floor-view--about .floor-view-panel-glass,
+html.about-ring-active .floor-view--about .floor-view-panel--immersive {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
+}
+
+.about-css-ring-host {
+    position: relative;
+    z-index: 2;
+    min-height: 58dvh;
+    pointer-events: auto;
+}
+
+.about-css-ring-host.hidden {
+    display: none;
+}
+
+.about-css-ring-stage {
+    position: relative;
+    height: 58dvh;
+    overflow: hidden;
+    perspective: 640px;
+    perspective-origin: 50% 88%;
+    mask-image: linear-gradient(to top, #000 0%, #000 48%, rgba(0, 0, 0, 0.12) 72%, transparent 92%);
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 48%, rgba(0, 0, 0, 0.12) 72%, transparent 92%);
+}
+
+.about-css-ring {
+    position: absolute;
+    left: 50%;
+    top: 58%;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg);
+    will-change: transform;
+}
+
+.about-css-ring-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: min(320px, 88vw);
+    margin: 0;
+    padding: 0 calc(var(--unit) * 1.5);
+    transform-origin: center center;
+    transform: rotateX(var(--line-angle)) translateZ(calc(-1 * var(--ring-r))) rotateX(180deg);
+    backface-visibility: hidden;
+    font-family: var(--font-mono);
+    font-size: clamp(12px, 3.4vw, 15px);
+    line-height: 1.5;
+    color: var(--bone);
+    text-align: center;
+    translate: -50% 0;
+    text-shadow: 0 1px 14px rgba(0, 0, 0, 0.75);
+}
+
+.about-css-ring-measure {
+    font-family: var(--font-mono);
+    font-size: clamp(12px, 3.4vw, 15px);
+}
+
+html.about-ring-active .about-tail-panel {
+    background: rgba(10, 10, 10, 0.72);
+    border: 1px solid rgba(236, 232, 223, 0.14);
+    padding: calc(var(--unit) * 2);
+    margin: calc(var(--unit) * 2);
+    border-radius: 2px;
 }
 
 html.about-sphere-active .floor-view--about {

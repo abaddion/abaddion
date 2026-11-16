@@ -359,17 +359,14 @@ class WebGLLayer {
             });
         }
         if (index === this.aboutFloorIndex) {
-            const crawl = this.cardLayer.getAboutCrawl(this.aboutFloorIndex);
-            crawl?.tryPromoteToSphere?.();
-            if (crawl?.sphereActive) {
-                void this.attachAboutSphere(crawl).then(() => this.setAboutSphereActive(true));
-            }
+            this.renderLoop?.ping();
         }
     }
 
     onFloorClosed() {
+        this.setAboutRingMode(false);
         this.setAboutSphereActive(false);
-        document.documentElement.classList.remove('about-sphere-active');
+        document.documentElement.classList.remove('about-sphere-active', 'about-ring-active');
         this.stack.root.visible = true;
         this.labels.container.style.visibility = '';
         this.corridor?.setVisible(false);
@@ -437,6 +434,28 @@ class WebGLLayer {
 
     disposeAboutSphere() {
         this.aboutCrawlRef = null;
+    }
+
+    setAboutRingMode(active) {
+        document.documentElement.classList.toggle('about-ring-active', active);
+        if (!this.stack?.root || !this.labels?.container) return;
+        if (active) {
+            this.stack.root.visible = false;
+            this.labels.container.style.visibility = 'hidden';
+            if (this.scene) this.scene.fog = null;
+        } else {
+            const aboutStillOpen =
+                this.interactionState.isOpen() &&
+                this.interactionState.floorIndex === this.aboutFloorIndex;
+            if (!aboutStillOpen) {
+                this.stack.root.visible = true;
+                this.labels.container.style.visibility = '';
+                if (this.scene && this.THREE && !this.scene.fog) {
+                    this.scene.fog = new this.THREE.Fog(0x0a0a0a, 12, 40);
+                }
+            }
+        }
+        this.renderLoop?.ping();
     }
 
     corridorScroll(delta) {
