@@ -91,6 +91,68 @@ async function runWebGLCase(baseUrl) {
     console.log('OK smoke-boot WebGL');
 }
 
+async function waitCorridorReady(page) {
+    await page.waitForFunction(
+        () => window.app?.webgl?.corridor?.root?.visible && window.__APP_STATE?.corridor?.visiblePaintings?.length > 0,
+        { timeout: TRANSITION_TIMEOUT_MS }
+    );
+}
+
+async function getCorridorTapTarget(page) {
+    return page.evaluate(() => {
+        const list = window.__APP_STATE?.corridor?.visiblePaintings ?? [];
+        const target = list.find((p) => p.focused && p.onScreen) ?? list.find((p) => p.onScreen);
+        if (!target?.screenRect) return null;
+        return { x: target.screenRect.cx, y: target.screenRect.cy, slug: target.slug };
+    });
+}
+
+async function runCanvasDetailCase(baseUrl) {
+    const puppeteer = await loadPuppeteer();
+    const browser = await puppeteer.launch(chromeLaunchOpts());
+    const page = await browser.newPage();
+    await page.setViewport({ width: 390, height: 844 });
+    const consoleErrors = [];
+    attachConsoleCollectors(page, consoleErrors);
+
+    await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: BOOT_TIMEOUT_MS });
+    await waitWebGLBoot(page);
+    await page.evaluate(() => window.app.openFloor(1));
+    await waitFloorOpen(page);
+    await waitCorridorReady(page);
+    for (let i = 0; i < 8; i++) {
+        await page.evaluate(() => window.app.webgl?.frameRender?.());
+    }
+    const tap = await getCorridorTapTarget(page);
+    if (!tap) throw new Error('no corridor tap target');
+    await page.touchscreen.tap(tap.x, tap.y);
+    await page.waitForFunction(
+        () => document.documentElement.classList.contains('detail-open'),
+        { timeout: TRANSITION_TIMEOUT_MS }
+    );
+    const state = await page.evaluate(() => ({
+        dialogOpen: !!document.querySelector('.detail-inquiry-dialog[open]'),
+        detailHidden: document.getElementById('canvas-detail')?.hidden
+    }));
+    if (state.dialogOpen) throw new Error('inquiry dialog open on detail entry');
+    if (state.detailHidden) throw new Error('detail not visible after tap');
+
+    await page.click('.detail-inquire');
+    await page.waitForFunction(
+        () => !!document.querySelector('.detail-inquiry-dialog[open]'),
+        { timeout: 10000 }
+    );
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(
+        () => !document.querySelector('.detail-inquiry-dialog[open]') && document.documentElement.classList.contains('detail-open'),
+        { timeout: 10000 }
+    );
+
+    if (consoleErrors.length) throw new Error(`console: ${consoleErrors.slice(0, 3).join(' | ')}`);
+    await browser.close();
+    console.log('OK smoke-boot canvas-detail');
+}
+
 async function runGamesCase(baseUrl) {
     const puppeteer = await loadPuppeteer();
     const browser = await puppeteer.launch(chromeLaunchOpts());
@@ -170,6 +232,12 @@ try {
     await runNoWebGLCase(baseUrl);
 } catch (e) {
     errors.push(`no-webgl: ${e.message}`);
+}
+
+try {
+    await runCanvasDetailCase(baseUrl);
+} catch (e) {
+    errors.push(`canvas-detail: ${e.message}`);
 }
 
 try {

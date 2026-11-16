@@ -156,6 +156,7 @@ export class FloorInput {
 
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
+                if (this.isDetailOpen()) return;
                 if (this.isOpen()) {
                     e.preventDefault();
                     this.onClose();
@@ -163,10 +164,10 @@ export class FloorInput {
                 return;
             }
             if (this.isCorridorActive()) {
-                if (e.code === 'ArrowLeft') {
+                if (e.code === 'ArrowLeft' || e.code === 'ArrowUp') {
                     e.preventDefault();
                     this.onCorridorStep(-1);
-                } else if (e.code === 'ArrowRight') {
+                } else if (e.code === 'ArrowRight' || e.code === 'ArrowDown') {
                     e.preventDefault();
                     this.onCorridorStep(1);
                 }

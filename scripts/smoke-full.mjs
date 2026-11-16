@@ -604,7 +604,7 @@ async function runViewportFull(vp) {
         if (!layout.imgInViewport || layout.overlap) {
             errors.push(`${vp.name}: detail layout ${slug} ${JSON.stringify(layout)}`);
         }
-        await page.evaluate(() => document.querySelector('.detail-inquire-btn')?.click());
+        await page.evaluate(() => document.querySelector('.detail-inquire')?.click());
         await new Promise((r) => setTimeout(r, 200));
         await page.evaluate(() => {
             window.app.webgl?.canvasDetail?.close?.();

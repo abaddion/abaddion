@@ -38,6 +38,7 @@ export class CanvasCorridor {
         this.meshes = [];
         this.spotlights = [];
         this.length = 0;
+        this._stepEaseUntil = 0;
 
         this._buildEnvironment();
         this._buildPaintings();
@@ -126,6 +127,7 @@ export class CanvasCorridor {
         if (next === this.focusIndex) return;
         this.focusIndex = next;
         this.targetCameraZ = this.meshes[next].userData.z + 1.2;
+        this._stepEaseUntil = performance.now() + 600;
     }
 
     get progress() {
@@ -179,6 +181,8 @@ export class CanvasCorridor {
             index: this.focusIndex,
             slug: item?.slug,
             title: item?.title,
+            atStart: this.focusIndex <= 0,
+            atEndIndex: this.focusIndex >= this.meshes.length - 1,
             atEnd: this.focusIndex >= this.meshes.length - 1 && this.progress > 0.92
         });
     }
@@ -193,7 +197,9 @@ export class CanvasCorridor {
     }
 
     update(dt, camera) {
-        this.cameraZ += (this.targetCameraZ - this.cameraZ) * Math.min(1, dt * 5);
+        const stepping = performance.now() < this._stepEaseUntil;
+        const ease = stepping ? Math.min(1, dt * 3.8) : Math.min(1, dt * 5);
+        this.cameraZ += (this.targetCameraZ - this.cameraZ) * ease;
         const pose = this.getCameraPose();
         camera.position.lerp(pose.position, Math.min(1, dt * 8));
         camera.lookAt(pose.lookAt);
