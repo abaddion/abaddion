@@ -28,22 +28,30 @@ export function createSlabMaterial(reducedMotion = false, variant = 0) {
             uAtlasReady: { value: 0 },
             uContentCollapse: { value: 1 },
             uVariant: { value: variant === 1 ? 1 : 0 },
-            uMobilePortrait: { value: 0 }
+            uMobilePortrait: { value: 0 },
+            uVibrateT: { value: 0 }
         },
         vertexShader: `
             attribute float aFocus;
+            attribute float aVibrate;
             attribute vec4 aAtlasRect;
             varying float vFocus;
+            varying float vVibrate;
             varying vec3 vWorldPos;
             varying vec3 vNormal;
             varying vec2 vUv;
             varying vec4 vAtlasRect;
+            uniform float uVibrateT;
 
             void main() {
                 vFocus = aFocus;
+                vVibrate = aVibrate;
                 vUv = uv;
                 vAtlasRect = aAtlasRect;
                 vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.0);
+                float vibe = aVibrate * uVibrateT;
+                float shake = vibe * 0.045 * sin(uVibrateT * 48.0 + aVibrate * 9.0);
+                world.x += shake;
                 vWorldPos = world.xyz;
                 vNormal = normalize(mat3(modelMatrix * instanceMatrix) * normal);
                 gl_Position = projectionMatrix * viewMatrix * world;
@@ -62,8 +70,10 @@ export function createSlabMaterial(reducedMotion = false, variant = 0) {
             uniform float uContentCollapse;
             uniform float uVariant;
             uniform float uMobilePortrait;
+            uniform float uVibrateT;
 
             varying float vFocus;
+            varying float vVibrate;
             varying vec3 vWorldPos;
             varying vec3 vNormal;
             varying vec2 vUv;
@@ -183,6 +193,16 @@ export function createSlabMaterial(reducedMotion = false, variant = 0) {
                 alpha *= mix(1.0, uBackdropDim, focus);
                 if (uMobilePortrait > 0.5) {
                     alpha *= mix(0.35, 1.0, focus);
+                }
+
+                float vibe = vVibrate * uVibrateT * (1.0 - uVibrateT);
+                if (vibe > 0.002 && uReduced < 0.5) {
+                    float smear = vibe * 0.035;
+                    vec3 smearR = mix(col, vec3(col.r, col.g * 0.4, col.b * 0.4), 0.55);
+                    vec3 smearG = mix(col, vec3(col.r * 0.45, col.g, col.b * 0.45), 0.55);
+                    col = mix(col, smearR, vibe * 0.5);
+                    col = mix(col, smearG, vibe * 0.35);
+                    col += vec3(smear * 0.6, 0.0, -smear * 0.35);
                 }
 
                 gl_FragColor = vec4(col, alpha);

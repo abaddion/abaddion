@@ -1,12 +1,10 @@
 /**
- * About floor — sphere crawl (WebGL) or flat text; SEO copy always in DOM.
+ * About floor — CSS 3D ring crawl or flat text; SEO copy always in DOM.
  */
 
 import { isWebGLReady } from './webgl-readiness.js';
-import {
-    aboutCrawlLoopSeconds,
-    aboutFlatPixelsPerSecond
-} from './about-crawl-speed.js';
+import { aboutCrawlLoopSeconds, aboutFlatPixelsPerSecond } from './about-crawl-speed.js';
+import { AboutCssRing } from './about-css-ring.js';
 
 /** @returns {boolean} Force flat HTML crawl (?about=flat) */
 export function resolveAboutFlatFromUrl(location = globalThis.location) {
@@ -16,10 +14,6 @@ export function resolveAboutFlatFromUrl(location = globalThis.location) {
 }
 
 export class AboutCrawl {
-    /**
-     * @param {HTMLElement} root
-     * @param {{ body?: string, paragraphs?: string[], byline?: string, ctaLinks?: { lead: string, href: string, label: string }[], closingLine?: string, reducedMotion?: boolean, sphereCapable?: boolean, startInSphere?: boolean }} options
-     */
     constructor(root, options = {}) {
         this.root = root;
         this.body = options.body ?? '';
@@ -32,45 +26,55 @@ export class AboutCrawl {
         this.reducedMotion =
             options.reducedMotion ??
             document.documentElement.classList.contains('reduce-motion');
-        this.allowSphere = options.startInSphere !== false;
+        this.allowRing = options.startInSphere !== false;
         const forceFlat = resolveAboutFlatFromUrl();
-        const webglReady = isWebGLReady();
-        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
         this.userChoseFlat = forceFlat;
-        this.startInSphere = this.wantsSphere && webglReady;
-        this.flat = !this.startInSphere;
+        this.flat =
+            forceFlat ||
+            this.reducedMotion ||
+            !this.allowRing ||
+            document.documentElement.classList.contains('no-webgl');
 
         this.offset = 0;
         this.auto = true;
         this.paused = false;
         this.resumeTimer = null;
         this.raf = null;
-        this.sphereActive = false;
         this.tailRevealed = false;
         this.flatPxPerSec = 32;
         this._autoLastTs = 0;
+        this.ring = null;
         this.onWheel = this.onWheel.bind(this);
+    }
+
+    _lineSources() {
+        const lines = [];
+        if (this.byline) lines.push(this.byline);
+        lines.push(...this.paragraphs);
+        return lines;
     }
 
     mount() {
         this.root.innerHTML = `
-            <div class="about-crawl-scene${this.flat ? ' is-flat' : ' is-sphere'}">
+            <div class="about-crawl-scene${this.flat ? ' is-flat' : ' is-ring'}">
                 <div class="about-seo-copy visually-hidden" aria-hidden="true">${this._copyHtml()}${this._tailHtml()}</div>
                 <div class="about-crawl-perspective about-crawl-flat-panel${this.flat ? '' : ' hidden'}">
                     <div class="about-crawl-block">
                         <div class="about-crawl-copy">${this._copyHtml()}</div>
                     </div>
                 </div>
+                <div class="about-css-ring-host${this.flat ? ' hidden' : ''}"></div>
                 <div class="about-tail-dock">
                     <div class="about-crawl-form-slot">
                         <div class="about-crawl-tail about-tail-panel">${this._tailHtml()}</div>
                     </div>
                 </div>
-                <button type="button" class="about-read-toggle">${this.flat ? 'inside the ball' : 'read as text'}</button>
+                <button type="button" class="about-read-toggle">${this.flat ? 'inside the ring' : 'read as text'}</button>
             </div>`;
 
         this.scene = this.root.querySelector('.about-crawl-scene');
         this.flatPanel = this.root.querySelector('.about-crawl-flat-panel');
+        this.ringHost = this.root.querySelector('.about-css-ring-host');
         this.toggle = this.root.querySelector('.about-read-toggle');
         this.formSlot = this.root.querySelector('.about-crawl-form-slot');
         this.tail = this.root.querySelector('.about-crawl-tail');
@@ -78,33 +82,43 @@ export class AboutCrawl {
         this.toggle?.addEventListener('click', () => this.setFlat(!this.flat, { user: true }));
         this.scene?.addEventListener('click', (e) => {
             if (e.target.closest('button, input, textarea, a, label')) return;
-            if (this.sphereActive) {
-                window.app?.webgl?.aboutSphere?.onTapTogglePause?.();
+            if (!this.flat && this.ring) {
+                this.ring.togglePause();
                 this.paused = !this.paused;
-            } else if (!this.sphereActive && !this.reducedMotion) {
+            } else if (this.flat && !this.reducedMotion) {
                 this.paused = !this.paused;
             }
         });
 
         if (this.flat) {
-            this._refreshFlatSpeed();
-            if (this.reducedMotion) {
-                this.formSlot?.classList.add('is-settled');
-                this.scene?.classList.add('tail-visible');
-            } else {
-                this.formSlot?.classList.remove('is-settled');
-                this.startAuto();
-            }
-        } else if (this.startInSphere && this._sphereCapableNow()) {
-            this.sphereActive = true;
-            void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() => {
-                if (window.app?.cardLayer?.isAboutFloorOpen?.()) {
-                    window.app?.webgl?.setAboutSphereActive?.(true);
-                }
-            });
-        } else if (!this.flat) {
+            this._bootFlat();
+        } else {
+            this._bootRing();
+        }
+    }
+
+    _bootFlat() {
+        document.documentElement.classList.remove('about-ring-active');
+        this._refreshFlatSpeed();
+        this.scene?.classList.add('tail-visible');
+        if (this.reducedMotion) {
+            this.formSlot?.classList.add('is-settled');
+        } else {
+            this.formSlot?.classList.remove('is-settled');
             this.startAuto();
         }
+    }
+
+    _bootRing() {
+        document.documentElement.classList.add('about-ring-active');
+        this.ring = new AboutCssRing(this.ringHost, {
+            lines: this._lineSources(),
+            reducedMotion: this.reducedMotion,
+            onFirstLoopComplete: () => this.onFirstRingLoopComplete()
+        });
+        this.ring.mount();
+        this.scene?.classList.remove('tail-visible');
+        window.app?.webgl?.setAboutRingMode?.(true);
     }
 
     _copyHtml() {
@@ -137,67 +151,39 @@ export class AboutCrawl {
         this.formSlot.appendChild(formEl);
     }
 
-    onFirstSphereLoopComplete() {
+    onFirstRingLoopComplete() {
         this.tailRevealed = true;
         this.scene?.classList.add('tail-visible');
-        window.app?.webgl?.aboutSphere?.setDim?.(0.42);
-    }
-
-    _sphereCapableNow() {
-        return !this.reducedMotion && !document.documentElement.classList.contains('no-webgl');
     }
 
     tryPromoteToSphere() {
-        if (this.userChoseFlat || this.sphereActive) return;
-        if (!isWebGLReady()) return;
-        if (!this.flat) return;
-        const forceFlat = resolveAboutFlatFromUrl();
-        this.wantsSphere = this._sphereCapableNow() && !forceFlat && this.allowSphere;
-        if (!this.wantsSphere) return;
-        this.setFlat(false);
+        /* WebGL text band removed — no-op for boot compatibility. */
     }
 
     setFlat(flat, opts = {}) {
         if (opts.user) this.userChoseFlat = flat;
+        if (flat === this.flat) return;
         this.flat = flat;
+        this.ring?.destroy();
+        this.ring = null;
+        this.stopAuto();
         this.scene?.classList.toggle('is-flat', flat);
-        this.scene?.classList.toggle('is-sphere', !flat);
+        this.scene?.classList.toggle('is-ring', !flat);
         this.flatPanel?.classList.toggle('hidden', !flat);
-
+        this.ringHost?.classList.toggle('hidden', flat);
         if (this.toggle) {
-            this.toggle.textContent = flat ? 'inside the ball' : 'read as text';
+            this.toggle.textContent = flat ? 'inside the ring' : 'read as text';
         }
-
         if (flat) {
-            window.app?.webgl?.setAboutSphereActive?.(false);
-            this.sphereActive = false;
-            this.stopAuto();
-            this._refreshFlatSpeed();
-            this.scene?.classList.add('tail-visible');
-            if (this.reducedMotion) {
-                this.formSlot?.classList.add('is-settled');
-            } else {
-                this.formSlot?.classList.remove('is-settled');
-                this.startAuto();
-            }
-        } else if (this._sphereCapableNow()) {
-            this.formSlot?.classList.remove('is-settled');
-            this.scene?.classList.toggle('tail-visible', this.tailRevealed);
-            this.sphereActive = true;
-            void window.app?.webgl?.attachAboutSphere?.(this)?.then?.(() =>
-                window.app?.webgl?.setAboutSphereActive?.(true)
-            );
+            window.app?.webgl?.setAboutRingMode?.(false);
+            this._bootFlat();
         } else {
-            this.offset = 0;
-            this.formSlot?.classList.remove('is-settled');
-            this.startAuto();
+            this._bootRing();
         }
     }
 
     onWheel(deltaY) {
-        if (this.sphereActive) {
-            return window.app?.webgl?.aboutSphere?.onWheel?.(deltaY) ?? false;
-        }
+        if (!this.flat && this.ring) return this.ring.onWheel(deltaY);
         if (this.reducedMotion) return false;
         this.auto = false;
         this.paused = false;
@@ -212,7 +198,7 @@ export class AboutCrawl {
 
     _refreshFlatSpeed() {
         const block = this.flatPanel?.querySelector('.about-crawl-block');
-        const copy = this.getCopyForSphere();
+        const copy = { byline: this.byline, paragraphs: this.paragraphs };
         const loopSec = aboutCrawlLoopSeconds(copy);
         const max = Math.max(2400, block?.scrollHeight ? block.scrollHeight * 0.85 : 2400);
         this.flatPxPerSec = aboutFlatPixelsPerSecond(max, loopSec);
@@ -220,7 +206,7 @@ export class AboutCrawl {
 
     startAuto() {
         this.stopAuto();
-        if (this.sphereActive || this.reducedMotion) return;
+        if (!this.flat || this.reducedMotion) return;
         this._autoLastTs = performance.now();
         const tick = (ts) => {
             const dt = Math.min(0.05, (ts - this._autoLastTs) / 1000);
@@ -245,35 +231,36 @@ export class AboutCrawl {
         if (!block) return;
         const max = Math.max(2400, block.scrollHeight * 0.85);
         this.offset = Math.max(-200, Math.min(max, this.offset));
-        const tilt = this.flat ? 'rotateX(25deg) ' : '';
-        block.style.transform = `${tilt}translate3d(0, ${-this.offset}px, 0)`;
+        block.style.transform = `rotateX(25deg) translate3d(0, ${-this.offset}px, 0)`;
         const atEnd = this.offset > max * 0.85;
-        if (!this.reducedMotion) {
-            this.formSlot?.classList.toggle('is-settled', atEnd);
-        }
+        this.formSlot?.classList.toggle('is-settled', atEnd);
     }
 
     getCopyForSphere() {
         return { byline: this.byline, paragraphs: this.paragraphs };
     }
 
-    /** Fail-safe: visible flat crawl when WebGL unavailable (PR A). */
+    /** First visible line label for proof captures */
+    getVisibleLineHint() {
+        return this.ring?.visibleLineHint?.() ?? '';
+    }
+
     forceFlatMode() {
-        window.app?.webgl?.setAboutSphereActive?.(false);
-        this.sphereActive = false;
-        if (this.flat) {
+        window.app?.webgl?.setAboutRingMode?.(false);
+        if (!this.flat) this.setFlat(true);
+        else {
             this.flatPanel?.classList.remove('hidden');
             this.scene?.classList.add('tail-visible');
             this.startAuto();
-            return;
         }
-        this.setFlat(true);
     }
 
     destroy() {
         this.stopAuto();
         clearTimeout(this.resumeTimer);
-        window.app?.webgl?.disposeAboutSphere?.();
+        this.ring?.destroy();
+        document.documentElement.classList.remove('about-ring-active');
+        window.app?.webgl?.setAboutRingMode?.(false);
         this.root?.replaceChildren();
     }
 }
