@@ -470,7 +470,18 @@ class WebGLLayer {
     corridorTap(clientX, clientY) {
         if (!this.isCorridorActive()) return;
         const hit = this.corridor.pick(clientX, clientY, this.camera, this.canvas);
-        if (hit?.userData?.slug) this.openCanvasDetail(hit.userData.slug);
+        if (hit?.userData?.slug) {
+            this.corridorHud?.markTapSeen?.();
+            this.openCanvasDetail(hit.userData.slug);
+        }
+    }
+
+    backToCorridorFromDetail() {
+        if (!this.isDetailOpen()) return;
+        this.canvasDetail.close({ skipHistory: true });
+        history.replaceState({ canvasCorridor: true }, '', '/canvas');
+        this._restoreDetailCorridorMesh();
+        this.renderLoop?.ping();
     }
 
     _restoreDetailCorridorMesh() {
@@ -626,9 +637,17 @@ class WebGLLayer {
 
     onKeyDown(event) {
         this.renderLoop?.ping();
-        if (this.isCorridorActive() && (event.code === 'ArrowLeft' || event.code === 'ArrowRight')) {
+        if (
+            this.isCorridorActive() &&
+            (event.code === 'ArrowLeft' ||
+                event.code === 'ArrowRight' ||
+                event.code === 'ArrowUp' ||
+                event.code === 'ArrowDown')
+        ) {
             event.preventDefault();
-            this.corridor.stepPainting(event.code === 'ArrowRight' ? 1 : -1);
+            const fwd =
+                event.code === 'ArrowRight' || event.code === 'ArrowDown' ? 1 : -1;
+            this.corridor.stepPainting(fwd);
             return;
         }
         if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {

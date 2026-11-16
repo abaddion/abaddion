@@ -262,6 +262,14 @@ export class CardLayer {
                 'beforeend',
                 '<p class="corridor-hint">Swipe or scroll to walk — tap a painting for detail.</p>'
             );
+            if (document.documentElement.classList.contains('no-webgl')) {
+                section.querySelectorAll('.canvas-thumb').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const slug = btn.dataset.canvasSlug;
+                        if (slug) this.openCanvasPiece(slug);
+                    });
+                });
+            }
         }
 
         if (floor.id === 'about') {
@@ -331,7 +339,10 @@ export class CardLayer {
 
         card.style.setProperty('--floor-expand', String(progress));
         document.documentElement.classList.toggle('floor-open', progress > 0.02);
-        document.documentElement.classList.toggle('floor-open-canvas', progress > 0.5 && card.dataset.floorId === 'canvas');
+        document.documentElement.classList.toggle(
+            'floor-open-canvas',
+            progress > 0.02 && card.dataset.floorId === 'canvas'
+        );
 
         this.activeIndex = index;
         if (progress >= 1) {
