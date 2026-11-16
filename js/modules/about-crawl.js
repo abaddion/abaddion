@@ -69,17 +69,30 @@ export class AboutCrawl {
                         <div class="about-crawl-tail about-tail-panel">${this._tailHtml()}</div>
                     </div>
                 </div>
-                <button type="button" class="about-read-toggle">${this.flat ? 'inside the ring' : 'read as text'}</button>
+                <div class="about-read-controls">
+                    <div class="about-speed-control" role="group" aria-label="Ring speed">
+                        <span class="about-speed-label">speed</span>
+                        <button type="button" class="about-speed-minus" aria-label="Slower">−</button>
+                        <span class="about-speed-readout">1×</span>
+                        <button type="button" class="about-speed-plus" aria-label="Faster">+</button>
+                    </div>
+                    <button type="button" class="about-read-toggle">${this.flat ? 'inside the ring' : 'read as text'}</button>
+                </div>
             </div>`;
 
         this.scene = this.root.querySelector('.about-crawl-scene');
         this.flatPanel = this.root.querySelector('.about-crawl-flat-panel');
         this.ringHost = this.root.querySelector('.about-css-ring-host');
         this.toggle = this.root.querySelector('.about-read-toggle');
+        this.speedControl = this.root.querySelector('.about-speed-control');
+        this.speedReadout = this.root.querySelector('.about-speed-readout');
         this.formSlot = this.root.querySelector('.about-crawl-form-slot');
         this.tail = this.root.querySelector('.about-crawl-tail');
 
         this.toggle?.addEventListener('click', () => this.setFlat(!this.flat, { user: true }));
+        this.root.querySelector('.about-speed-minus')?.addEventListener('click', () => this._stepRingSpeed(-1));
+        this.root.querySelector('.about-speed-plus')?.addEventListener('click', () => this._stepRingSpeed(1));
+        this._syncSpeedUi();
         this.scene?.addEventListener('click', (e) => {
             if (e.target.closest('button, input, textarea, a, label')) return;
             if (!this.flat && this.ring) {
@@ -117,6 +130,7 @@ export class AboutCrawl {
             onFirstLoopComplete: () => this.onFirstRingLoopComplete()
         });
         this.ring.mount();
+        this._syncSpeedUi();
         this.scene?.classList.remove('tail-visible');
         window.app?.webgl?.setAboutRingMode?.(true);
     }
@@ -179,6 +193,23 @@ export class AboutCrawl {
             this._bootFlat();
         } else {
             this._bootRing();
+        }
+        this._syncSpeedUi();
+    }
+
+    _stepRingSpeed(delta) {
+        if (!this.ring || this.flat) return;
+        this.ring.setSpeedStep(delta);
+        this._syncSpeedUi();
+    }
+
+    _syncSpeedUi() {
+        const show = !this.flat && !this.reducedMotion;
+        if (this.speedControl) this.speedControl.hidden = !show;
+        if (this.speedReadout && this.ring) {
+            this.speedReadout.textContent = this.ring.getSpeedLabel();
+        } else if (this.speedReadout) {
+            this.speedReadout.textContent = '1×';
         }
     }
 

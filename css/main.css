@@ -624,14 +624,14 @@ html.about-ring-active .floor-view--about .floor-view-panel--immersive {
     position: absolute;
     left: 50%;
     top: 0;
-    width: min(320px, 88vw);
+    width: min(268px, 88vw);
     margin: 0;
     padding: 0 calc(var(--unit) * 1.5);
     transform-origin: center center;
     transform: rotateX(var(--line-angle)) translateZ(calc(-1 * var(--ring-r))) rotateX(180deg);
     backface-visibility: hidden;
     font-family: var(--font-mono);
-    font-size: clamp(12px, 3.4vw, 15px);
+    font-size: clamp(9px, 2.55vw, 12.75px);
     line-height: 1.5;
     color: var(--bone);
     text-align: center;
@@ -641,7 +641,51 @@ html.about-ring-active .floor-view--about .floor-view-panel--immersive {
 
 .about-css-ring-measure {
     font-family: var(--font-mono);
-    font-size: clamp(12px, 3.4vw, 15px);
+    font-size: clamp(9px, 2.55vw, 12.75px);
+}
+
+@media (min-width: 769px) {
+    .about-css-ring-line {
+        width: min(320px, 50vw);
+    }
+}
+
+.about-read-controls {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(var(--unit) * 1.5);
+    margin: calc(var(--unit) * 2);
+    pointer-events: auto;
+}
+
+.about-speed-control {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--unit) * 1.25);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--bone);
+}
+
+.about-speed-control[hidden] {
+    display: none !important;
+}
+
+.about-speed-control button {
+    min-width: 44px;
+    min-height: 44px;
+    border: 1px solid var(--stroke);
+    background: rgba(10, 10, 10, 0.65);
+    color: var(--bone);
+    cursor: pointer;
+}
+
+.about-speed-readout {
+    min-width: 2.5rem;
+    text-align: center;
 }
 
 html.about-ring-active .about-tail-panel {
