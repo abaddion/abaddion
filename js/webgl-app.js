@@ -712,7 +712,9 @@ class WebGLLayer {
             });
         } else if (!this.isCorridorActive()) {
             this.cameraRig.update(dt);
-            this.stack.update(time, dt, this.camera, this.parallax);
+            this.stack.update(time, dt, this.camera, this.parallax, {
+                frozen: this.renderLoop?.isFrozen?.() ?? false
+            });
             this.labels.update(this.camera);
             this.labels.setFocusIndex(this.focusIndex);
         }
