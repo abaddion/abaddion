@@ -6,6 +6,8 @@ import { aboutCrawlLoopSeconds } from './about-crawl-speed.js';
 
 const R_MOBILE = 220;
 const R_DESKTOP = 280;
+const SPEED_STEPS = [0.5, 0.75, 1, 1.5];
+const BASE_SPEED = 0.65;
 
 export class AboutCssRing {
     /**
@@ -17,6 +19,7 @@ export class AboutCssRing {
         this.lines = opts.lines ?? [];
         this.onFirstLoopComplete = opts.onFirstLoopComplete ?? (() => {});
         this.reducedMotion = opts.reducedMotion ?? false;
+        this.speedStepIndex = this._loadSpeedStep();
         this.loopSec = aboutCrawlLoopSeconds({ paragraphs: this.lines });
         this.ringDeg = 0;
         this.auto = true;
@@ -69,11 +72,35 @@ export class AboutCssRing {
         return out.length ? out : [''];
     }
 
+    _loadSpeedStep() {
+        try {
+            const raw = localStorage.getItem('about-ring-speed-step');
+            const idx = Number(raw);
+            if (Number.isFinite(idx) && idx >= 0 && idx < SPEED_STEPS.length) return idx;
+        } catch (e) {}
+        return 2;
+    }
+
+    getSpeedLabel() {
+        return `${SPEED_STEPS[this.speedStepIndex]}×`;
+    }
+
+    setSpeedStep(delta) {
+        const next = Math.max(0, Math.min(SPEED_STEPS.length - 1, this.speedStepIndex + delta));
+        if (next === this.speedStepIndex) return;
+        this.speedStepIndex = next;
+        try {
+            localStorage.setItem('about-ring-speed-step', String(next));
+        } catch (e) {}
+    }
+
     relayout() {
         if (!this.ring) return;
         const mobile = window.innerWidth < 768;
         const R = mobile ? R_MOBILE : R_DESKTOP;
-        const maxW = Math.min(320, window.innerWidth - 48);
+        const charW = mobile ? 7.1 : 7.6;
+        const targetChars = mobile ? 32 : 38;
+        const maxW = Math.min(mobile ? 268 : 320, Math.min(window.innerWidth - 48, targetChars * charW));
         const wrapped = this.wrapLines(this.lines, maxW);
         const step = 360 / Math.max(wrapped.length, 1);
         this.ring.replaceChildren();
@@ -91,7 +118,8 @@ export class AboutCssRing {
     }
 
     _degPerSec() {
-        return 360 / Math.max(this.loopSec, 8);
+        const mult = SPEED_STEPS[this.speedStepIndex] ?? 1;
+        return (360 / Math.max(this.loopSec, 8)) * BASE_SPEED * mult;
     }
 
     _applyRing() {

@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-11-16T09:53:11.305Z",
+  "shots": {
+    "ring-control-390": "ring-control-390.png",
+    "ring-slow-f1-390": "ring-slow-f1-390.png",
+    "ring-slow-f2-390": "ring-slow-f2-390.png",
+    "ring-slow-f3-390": "ring-slow-f3-390.png",
+    "ring-fast-f1-390": "ring-fast-f1-390.png",
+    "ring-fast-f2-390": "ring-fast-f2-390.png",
+    "ring-fast-f3-390": "ring-fast-f3-390.png",
+    "ring-control-1440": "ring-control-1440.png",
+    "ring-slow-f1-1440": "ring-slow-f1-1440.png",
+    "ring-slow-f2-1440": "ring-slow-f2-1440.png",
+    "ring-slow-f3-1440": "ring-slow-f3-1440.png",
+    "ring-fast-f1-1440": "ring-fast-f1-1440.png",
+    "ring-fast-f2-1440": "ring-fast-f2-1440.png",
+    "ring-fast-f3-1440": "ring-fast-f3-1440.png"
+  },
+  "slow-390-f1-deltaDeg": 0,
+  "slow-390-f2-deltaDeg": 6.419753086419753,
+  "slow-390-f3-deltaDeg": 12.838922558922587,
+  "fast-390-f1-deltaDeg": 0,
+  "fast-390-f2-deltaDeg": 3.2098765432098837,
+  "fast-390-f3-deltaDeg": 6.565656565656594,
+  "slow-1440-f1-deltaDeg": 0,
+  "slow-1440-f2-deltaDeg": 8.070796857463531,
+  "slow-1440-f3-deltaDeg": 15.94841750841751,
+  "fast-1440-f1-deltaDeg": 0,
+  "fast-1440-f2-deltaDeg": 3.9872502805836154,
+  "fast-1440-f3-deltaDeg": 7.877912457912457
+}
